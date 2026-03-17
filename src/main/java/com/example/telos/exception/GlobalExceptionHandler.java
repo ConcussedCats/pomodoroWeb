@@ -1,6 +1,5 @@
 package com.example.telos.exception;
 
-import com.example.telos.controller.*;
 import com.example.telos.service.LogErrorService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
