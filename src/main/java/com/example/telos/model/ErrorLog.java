@@ -17,7 +17,7 @@ public class ErrorLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "error_id", unique = true, nullable = false)
-    private Long error_id;
+    private Long errorId;
 
     @Setter
     @Column(name = "http_error", nullable = false)
