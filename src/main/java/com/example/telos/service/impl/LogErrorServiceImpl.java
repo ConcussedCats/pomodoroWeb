@@ -27,7 +27,7 @@ public class LogErrorServiceImpl implements LogErrorService {
     public void logError(HttpServletRequest request, HttpStatus httpStatus, Exception exception) {
         String errorDescription = buildDescription(request, httpStatus, exception);
 
-        logger.error(errorDescription);
+        logger.error(errorDescription, exception);
 
         if (!shouldPersist(httpStatus)) {
             return;
