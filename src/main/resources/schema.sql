@@ -5,7 +5,7 @@ DROP TABLE IF EXISTS error_logs;
 CREATE TABLE error_logs (
     error_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY UNIQUE,
     http_error INT NOT NULL,
-    error_desc VARCHAR NOT NULL,
+    error_description VARCHAR NOT NULL,
     occurred_at TIMESTAMP NOT NULL DEFAULT now()
 );
 
