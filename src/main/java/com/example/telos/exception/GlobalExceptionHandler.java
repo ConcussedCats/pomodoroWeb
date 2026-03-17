@@ -1,66 +1,70 @@
 package com.example.telos.exception;
 
-import com.example.telos.controller.AboutUsController;
-import com.example.telos.controller.HelpUsController;
-import com.example.telos.controller.HomeController;
-import com.example.telos.controller.LoginController;
-import com.example.telos.controller.UserController;
-import com.example.telos.repository.ErrorLogRepository;
+import com.example.telos.controller.*;
+import com.example.telos.service.LogErrorService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-@ControllerAdvice(annotations = Controller.class)
+@ControllerAdvice(assignableTypes = {
+        HomeController.class,
+        LoginController.class,
+        AboutUsController.class,
+        HelpUsController.class,
+        UserController.class
+})
 @AllArgsConstructor
 public class GlobalExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-    private final ErrorLogRepository errorLogRepository;
+    private final LogErrorService logErrorService;
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ModelAndView handleMethodNotSupported(HttpServletRequest request, HttpRequestMethodNotSupportedException exception) {
+        logErrorService.logWarn(request, HttpStatus.METHOD_NOT_ALLOWED, exception);
+        return buildErrorPage(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed");
+    }
 
     @ExceptionHandler(NullEntityReferenceException.class)
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    public ModelAndView nullEntityReferenceExceptionHandler(HttpServletRequest request, NullEntityReferenceException exception) {
-        return getModelAndView(request, HttpStatus.BAD_REQUEST, exception);
+    public ModelAndView handleNullEntity(HttpServletRequest request, NullEntityReferenceException exception) {
+        logErrorService.logWarn(request, HttpStatus.BAD_REQUEST, exception);
+        return buildErrorPage(HttpStatus.BAD_REQUEST, "Bad request");
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    @ResponseStatus(value = HttpStatus.NOT_FOUND)
-    public ModelAndView entityNotFoundExceptionHandler(HttpServletRequest request, EntityNotFoundException exception) {
-        return getModelAndView(request, HttpStatus.NOT_FOUND, exception);
+    public ModelAndView handleEntityNotFound(HttpServletRequest request, EntityNotFoundException exception) {
+        logErrorService.logWarn(request, HttpStatus.NOT_FOUND, exception);
+        return buildErrorPage(HttpStatus.NOT_FOUND, "Page or resource not found");
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    @ResponseStatus(value = HttpStatus.FORBIDDEN)
-    public ModelAndView accessDeniedExceptionHandler(HttpServletRequest request) {
+    public ModelAndView handleAccessDenied(HttpServletRequest request, AccessDeniedException exception) {
+        logErrorService.logWarn(request, HttpStatus.FORBIDDEN, exception);
         return new ModelAndView("error/403");
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    @ResponseStatus(value = HttpStatus.NOT_FOUND)
-    public ModelAndView noResourceFoundExceptionHandler(HttpServletRequest request) {
+    public ModelAndView handleNoResource(HttpServletRequest request, NoResourceFoundException exception) {
+        logErrorService.logWarn(request, HttpStatus.NOT_FOUND, exception);
         return new ModelAndView("error/404");
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-    public ModelAndView exceptionHandler(HttpServletRequest request, Exception exception) {
-        return getModelAndView(request, HttpStatus.INTERNAL_SERVER_ERROR, exception);
+    public ModelAndView handleUnexpected(HttpServletRequest request, Exception exception) {
+        logErrorService.logError(request, HttpStatus.INTERNAL_SERVER_ERROR, exception);
+        return buildErrorPage(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong on the server");
     }
 
-    private ModelAndView getModelAndView(HttpServletRequest request, HttpStatus httpStatus, Exception exception) {
-        logger.error("Exception raised = {} :: URL = {}", exception.getMessage(), request.getRequestURL());
+    private ModelAndView buildErrorPage(HttpStatus httpStatus, String message) {
         ModelAndView modelAndView = new ModelAndView("error/error");
         modelAndView.addObject("code", httpStatus.value() + " / " + httpStatus.getReasonPhrase());
-        modelAndView.addObject("message", exception.getMessage());
+        modelAndView.addObject("message", message);
         return modelAndView;
     }
 }

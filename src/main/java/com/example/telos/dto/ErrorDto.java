@@ -1,12 +1,21 @@
 package com.example.telos.dto;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+
+import java.time.OffsetDateTime;
 
 @Getter
-@Setter
-@AllArgsConstructor
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorDto {
-    String message;
+    private final OffsetDateTime timestamp;
+    private final int status;
+    private final String error;
+    private final String message;
+    private final String path;
+    private final String method;
+    private final String errorCode;
+    private final String requestId;
 }

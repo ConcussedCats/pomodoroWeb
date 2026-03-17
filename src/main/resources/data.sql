@@ -1,8 +1,3 @@
-INSERT INTO error_logs (http_error, error_description)
-VALUES
-    (1,'Test error #1'),
-    (2, 'Test error #2');
-
 INSERT INTO users (username, email, password)
 VALUES
     ('user', 'user@test.com', '$2a$10$BKNS1AKDimfsXJf2JKG6B.spn1MUz7TuONVN6rw/0BJQa.hci6eDa'),

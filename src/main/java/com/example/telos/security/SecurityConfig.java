@@ -17,6 +17,8 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final PasswordEncoder passwordEncoder;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+    private final RestAccessDeniedHandler restAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -34,6 +36,16 @@ public class SecurityConfig {
                         .requestMatchers("/user/**", "/api/**").authenticated()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(ex -> ex
+                        .defaultAuthenticationEntryPointFor(
+                                restAuthenticationEntryPoint,
+                                request -> request.getRequestURI().startsWith("/api/")
+                        )
+                        .defaultAccessDeniedHandlerFor(
+                                restAccessDeniedHandler,
+                                request -> request.getRequestURI().startsWith("/api/")
+                        )
+                )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .defaultSuccessUrl("/user", true)
@@ -42,6 +54,7 @@ public class SecurityConfig {
                 .logout(logout -> logout
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/")
+                        .deleteCookies("JSESSIONID")
                         .permitAll()
                 );
         return http.build();
