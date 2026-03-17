@@ -3,6 +3,7 @@ package com.example.telos.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
@@ -18,9 +19,11 @@ public class ErrorLog {
     @Column(name = "error_id", unique = true, nullable = false)
     private Long error_id;
 
+    @Setter
     @Column(name = "http_error", nullable = false)
     private Integer httpError;
 
+    @Setter
     @Column(name = "error_description", nullable = false)
     private String errorDescription;
 

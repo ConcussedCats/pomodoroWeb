@@ -5,27 +5,26 @@ import com.example.telos.controller.HelpUsController;
 import com.example.telos.controller.HomeController;
 import com.example.telos.controller.LoginController;
 import com.example.telos.controller.UserController;
+import com.example.telos.repository.ErrorLogRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-@ControllerAdvice(assignableTypes = {
-        AboutUsController.class,
-        HelpUsController.class,
-        HomeController.class,
-        LoginController.class,
-        UserController.class
-})
+@ControllerAdvice(annotations = Controller.class)
+@AllArgsConstructor
 public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private final ErrorLogRepository errorLogRepository;
 
     @ExceptionHandler(NullEntityReferenceException.class)
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
