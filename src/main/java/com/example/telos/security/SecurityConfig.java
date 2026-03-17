@@ -32,7 +32,7 @@ public class SecurityConfig {
                                 "/assets/**"
                         ).permitAll()
                         .requestMatchers("/user/**", "/api/**").authenticated()
-                        .anyRequest().permitAll()
+                        .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
