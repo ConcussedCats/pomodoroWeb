@@ -59,8 +59,6 @@ public class LogErrorServiceImpl implements LogErrorService {
     }
 
     private boolean shouldPersist(HttpStatus status) {
-        return status.is5xxServerError()
-                || status == HttpStatus.UNAUTHORIZED
-                || status == HttpStatus.FORBIDDEN;
+        return status.is5xxServerError();
     }
 }
