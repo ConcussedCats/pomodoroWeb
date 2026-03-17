@@ -7,7 +7,7 @@ CREATE TABLE error_logs (
     http_error INT NOT NULL,
     error_desc VARCHAR NOT NULL,
     occurred_at TIMESTAMP NOT NULL DEFAULT now()
-)
+);
 
 CREATE TABLE users (
     user_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY UNIQUE,
