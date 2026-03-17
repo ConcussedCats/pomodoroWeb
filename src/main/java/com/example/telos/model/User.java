@@ -38,7 +38,9 @@ public class User {
     @PrePersist
     private void prePersist() {
         this.createdAt = LocalDateTime.now();
-        this.isAdmin = false;
+        if (this.isAdmin == null) {
+            this.isAdmin = Boolean.FALSE;
+        }
     }
 
     @ToString.Exclude
