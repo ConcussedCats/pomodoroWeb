@@ -14,7 +14,8 @@ CREATE TABLE users (
     username VARCHAR(20) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT now()
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
+    is_admin BOOLEAN NOT NULL DEFAULT false
 );
 
  CREATE TABLE user_time_settings (
