@@ -5,6 +5,8 @@ import com.example.telos.service.LogErrorService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
@@ -14,13 +16,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-@ControllerAdvice(assignableTypes = {
-        HomeController.class,
-        LoginController.class,
-        AboutUsController.class,
-        HelpUsController.class,
-        UserController.class
-})
+@ControllerAdvice(annotations = Controller.class)
+@Order(Ordered.LOWEST_PRECEDENCE)
 @AllArgsConstructor
 public class GlobalExceptionHandler {
     private final LogErrorService logErrorService;

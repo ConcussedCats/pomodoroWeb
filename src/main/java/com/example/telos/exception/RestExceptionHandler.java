@@ -5,6 +5,8 @@ import com.example.telos.service.LogErrorService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -19,6 +21,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import java.time.OffsetDateTime;
 
 @RestControllerAdvice(annotations = RestController.class)
+@Order(Ordered.HIGHEST_PRECEDENCE)
 @AllArgsConstructor
 public class RestExceptionHandler {
     private final LogErrorService logErrorService;
