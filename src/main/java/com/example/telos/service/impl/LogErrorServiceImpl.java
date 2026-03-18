@@ -46,12 +46,12 @@ public class LogErrorServiceImpl implements LogErrorService {
     private String buildDescription(HttpServletRequest request, HttpStatus httpStatus, Exception exception) {
         String method = request.getMethod();
         String path = request.getRequestURI();
+        String exceptionType = exception.getClass().getSimpleName();
 
         return "status=" + httpStatus.value()
                 + ", method=" + method
                 + ", path=" + path
-                + ", exception=" + exceptionType
-                + ", path=" + path
+                + ", exception=" + exceptionType;
     }
 
     private boolean shouldPersist(HttpStatus status) {
