@@ -32,9 +32,15 @@ public class User {
     @Column(name="created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "is_admin", nullable = false)
+    private Boolean isAdmin;
+
     @PrePersist
     private void prePersist() {
         this.createdAt = LocalDateTime.now();
+        if (this.isAdmin == null) {
+            this.isAdmin = Boolean.FALSE;
+        }
     }
 
     @ToString.Exclude

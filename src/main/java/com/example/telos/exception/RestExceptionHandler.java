@@ -1,77 +1,105 @@
 package com.example.telos.exception;
 
-
 import com.example.telos.dto.ErrorDto;
+import com.example.telos.service.LogErrorService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.AllArgsConstructor;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-@RestControllerAdvice(annotations = RestController.class)
-public class RestExceptionHandler {
-    private static final Logger logger = LoggerFactory.getLogger(RestExceptionHandler.class);
+import java.time.OffsetDateTime;
 
-    @ExceptionHandler({NullEntityReferenceException.class,IllegalArgumentException.class})
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    public ErrorDto nullEntityReferenceExceptionHandler(HttpServletRequest request, RuntimeException exception) {
-        return new ErrorDto(exception.getMessage());
+@RestControllerAdvice(annotations = RestController.class)
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@AllArgsConstructor
+public class RestExceptionHandler {
+    private final LogErrorService logErrorService;
+
+    @ExceptionHandler(NullEntityReferenceException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorDto handleNullEntity(HttpServletRequest request, NullEntityReferenceException exception) {
+        logErrorService.logWarn(request, HttpStatus.BAD_REQUEST, exception);
+        return buildError(request, HttpStatus.BAD_REQUEST, exception.getMessage(), "NULL_ENTITY");
     }
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    @ResponseStatus(value = HttpStatus.NOT_FOUND)
-    public ErrorDto entityNotFoundExceptionHandler(HttpServletRequest request, EntityNotFoundException exception) {
-        return new ErrorDto(exception.getMessage());
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorDto handleIllegalArgument(HttpServletRequest request, IllegalArgumentException exception) {
+        logErrorService.logWarn(request, HttpStatus.BAD_REQUEST, exception);
+        return buildError(request, HttpStatus.BAD_REQUEST, exception.getMessage(), "INVALID_ARGUMENT");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorDto methodArgumentNotValidExceptionHandler(HttpServletRequest request,
-                                                           MethodArgumentNotValidException exception) {
+    public ErrorDto handleValidation(HttpServletRequest request, MethodArgumentNotValidException exception) {
         FieldError fieldError = exception.getBindingResult().getFieldError();
-        String message = fieldError != null
-                ? fieldError.getDefaultMessage()
-                : "Request data is invalid";
-        return new ErrorDto(message);
+        String message = fieldError != null ? fieldError.getDefaultMessage() : "Request validation failed";
+        logErrorService.logWarn(request, HttpStatus.BAD_REQUEST, exception);
+        return buildError(request, HttpStatus.BAD_REQUEST, message, "VALIDATION_ERROR");
     }
-
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorDto httpMessageNotReadableExceptionHandler(HttpServletRequest request,
-                                                           HttpMessageNotReadableException exception) {
-        return new ErrorDto("Request body is missing or malformed");
+    public ErrorDto handleMalformedBody(HttpServletRequest request, HttpMessageNotReadableException exception) {
+        logErrorService.logWarn(request, HttpStatus.BAD_REQUEST, exception);
+        return buildError(request, HttpStatus.BAD_REQUEST, "Request body is missing or malformed", "MALFORMED_BODY");
     }
 
-
-    @ExceptionHandler(AccessDeniedException.class)
-    @ResponseStatus(value = HttpStatus.FORBIDDEN)
-    public ErrorDto accessDeniedExceptionHandler(HttpServletRequest request) {
-        return new ErrorDto("You do not have permission to perform this action");
+    @ExceptionHandler(EntityNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorDto handleEntityNotFound(HttpServletRequest request, EntityNotFoundException exception) {
+        logErrorService.logWarn(request, HttpStatus.NOT_FOUND, exception);
+        return buildError(request, HttpStatus.NOT_FOUND, exception.getMessage(), "ENTITY_NOT_FOUND");
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    @ResponseStatus(value = HttpStatus.NOT_FOUND)
-    public ErrorDto noResourceFoundHandler(HttpServletRequest request) {
-        return new ErrorDto("API endpoint was not found");
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorDto handleNoResource(HttpServletRequest request, NoResourceFoundException exception) {
+        logErrorService.logWarn(request, HttpStatus.NOT_FOUND, exception);
+        return buildError(request, HttpStatus.NOT_FOUND, "API endpoint was not found", "ENDPOINT_NOT_FOUND");
     }
 
     @ExceptionHandler(UsernameAlreadyTakenException.class)
-    @ResponseStatus(value = HttpStatus.CONFLICT)
-    public ErrorDto usernameAlreadyTakenExceptionHandler(HttpServletRequest request, UsernameAlreadyTakenException exception) {
-        return new ErrorDto(exception.getMessage());
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorDto handleUsernameConflict(HttpServletRequest request, UsernameAlreadyTakenException exception) {
+        logErrorService.logWarn(request, HttpStatus.CONFLICT, exception);
+        return buildError(request, HttpStatus.CONFLICT, exception.getMessage(), "USERNAME_CONFLICT");
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
+    public ErrorDto handleMethodNotSupported(HttpServletRequest request, HttpRequestMethodNotSupportedException exception) {
+        logErrorService.logWarn(request, HttpStatus.METHOD_NOT_ALLOWED, exception);
+        return buildError(request, HttpStatus.METHOD_NOT_ALLOWED, "HTTP method is not supported for this endpoint", "METHOD_NOT_ALLOWED");
     }
 
     @ExceptionHandler(Exception.class)
-    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorDto exceptionHandler(HttpServletRequest request, Exception exception) {
-        logger.error("Exception raised = {} :: URL = {}", exception.getMessage(), request.getRequestURL());
-        return new ErrorDto("Unexpected server error");
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorDto handleUnexpected(HttpServletRequest request, Exception exception) {
+        logErrorService.logError(request, HttpStatus.INTERNAL_SERVER_ERROR, exception);
+        return buildError(request, HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", "INTERNAL_ERROR");
+    }
+
+    private ErrorDto buildError(HttpServletRequest request, HttpStatus status, String message, String errorCode) {
+        return ErrorDto.builder()
+                .timestamp(OffsetDateTime.now())
+                .status(status.value())
+                .error(status.getReasonPhrase())
+                .message(message)
+                .path(request.getRequestURI())
+                .method(request.getMethod())
+                .errorCode(errorCode)
+                .build();
     }
 }
