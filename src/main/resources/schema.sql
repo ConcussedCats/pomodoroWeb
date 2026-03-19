@@ -46,7 +46,7 @@ CREATE TABLE todos (
     user_id INT NOT NULL,
     todo_title VARCHAR(255) NOT NULL,
     todo_description TEXT,
-    is_done BOOLEAN NOT NULL,
+    is_done BOOLEAN NOT NULL DEFAULT false,
     todo_priority VARCHAR(10) NOT NULL
                    CHECK (todo_priority IN ('LOW','MEDIUM','HIGH')),
     todo_deadline TIMESTAMP,
