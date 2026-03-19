@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS user_time_settings;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS error_logs;
+DROP TABLE IF EXISTS notes;
 
 CREATE TABLE error_logs (
     error_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY UNIQUE,
@@ -26,6 +27,15 @@ CREATE TABLE users (
     long_break_minutes INT NOT NULL,
     pomo_cycles INT NOT NULL,
     sounds_enable BOOLEAN NOT NULL,
+
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users (user_id)
+);
+
+CREATE TABLE notes (
+    note_id INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY UNIQUE,
+    user_id INT NOT NULL,
+    note_text TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT now(),
 
     CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users (user_id)
 );
