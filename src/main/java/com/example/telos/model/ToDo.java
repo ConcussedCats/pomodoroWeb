@@ -54,7 +54,7 @@ public class ToDo {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-        if (isDone == null) isDone = true;
+        if (isDone == null) isDone = false;
         if (priority == null) priority = Priority.LOW;
     }
 }
