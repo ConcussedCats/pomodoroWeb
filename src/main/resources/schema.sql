@@ -28,7 +28,7 @@ CREATE TABLE users (
     pomo_cycles INT NOT NULL,
     sounds_enable BOOLEAN NOT NULL,
 
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users (user_id)
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
 );
 
 CREATE TABLE notes (
@@ -37,5 +37,5 @@ CREATE TABLE notes (
     note_text TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT now(),
 
-    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users (user_id)
+    CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
 );
