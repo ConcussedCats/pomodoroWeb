@@ -29,7 +29,7 @@ public class User {
     @Column(name="password", nullable = false)
     private String password;
 
-    @Column(name="created_at", nullable = false)
+    @Column(name="created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "is_admin", nullable = false)
@@ -38,9 +38,7 @@ public class User {
     @PrePersist
     private void prePersist() {
         this.createdAt = LocalDateTime.now();
-        if (this.isAdmin == null) {
-            this.isAdmin = Boolean.FALSE;
-        }
+        this.isAdmin = false; // we will add admins manually in db
     }
 
     @ToString.Exclude
