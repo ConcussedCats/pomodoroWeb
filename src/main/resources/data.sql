@@ -11,3 +11,14 @@ VALUES
     (1, 25, 5, 15, 4, true),
     (2, 30, 5, 20, 4, true),
     (3, 50, 10, 30, 3, false);
+
+INSERT INTO notes (user_id, note_text)
+VALUES
+    (1, 'Note test text #1'),
+    (2, 'Lorem ipsum...'),
+    (3, 'I need money'),
+    (1, 'Note test text #2'),
+    (2, 'I love  my cat and dog'),
+    (3, 'Example text'),
+    (1, 'I need to pass my exams'),
+    (2, 'Buy products: eggs, milk, bread')
