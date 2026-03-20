@@ -93,10 +93,10 @@
 }
 
 .error-title {
-    margin-bottom:1rem;
+    margin-bottom: 1rem;
 }
 
 .error-description {
-    margin-bottom:2rem;
-    color:var(--color-text-muted);
+    margin-bottom: 2rem;
+    color: var(--color-text-muted);
 }
