@@ -1,8 +1,8 @@
 INSERT INTO users (username, email, password)
 VALUES
-    ('user', 'user@test.com', '1111'),
-    ('guest', 'guest@test.com', '2222'),
-    ('demo', 'demo@test.com', '3333');
+    ('user', 'user@test.com', '$2a$10$BKNS1AKDimfsXJf2JKG6B.spn1MUz7TuONVN6rw/0BJQa.hci6eDa'),
+    ('guest', 'guest@test.com', '$2a$10$WR/K82uxZbC0IlRfMsTDZu/4VXwar2RpUQcg0TILh9FH33WS4z6ZK'),
+    ('demo', 'demo@test.com', '$2a$10$Hm.qp68UZ5SrVp9G8kSupuY3FW9JGIDPi.IvvMzSdja9vm/h669Eu');
 
 
 INSERT INTO user_time_settings

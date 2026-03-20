@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title>Profile - Telos</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
@@ -20,28 +22,27 @@
                 </p>
 
                 <div class="profile-grid">
-                    <form id="profileForm" class="auth-form profile-panel" data-auth-form="profile" novalidate>
+                    <form id="username-form" class="auth-form profile-panel" novalidate>
                         <h3 class="profile-panel-title">Public Profile</h3>
 
                         <div class="auth-field">
-                            <label class="settings-label" for="profileName">Display Name</label>
-                            <input type="text" id="profileName" class="settings-input auth-input" name="displayName" autocomplete="name">
-                            <p class="form-field-error hidden" data-error-for="profileName"></p>
+                            <label class="settings-label" for="username">Username</label>
+                            <input type="text" id="username" class="settings-input auth-input" name="username" autocomplete="username" th:value="${curUsername}">
+                            <p class="form-field-error hidden" data-error-for="username"></p>
                         </div>
 
-                        <p class="form-message hidden" data-form-message aria-live="polite"></p>
+                        <p id="username-message" class="form-message hidden" aria-live="polite"></p>
 
                         <button type="submit" class="btn btn--primary auth-submit">Save Name</button>
-                        <button type="button" class="btn btn--secondary auth-submit auth-logout hidden" id="logoutBtn">Log Out</button>
                     </form>
 
-                    <form id="passwordForm" class="auth-form profile-panel" data-auth-form="password" novalidate>
+                    <form id="password-form" class="auth-form profile-panel" novalidate>
                         <h3 class="profile-panel-title">Security</h3>
 
                         <div class="auth-field">
-                            <label class="settings-label" for="currentPassword">Current Password</label>
-                            <input type="password" id="currentPassword" class="settings-input auth-input" name="currentPassword" autocomplete="current-password">
-                            <p class="form-field-error hidden" data-error-for="currentPassword"></p>
+                            <label class="settings-label" for="oldPassword">Current Password</label>
+                            <input type="password" id="oldPassword" class="settings-input auth-input" name="oldPassword" autocomplete="current-password">
+                            <p class="form-field-error hidden" data-error-for="oldPassword"></p>
                         </div>
 
                         <div class="auth-field">
@@ -51,12 +52,12 @@
                         </div>
 
                         <div class="auth-field">
-                            <label class="settings-label" for="confirmPassword">Confirm New Password</label>
-                            <input type="password" id="confirmPassword" class="settings-input auth-input" name="confirmPassword" autocomplete="new-password">
-                            <p class="form-field-error hidden" data-error-for="confirmPassword"></p>
+                            <label class="settings-label" for="confirmNewPassword">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" class="settings-input auth-input" name="confirmNewPassword" autocomplete="new-password">
+                            <p class="form-field-error hidden" data-error-for="confirmNewPassword"></p>
                         </div>
 
-                        <p class="form-message hidden" data-form-message aria-live="polite"></p>
+                        <p id="password-message" class="form-message hidden" aria-live="polite"></p>
 
                         <button type="submit" class="btn btn--primary auth-submit">Change Password</button>
                     </form>
@@ -67,9 +68,7 @@
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
-    <script th:src="@{/js/timer-state.js}"></script>
-    <script th:src="@{/js/mini-timer.js}"></script>
-    <script th:src="@{/js/auth-state.js}"></script>
-    <script th:src="@{/js/auth-forms.js}"></script>
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+    <script th:src="@{/js/user-settings.js}"></script>
 </body>
 </html>

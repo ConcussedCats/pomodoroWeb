@@ -10,6 +10,9 @@ const longBreakInput = document.getElementById("longBreakTime");
 const soundEnabledInput = document.getElementById("soundEnabled");
 const focusCyclesInput = document.getElementById("focusCycles");
 const settingsError = document.getElementById("settingsError");
+const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+const isAuthenticated = document.querySelector('meta[name="is-authenticated"]')?.content === "true";
 
 const timerStateStore = window.PomodoroTimerState;
 
@@ -24,6 +27,33 @@ let savedSettings = loadSettingsFromStorage();
 
 function loadSettingsFromStorage() {
     return timerStateStore.loadSettings();
+}
+
+function mapApiSettingsToLocal(settings) {
+    return timerStateStore.normalizeSettings({
+        pomodoro: settings.pomodoroMinutes,
+        shortBreak: settings.shortBreakMinutes,
+        longBreak: settings.longBreakMinutes,
+        soundEnabled: settings.soundsEnabled,
+        focusCycles: settings.pomoCycles
+    });
+}
+
+function mapLocalSettingsToApi(settings) {
+    return {
+        pomodoroMinutes: settings.pomodoro,
+        shortBreakMinutes: settings.shortBreak,
+        longBreakMinutes: settings.longBreak,
+        pomoCycles: settings.focusCycles,
+        soundsEnabled: settings.soundEnabled
+    };
+}
+
+function getRequestHeaders() {
+    return {
+        "Content-Type": "application/json",
+        ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {})
+    };
 }
 
 function applySettingsToInputs(settings) {
@@ -56,6 +86,14 @@ function showValidationError(message, invalidInputs) {
         settingsError.textContent = message;
         settingsError.classList.remove("hidden");
     }
+}
+
+function showSettingsMessage(message, isError = true) {
+    if (!settingsError) return;
+
+    settingsError.textContent = message;
+    settingsError.classList.remove("hidden");
+    settingsError.style.color = isError ? "" : "#8ff0b3";
 }
 
 function validateSettingsDraft() {
@@ -94,13 +132,53 @@ function closeSettings() {
     timerSection.classList.remove("hidden");
 }
 
-function saveSettings() {
+async function fetchSettingsFromApi() {
+    const response = await fetch("/api/user/time-settings", {
+        method: "GET",
+        headers: {
+            ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {})
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to load settings from server");
+    }
+
+    const data = await response.json();
+    return mapApiSettingsToLocal(data);
+}
+
+async function saveSettingsToApi(settings) {
+    const response = await fetch("/api/user/time-settings", {
+        method: "PATCH",
+        headers: getRequestHeaders(),
+        body: JSON.stringify(mapLocalSettingsToApi(settings))
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.message || "Failed to sync settings with server");
+    }
+
+    return mapApiSettingsToLocal(data);
+}
+
+async function saveSettings() {
     const validatedSettings = validateSettingsDraft();
     if (!validatedSettings) return;
 
-    savedSettings = timerStateStore.saveSettings(validatedSettings);
-    document.dispatchEvent(new CustomEvent("settings:updated", { detail: savedSettings }));
-    closeSettings();
+    try {
+        const nextSettings = isAuthenticated
+            ? await saveSettingsToApi(validatedSettings)
+            : validatedSettings;
+
+        savedSettings = timerStateStore.saveSettings(nextSettings);
+        document.dispatchEvent(new CustomEvent("settings:updated", { detail: savedSettings }));
+        closeSettings();
+    } catch (error) {
+        showSettingsMessage(error.message || "Failed to save settings");
+    }
 }
 
 function cancelSettings() {
@@ -125,6 +203,7 @@ fieldConfig.forEach(({ input }) => {
         if (settingsError) {
             settingsError.textContent = "";
             settingsError.classList.add("hidden");
+            settingsError.style.color = "";
         }
     });
 });
@@ -139,5 +218,26 @@ window.addEventListener("storage", (event) => {
     }
 });
 
-applySettingsToInputs(savedSettings);
-document.dispatchEvent(new CustomEvent("settings:loaded", { detail: savedSettings }));
+async function syncSettingsOnLoad() {
+    if (!isAuthenticated) {
+        savedSettings = loadSettingsFromStorage();
+        applySettingsToInputs(savedSettings);
+        document.dispatchEvent(new CustomEvent("settings:loaded", { detail: savedSettings }));
+        return;
+    }
+
+    try {
+        const syncedSettings = await fetchSettingsFromApi();
+        savedSettings = timerStateStore.saveSettings(syncedSettings);
+        applySettingsToInputs(savedSettings);
+        document.dispatchEvent(new CustomEvent("settings:loaded", { detail: savedSettings }));
+        document.dispatchEvent(new CustomEvent("settings:updated", { detail: savedSettings }));
+    } catch (error) {
+        savedSettings = loadSettingsFromStorage();
+        applySettingsToInputs(savedSettings);
+        showSettingsMessage("Failed to sync timer settings from server");
+        document.dispatchEvent(new CustomEvent("settings:loaded", { detail: savedSettings }));
+    }
+}
+
+syncSettingsOnLoad();

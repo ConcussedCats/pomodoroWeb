@@ -1,8 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <meta name="is-authenticated" sec:authorize="isAuthenticated()" content="true">
+    <meta name="is-authenticated" sec:authorize="isAnonymous()" content="false">
     <title>Telos</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
@@ -122,9 +126,7 @@
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
     <!-- Scripts -->
-    <script th:src="@{/js/timer-state.js}"></script>
-    <script th:src="@{/js/mini-timer.js}"></script>
-    <script th:src="@{/js/auth-state.js}"></script>
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
     <script th:src="@{/js/settings.js}"></script>
     <script th:src="@{/js/timer.js}"></script>
 </body>

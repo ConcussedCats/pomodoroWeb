@@ -15,14 +15,13 @@
             <section class="auth-card auth-card--compact">
                 <p class="eyebrow">Account Access</p>
                 <h2 class="auth-title">Login</h2>
-                <p class="auth-description">
-                    Use this screen to sign in once the backend auth endpoint is connected.
-                </p>
 
-                <form id="loginForm" class="auth-form" data-auth-form="login" novalidate>
+                <form id="loginForm" class="auth-form" data-auth-form="login" novalidate th:action="@{/login}" method="post">
+                    <p th:if="${param.error}">Username or password is incorrect</p>
+                    <input type="hidden" th:name="${_csrf.getParameterName()}" th:value="${_csrf.getToken()}">
                     <div class="auth-field">
                         <label class="settings-label" for="loginIdentifier">Email or Username</label>
-                        <input type="text" id="loginIdentifier" class="settings-input auth-input" name="identifier" autocomplete="username">
+                        <input type="text" id="loginIdentifier" class="settings-input auth-input" name="username" autocomplete="username">
                         <p class="form-field-error hidden" data-error-for="loginIdentifier"></p>
                     </div>
 
@@ -42,9 +41,6 @@
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
-    <script th:src="@{/js/timer-state.js}"></script>
-    <script th:src="@{/js/mini-timer.js}"></script>
-    <script th:src="@{/js/auth-state.js}"></script>
-    <script th:src="@{/js/auth-forms.js}"></script>
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
 </body>
 </html>

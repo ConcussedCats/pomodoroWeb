@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 • Page Not Found</title>
+    <title>403 • Access denied</title>
 
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
@@ -31,15 +31,15 @@
                 <path d="m50 55.816c-0.80469 0-1.4531-0.65234-1.4531-1.4531v-21.816c0-0.80469 0.65234-1.4531 1.4531-1.4531 0.80469 0 1.4531 0.65234 1.4531 1.4531v21.816c0 0.80469-0.64844 1.4531-1.4531 1.4531z"/>
             </svg>
 
-            <span class="error-digit">4</span>
+            <span class="error-digit">3</span>
         </div>
 
         <h2 class="error-title">
-            Page Not Found
+            Access denied
         </h2>
 
         <p class="error-description">
-            The page you are looking for doesn't exist or was moved.
+            Looks like you tried to access a page that requires additional permissions.
         </p>
 
         <a th:href="@{/}" class="btn btn--primary error-btn">
@@ -51,9 +51,6 @@
 
 <!-- Footer -->
 <th:block th:replace="~{fragments/footer :: footer}"></th:block>
-
-<script th:src="@{/js/timer-state.js}"></script>
-<script th:src="@{/js/mini-timer.js}"></script>
 
 </body>
 </html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity - Telos</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
+</head>
+<body>
+    <th:block th:replace="~{fragments/header :: header('productivity')}"></th:block>
+
+    <main class="main-content">
+        <div class="container productivity-shell">
+            <div class="page-intro">
+                <p class="eyebrow">Focus Support</p>
+                <h2 class="page-title productivity-title">Productivity</h2>
+                <p class="page-lead productivity-lead">
+                    Capture short tasks and working notes without leaving the timer workflow.
+                </p>
+            </div>
+
+            <section class="productivity-surface" aria-label="Productivity tools">
+                <div class="productivity-tabs" role="tablist" aria-label="Productivity tabs">
+                    <button
+                        id="productivity-tab-todo"
+                        class="productivity-tab productivity-tab--active"
+                        type="button"
+                        role="tab"
+                        aria-selected="true"
+                        tabindex="0"
+                        aria-controls="productivity-panel-todo"
+                        data-tab-trigger="todo"
+                    >
+                        To-do
+                    </button>
+                    <button
+                        id="productivity-tab-notes"
+                        class="productivity-tab"
+                        type="button"
+                        role="tab"
+                        aria-selected="false"
+                        tabindex="-1"
+                        aria-controls="productivity-panel-notes"
+                        data-tab-trigger="notes"
+                    >
+                        Notes
+                    </button>
+                </div>
+
+                <div class="productivity-panels">
+                    <section
+                        id="productivity-panel-todo"
+                        class="productivity-panel"
+                        role="tabpanel"
+                        aria-labelledby="productivity-tab-todo"
+                        aria-hidden="false"
+                        data-tab-panel="todo"
+                    >
+                        <form class="productivity-entry-form" data-entry-form="todo" novalidate>
+                            <div class="productivity-field">
+                                <label class="settings-label" for="todoInput">Task</label>
+                                <input
+                                    id="todoInput"
+                                    class="settings-input productivity-input"
+                                    name="text"
+                                    type="text"
+                                    maxlength="160"
+                                    placeholder="Add a task you want to track"
+                                    autocomplete="off"
+                                >
+                            </div>
+                            <div class="productivity-form-actions">
+                                <button class="btn btn--primary productivity-submit" type="submit">Add task</button>
+                            </div>
+                            <p class="form-message hidden" data-form-message="todo" aria-live="polite"></p>
+                        </form>
+
+                        <ul class="productivity-list" data-item-list="todo" aria-live="polite"></ul>
+                        <p class="productivity-empty-state" data-empty-state="todo">
+                            No tasks yet. Add the first one to build your list.
+                        </p>
+                    </section>
+
+                    <section
+                        id="productivity-panel-notes"
+                        class="productivity-panel hidden"
+                        role="tabpanel"
+                        aria-labelledby="productivity-tab-notes"
+                        aria-hidden="true"
+                        data-tab-panel="notes"
+                    >
+                        <form class="productivity-entry-form" data-entry-form="notes" novalidate>
+                            <div class="productivity-field">
+                                <label class="settings-label" for="noteInput">Note</label>
+                                <textarea
+                                    id="noteInput"
+                                    class="settings-input productivity-input productivity-textarea"
+                                    name="content"
+                                    rows="5"
+                                    maxlength="1200"
+                                    placeholder="Write a note, idea, or follow-up for later"
+                                ></textarea>
+                            </div>
+                            <div class="productivity-form-actions">
+                                <button class="btn btn--primary productivity-submit" type="submit">Add note</button>
+                            </div>
+                            <p class="form-message hidden" data-form-message="notes" aria-live="polite"></p>
+                        </form>
+
+                        <ul class="productivity-list productivity-list--notes" data-item-list="notes" aria-live="polite"></ul>
+                        <p class="productivity-empty-state" data-empty-state="notes">
+                            No notes yet. Add one to keep context close to your work.
+                        </p>
+                    </section>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+    <script th:src="@{/js/productivity.js}"></script>
+</body>
+</html>
