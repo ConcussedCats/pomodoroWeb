@@ -365,9 +365,10 @@
 
 .nav-btn--active {
     color: var(--color-primary);
-    border-color: rgba(231, 76, 60, 0.28);
+    border-color: rgba(255, 107, 90, 0.56);
     background:
-        linear-gradient(145deg, rgba(231, 76, 60, 0.24), rgba(231, 76, 60, 0.1));
-    box-shadow: inset 0 0 0 1px rgba(255, 107, 90, 0.08);
+        linear-gradient(145deg, rgba(231, 76, 60, 0.4), rgba(231, 76, 60, 0.18));
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 214, 208, 0.12),
+        0 4px 10px rgba(231, 76, 60, 0.08);
 }
-
