@@ -155,7 +155,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function formatTimestamp(value) {
-        return dateFormatter.format(new Date(value));
+        const date = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            // Fallback for corrupted or unparsable timestamps
+            return "";
+        }
+        return dateFormatter.format(date);
     }
 
     function syncStateFromStorage() {
