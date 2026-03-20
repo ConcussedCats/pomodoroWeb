@@ -84,9 +84,6 @@
 .error-clock {
     width: 90px;
     height: auto;
-}
-
-.error-clock {
     fill: var(--color-primary-light);
     position: relative;
     top: 10px;
