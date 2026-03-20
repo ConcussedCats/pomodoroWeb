@@ -472,11 +472,20 @@ document.addEventListener("DOMContentLoaded", () => {
             const itemElement = event.target.closest("[data-item-id]");
             if (!itemElement) return;
 
-            const isTodoEditor = type === "todo" && event.key === "Enter";
-            const isNoteEditor = type === "notes" && event.key === "Enter" && (event.metaKey || event.ctrlKey);
+            const itemId = itemElement.dataset.itemId;
+            const isEditing = itemId && state.editingByType?.[type] === itemId;
 
-            if (!isTodoEditor && !isNoteEditor) return;
+            const keyIsTodoSave = type === "todo" && event.key === "Enter";
+            const keyIsNoteSave = type === "notes" && event.key === "Enter" && (event.metaKey || event.ctrlKey);
 
+            if (!keyIsTodoSave && !keyIsNoteSave) return;
+
+            // Only treat Enter as a save action when the focused element is an editor field
+            // within the item that is currently being edited.
+            const editorField = event.target.closest("input, textarea");
+            const editorBelongsToItem = editorField && itemElement.contains(editorField);
+
+            if (!isEditing || !editorBelongsToItem) return;
             event.preventDefault();
             saveEdit(itemElement);
         });
