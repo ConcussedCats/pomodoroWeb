@@ -15,7 +15,7 @@ public class UserTimeSettings {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "settings_id", unique = true, nullable = false)
+    @Column(name = "settings_id", nullable = false)
     private Long settingsId;
 
     @ToString.Exclude
