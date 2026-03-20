@@ -1,4 +1,4 @@
-<header class="header" xmlns:th="http://www.thymeleaf.org" th:fragment="header(activePage)">
+<header class="header" xmlns:th="http://www.thymeleaf.org" th:fragment="header(activePage)" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
     <script>
         //      \    /\
         //       )  ( ')        patrick.
@@ -27,15 +27,34 @@
                 </span>
             </a>
             <div class="auth-controls">
-                <a class="profile-entry" th:classappend="${activePage == 'login' or activePage == 'user'} ? ' profile-entry--active' : ''" th:href="@{/login}" id="profileEntry" aria-label="Open account page">
+                <a sec:authorize="isAnonymous()" class="profile-entry" th:classappend="${activePage == 'login'} ? ' profile-entry--active' : ''" th:href="@{/login}" id="profileEntry" aria-label="Open login page">
                     <span class="profile-entry__avatar" aria-hidden="true">
                         <svg class="profile-entry__icon" viewBox="0 0 24 24" focusable="false">
                             <path d="M12 12c2.761 0 5-2.687 5-6s-2.239-6-5-6-5 2.687-5 6 2.239 6 5 6Z"></path>
                             <path d="M21 24c0-4.971-4.029-9-9-9s-9 4.029-9 9"></path>
                         </svg>
                     </span>
-                    <span class="profile-entry__label" id="profileEntryLabel">Account</span>
+                    <span class="profile-entry__label" id="profileEntryLabel">Login</span>
                 </a>
+                <details sec:authorize="isAuthenticated()" class="account-menu">
+                    <summary class="profile-entry" th:classappend="${activePage == 'user'} ? ' profile-entry--active' : ''" aria-label="Open account menu">
+                        <span class="profile-entry__avatar" aria-hidden="true">
+                            <svg class="profile-entry__icon" viewBox="0 0 24 24" focusable="false">
+                                <path d="M12 12c2.761 0 5-2.687 5-6s-2.239-6-5-6-5 2.687-5 6 2.239 6 5 6Z"></path>
+                                <path d="M21 24c0-4.971-4.029-9-9-9s-9 4.029-9 9"></path>
+                            </svg>
+                        </span>
+                        <span class="profile-entry__label">Account</span>
+                        <span class="account-menu__caret" aria-hidden="true"></span>
+                    </summary>
+                    <div class="account-menu__panel">
+                        <a class="account-menu__link" th:href="@{/user}">Account settings</a>
+                        <form th:action="@{/logout}" method="post" class="account-menu__form">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="account-menu__button">Log out</button>
+                        </form>
+                    </div>
+                </details>
             </div>
         </div>
     </div>

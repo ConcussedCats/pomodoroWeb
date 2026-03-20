@@ -28,8 +28,6 @@
     <!-- Footer -->
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
-    <script th:src="@{/js/timer-state.js}"></script>
-    <script th:src="@{/js/mini-timer.js}"></script>
-    <script th:src="@{/js/auth-state.js}"></script>
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
 </body>
 </html>
