@@ -15,5 +15,6 @@ public interface NoteService {
     List<NoteResponseDto> getUserNotes(String login);
     NoteResponseDto updateNote(String login, long noteId, NoteDto noteDto);
     NoteResponseDto createNewNote(String login, NoteDto noteDto);
+    void deleteNote(String login, long id);
     void delete(Note note);
 }

@@ -71,6 +71,16 @@ public class NoteServiceImpl implements NoteService {
     }
 
     @Override
+    public void deleteNote(String login, long id) {
+        User user = userService.findByEmailOrUsername(login);
+        Note note = findById(id);
+
+        if (note.getUser().getUserId().equals(user.getUserId())) throw new EntityNotFoundException("Note not found with id: " + id);
+
+        delete(note);
+    }
+
+    @Override
     public List<Note> findAllByUser(User user) {
         return noteRepository.findByUser(user);
     }

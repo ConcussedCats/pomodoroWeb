@@ -30,4 +30,9 @@ public class NoteRestController {
     public NoteResponseDto createNote(Principal principal, @Valid @RequestBody NoteDto noteDto) {
         return noteService.createNewNote(principal.getName(), noteDto);
     }
+
+    @DeleteMapping("/{id}")
+    public void deleteNote(Principal principal, @PathVariable long id) {
+        noteService.deleteNote(principal.getName(), id);
+    }
 }
