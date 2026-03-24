@@ -2,9 +2,7 @@ package com.example.telos.controller;
 
 import com.example.telos.dto.NoteDto;
 import com.example.telos.dto.NoteResponseDto;
-import com.example.telos.repository.NoteRepository;
 import com.example.telos.service.NoteService;
-import com.example.telos.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -14,13 +12,22 @@ import java.util.List;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/productivity/note")
+@RequestMapping("/api/productivity/notes")
 public class NoteRestController {
-    private final UserService userService;
-    NoteService noteService;
+    private final NoteService noteService;
 
     @GetMapping
     public List<NoteResponseDto> getNotes(Principal principal) {
         return noteService.getUserNotes(principal.getName());
+    }
+
+    @PatchMapping("/{id}")
+    public NoteResponseDto updateNote(Principal principal, @PathVariable long id, @Valid @RequestBody NoteDto noteDto) {
+        return noteService.updateNote(principal.getName(), id, noteDto);
+    }
+
+    @PostMapping
+    public NoteResponseDto createNote(Principal principal, @Valid @RequestBody NoteDto noteDto) {
+        return noteService.createNewNote(principal.getName(), noteDto);
     }
 }
