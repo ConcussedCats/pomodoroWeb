@@ -2,7 +2,9 @@ package com.example.telos.controller;
 
 import com.example.telos.dto.AuthRequest;
 import com.example.telos.dto.AuthResponse;
+import com.example.telos.model.User;
 import com.example.telos.security.JwtService;
+import com.example.telos.service.UserService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +20,7 @@ public class RestAuthController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final UserService userService;
 
     @PostMapping("/login")
     public AuthResponse login(@RequestBody AuthRequest authRequest) {
@@ -28,6 +31,8 @@ public class RestAuthController {
                 )
         );
 
-        return new AuthResponse(jwtService.generateToken(authRequest.getLogin()));
+        User user = userService.findByEmailOrUsername(authRequest.getLogin());
+
+        return new AuthResponse(jwtService.generateToken(user.getEmail()));
     }
 }
