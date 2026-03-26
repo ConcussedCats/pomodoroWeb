@@ -43,7 +43,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .csrf( csrf -> csrf
-                        .ignoringRequestMatchers("/api/auth/**")
+                        .ignoringRequestMatchers("/api/jwt/**")
                 )
                 .exceptionHandling(ex -> ex
                         .defaultAuthenticationEntryPointFor(
