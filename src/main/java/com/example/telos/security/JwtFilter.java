@@ -59,7 +59,8 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         } catch (JwtException | IllegalArgumentException ex) {
             SecurityContextHolder.clearContext();
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            restAuthenticationEntryPoint.commence(request, response,
+                    new BadCredentialsException("Invalid or expired token", ex));
             return;
         }
 
