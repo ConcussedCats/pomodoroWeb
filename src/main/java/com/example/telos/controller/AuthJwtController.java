@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/jwt/auth")
 @AllArgsConstructor
-public class RestAuthController {
+public class AuthJwtController {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
