@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -21,8 +22,9 @@ public class SecurityConfig {
     private final RestAccessDeniedHandler restAccessDeniedHandler;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
         http
+                .authenticationProvider(daoAuthenticationProvider())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
@@ -34,8 +36,12 @@ public class SecurityConfig {
                                 "/js/**",
                                 "/assets/**"
                         ).permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/user/**", "/api/**").authenticated()
                         .anyRequest().authenticated()
+                )
+                .csrf( csrf -> csrf
+                        .ignoringRequestMatchers("/api/auth/**")
                 )
                 .exceptionHandling(ex -> ex
                         .defaultAuthenticationEntryPointFor(
@@ -57,7 +63,8 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/")
                         .deleteCookies("JSESSIONID")
                         .permitAll()
-                );
+                )
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
