@@ -1,14 +1,14 @@
-package com.example.telos.controller;
+package com.example.telos.controller.page;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
-@RequestMapping("/")
-public class HomeController {
+@RequestMapping("/helpus")
+public class HelpUsController {
     @GetMapping
-    public String home() {
-        return "index";
+    public String helpUs() {
+        return "helpus";
     }
 }

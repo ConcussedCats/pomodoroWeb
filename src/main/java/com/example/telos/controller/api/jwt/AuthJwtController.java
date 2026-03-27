@@ -1,4 +1,4 @@
-package com.example.telos.controller;
+package com.example.telos.controller.api.jwt;
 
 import com.example.telos.dto.AuthRequest;
 import com.example.telos.dto.AuthResponse;

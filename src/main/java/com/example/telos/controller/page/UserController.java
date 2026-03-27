@@ -1,4 +1,4 @@
-package com.example.telos.controller;
+package com.example.telos.controller.page;
 
 import com.example.telos.model.User;
 import com.example.telos.service.UserService;
