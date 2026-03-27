@@ -1,4 +1,4 @@
-package com.example.telos.controller;
+package com.example.telos.controller.api.session;
 
 import com.example.telos.dto.UserPasswordDto;
 import com.example.telos.dto.UserPasswordResponseDto;
