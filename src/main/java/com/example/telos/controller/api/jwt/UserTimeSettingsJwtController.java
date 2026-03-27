@@ -1,4 +1,4 @@
-package com.example.telos.controller;
+package com.example.telos.controller.api.jwt;
 
 import com.example.telos.dto.UserTimeSettingsDto;
 import com.example.telos.dto.UserTimeSettingsResponseDto;
@@ -11,8 +11,8 @@ import java.security.Principal;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/api/user/time-settings")
-public class UserTimeSettingsRestController {
+@RequestMapping("/api/jwt/user/time-settings")
+public class UserTimeSettingsJwtController {
     private final UserTimeSettingsService userTimeSettingsService;
 
     @PatchMapping

@@ -9,6 +9,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -90,6 +91,19 @@ public class RestExceptionHandler {
         logErrorService.logError(request, HttpStatus.INTERNAL_SERVER_ERROR, exception);
         return buildError(request, HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected server error", "INTERNAL_ERROR");
     }
+
+    @ExceptionHandler(AuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorDto handleAuthentication(HttpServletRequest request, AuthenticationException exception) {
+        logErrorService.logWarn(request, HttpStatus.UNAUTHORIZED, exception);
+        return buildError(
+                request,
+                HttpStatus.UNAUTHORIZED,
+                "Invalid login or password",
+                "UNAUTHORIZED"
+        );
+    }
+
 
     private ErrorDto buildError(HttpServletRequest request, HttpStatus status, String message, String errorCode) {
         return ErrorDto.builder()
