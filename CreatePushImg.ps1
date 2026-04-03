@@ -58,6 +58,7 @@ function Get-BranchName {
         return $ProvidedBranchName
     }
 
+    
     if (-not [string]::IsNullOrWhiteSpace($env:GITHUB_REF_NAME)) {
         return $env:GITHUB_REF_NAME
     }
