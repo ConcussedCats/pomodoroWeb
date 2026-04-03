@@ -20,7 +20,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        ref: ${{ github.ref }}
+        with:
+          ref: ${{ github.ref }}
+
 
       - name: Publish build
         shell: powershell
