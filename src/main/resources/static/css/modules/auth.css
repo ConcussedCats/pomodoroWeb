@@ -1,0 +1,109 @@
+/* ===== AUTH PAGES ===== */
+.auth-shell,
+.profile-shell {
+    max-width: 940px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.auth-card--compact {
+    max-width: 560px;
+}
+
+.auth-card--wide {
+    max-width: 900px;
+}
+
+.eyebrow {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--color-primary-light);
+}
+
+.auth-title {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    line-height: 1.1;
+}
+
+.auth-description {
+    color: rgba(255, 255, 255, 0.66);
+    max-width: 42rem;
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    padding: 1.4rem;
+    border-radius: 1.35rem;
+    background:
+        linear-gradient(170deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.015)),
+        rgba(16, 16, 16, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.22);
+}
+
+.auth-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.auth-input {
+    width: 100%;
+}
+
+.auth-submit {
+    justify-content: center;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+}
+
+.profile-panel {
+    height: 100%;
+}
+
+.profile-panel-title {
+    font-size: var(--font-size-lg);
+}
+
+.form-field-error {
+    color: var(--color-primary-light);
+    font-size: var(--font-size-sm);
+}
+
+.form-message {
+    border-radius: var(--radius-md);
+    padding: 0.8rem 1rem;
+    font-size: var(--font-size-sm);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--color-text-muted);
+}
+
+.form-message--success {
+    background: rgba(46, 204, 113, 0.12);
+    color: #8ff0b3;
+}
+
+.form-message--error {
+    background: rgba(231, 76, 60, 0.14);
+    color: #ff9588;
+}
+
+#sessionCount {
+    color: var(--color-primary-light);
+    font-weight: 700;
+}
+

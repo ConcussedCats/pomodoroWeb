@@ -1,4 +1,5 @@
-package com.example.telos.controller;
+package com.example.telos.controller.api.jwt;
+
 
 import com.example.telos.dto.UserPasswordDto;
 import com.example.telos.dto.UserPasswordResponseDto;
@@ -7,17 +8,14 @@ import com.example.telos.dto.UserUsernameResponseDto;
 import com.example.telos.service.UserService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 
 @AllArgsConstructor
+@RequestMapping("/api/jwt/user")
 @RestController
-@RequestMapping("/api/user")
-public class UserRestController {
+public class UserJwtController {
     private final UserService userService;
 
     @PatchMapping("/username")

@@ -1,7 +1,7 @@
 package com.example.telos.controllerTests;
 
 
-import com.example.telos.controller.HelpUsController;
+import com.example.telos.controller.page.HelpUsController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;

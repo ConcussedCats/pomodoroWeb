@@ -1,0 +1,115 @@
+/* ===== CSS RESET & VARIABLES ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Colors */
+    --color-primary: #e74c3c;
+    --color-primary-dark: #c0392b;
+    --color-primary-light: #ff6b5a;
+    --color-secondary: #3498db;
+    --color-secondary-dark: #2980b9;
+    --color-success: #2ecc71;
+    --color-warning: #f39c12;
+    
+    /* Neutral Colors */
+    --color-bg: #1a1a1a;
+    --color-bg-light: #2a2a2a;
+    --color-bg-lighter: #3a3a3a;
+    --color-text: #ffffff;
+    --color-text-muted: #b0b0b0;
+    --color-border: #4a4a4a;
+    
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+    --spacing-xxl: 4rem;
+    
+    /* Typography */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.25rem;
+    --font-size-xl: 1.5rem;
+    --font-size-xxl: 2rem;
+    --font-size-display: 4rem;
+    
+    /* Border Radius */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 1rem;
+    --radius-full: 50%;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
+    
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* ===== BASE STYLES ===== */
+body {
+    font-family: var(--font-family);
+    background:
+        radial-gradient(circle at top left, rgba(231, 76, 60, 0.18), transparent 24rem),
+        radial-gradient(circle at top right, rgba(52, 152, 219, 0.14), transparent 22rem),
+        linear-gradient(150deg, #111111 0%, #181818 38%, #232323 100%);
+    color: var(--color-text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.6;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    inset: auto;
+    width: 20rem;
+    height: 20rem;
+    border-radius: 50%;
+    filter: blur(110px);
+    opacity: 0.22;
+    pointer-events: none;
+    z-index: 0;
+}
+
+body::before {
+    top: -4rem;
+    right: -5rem;
+    background: rgba(231, 76, 60, 0.5);
+}
+
+body::after {
+    bottom: -6rem;
+    left: -5rem;
+    background: rgba(52, 152, 219, 0.35);
+}
+
+a {
+    color: var(--color-primary);
+    transition: color var(--transition-fast);
+}
+
+a:visited {
+    color: var(--color-primary);
+}
+
+a:hover,
+a:focus {
+    color: var(--color-primary-light);
+}
+

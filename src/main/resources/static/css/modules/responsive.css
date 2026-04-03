@@ -1,0 +1,164 @@
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+    .header-container {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+    }
+
+    .logo-container,
+    .header-side,
+    .auth-controls {
+        justify-content: center;
+    }
+
+    .header-side,
+    .nav {
+        justify-self: stretch;
+        width: 100%;
+    }
+
+    .mini-timer {
+        width: min(100%, 320px);
+        align-items: center;
+    }
+    
+    .nav {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .nav-btn {
+        flex: 1 1 0;
+        text-align: center;
+    }
+    
+    .timer-circle {
+        width: 280px;
+        height: 280px;
+    }
+
+    .page-title {
+        max-width: 100%;
+    }
+    
+    .time-display {
+        font-size: 3rem;
+    }
+    
+    .timer-label {
+        font-size: var(--font-size-base);
+    }
+    
+    .controls {
+        flex-direction: column;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .settings-dropdown {
+        min-width: 90vw;
+        left: 5vw;
+        transform: translateX(0);
+    }
+    
+    .timer-modes {
+        flex-direction: column;
+    }
+
+    .profile-entry__label {
+        max-width: 5.5rem;
+    }
+
+    .productivity-tabs {
+        gap: var(--spacing-md);
+    }
+
+    .productivity-item,
+    .productivity-item--note {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .productivity-form-actions,
+    .productivity-item__actions {
+        width: 100%;
+    }
+
+    .productivity-action {
+        flex: 1 1 0;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --font-size-display: 3rem;
+        --spacing-xl: 2rem;
+    }
+    
+    .timer-circle {
+        width: 240px;
+        height: 240px;
+    }
+
+    .container {
+        padding: 1.2rem;
+        border-radius: 1.25rem;
+    }
+    
+    .logo {
+        font-size: var(--font-size-lg);
+    }
+    
+    .header-container {
+        padding: 0.65rem 0.9rem 0.9rem;
+    }
+
+    .header-side {
+        gap: 0.85rem;
+    }
+
+    .nav-btn {
+        font-size: var(--font-size-sm);
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+
+    .profile-entry {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .account-menu {
+        width: 100%;
+    }
+
+    .account-menu__panel {
+        left: 0;
+        right: 0;
+        min-width: 0;
+    }
+
+    .mini-timer {
+        width: 100%;
+    }
+
+    .productivity-entry-form,
+    .productivity-surface {
+        padding: 1.15rem;
+    }
+
+    .productivity-tabs {
+        gap: var(--spacing-sm);
+    }
+
+    .productivity-tab {
+        font-size: var(--font-size-sm);
+    }
+
+    .productivity-item {
+        padding: 0.9rem;
+    }
+}
+

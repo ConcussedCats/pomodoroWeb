@@ -1,6 +1,6 @@
 package com.example.telos.controllerTests;
 
-import com.example.telos.controller.page.LoginController;
+import com.example.telos.controller.page.ProductivityController;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -10,16 +10,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-@WebMvcTest(LoginController.class)
-public class LoginControllerTest {
+@WebMvcTest(ProductivityController.class)
+public class ProductivityControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Test
-    void shouldReturnLoginPage() throws Exception {
-        mockMvc.perform(get("/login"))
+    void shouldReturnProductivityPage() throws Exception {
+        mockMvc.perform(get("/productivity"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("login"));
+                .andExpect(view().name("productivity"));
     }
 }
