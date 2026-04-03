@@ -11,6 +11,7 @@ param(
     [string]$DockerToken = $env:DOCKERHUB_TOKEN
 )
 
+
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
