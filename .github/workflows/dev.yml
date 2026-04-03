@@ -1,0 +1,45 @@
+name: Dev Publish Push
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish_push_img:
+    name: Publish Push Img
+    runs-on:
+      - self-hosted
+      - windows
+      - build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish build
+        shell: powershell
+        env:
+          PUBLISH_BRANCH: dev
+        run: .\publish.ps1 -Branch $env:PUBLISH_BRANCH
+
+      - name: Commit bumped version
+        shell: powershell
+        run: |
+          [xml]$pom = Get-Content .\pom.xml
+          $version = $pom.project.version
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pom.xml
+          git commit -m "bump version to $version [skip ci]"
+          git push origin HEAD:dev
+
+      - name: Build and push image
+        shell: powershell
+        env:
+          PUBLISH_BRANCH: dev
+        run: .\CreatePushImg.ps1 -BranchName $env:PUBLISH_BRANCH -DockerUsername "${{ secrets.DOCKERHUB_USERNAME }}" -DockerToken "${{ secrets.DOCKERHUB_TOKEN }}"
