@@ -40,10 +40,16 @@ jobs:
           git push origin HEAD:refs/heads/feature/Deployment
 
       - name: Build and push image
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
         shell: powershell
         env:
           PUBLISH_BRANCH: staging_telos
-        run: .\CreatePushImg.ps1 -BranchName $env:PUBLISH_BRANCH -DockerUsername "${{ secrets.DOCKERHUB_USERNAME }}" -DockerToken "${{ secrets.DOCKERHUB_TOKEN }}"
+        run: .\CreatePushImg.ps1 -BranchName $env:PUBLISH_BRANCH -SkipDockerLogin
 
   deploy_to_prod:
     name: Deploy To Prod
