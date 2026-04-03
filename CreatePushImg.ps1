@@ -15,6 +15,7 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+
 function Require-Command {
     param([Parameter(Mandatory = $true)][string]$Name)
 
