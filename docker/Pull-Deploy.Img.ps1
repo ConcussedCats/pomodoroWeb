@@ -2,7 +2,7 @@
 param(
     [string]$Repository = "whyisthecodeworking/telosrepo",
     [string]$Tag = "latest",
-    [string]$ComposeFile = ".\docker\docker-compose.yml",
+    [string]$ComposeFile = ".\docker-compose.yml",
     [string]$ComposeImage = "telos_test:ver1",
     [switch]$SkipDockerLogin,
     [string]$DockerUsername = $env:DOCKERHUB_USERNAME,
@@ -52,6 +52,12 @@ Write-Host "==> Tagging '$remoteImage' as '$ComposeImage'..."
 docker tag $remoteImage $ComposeImage
 if ($LASTEXITCODE -ne 0) {
     throw "Docker tag failed."
+}
+
+Write-Host "==> Stopping compose stack from '$ComposeFile'..."
+docker compose -f $ComposeFile down
+if ($LASTEXITCODE -ne 0) {
+    throw "Docker compose down failed."
 }
 
 Write-Host "==> Starting compose stack from '$ComposeFile'..."
