@@ -10,7 +10,7 @@
   </parent>
   <groupId>com.example</groupId>
   <artifactId>telos</artifactId>
-  <version>0.6.0</version>
+  <version>0.7.0</version>
   <name>telos</name>
   <description>Pomodoro timer with to-do</description>
   <url />
