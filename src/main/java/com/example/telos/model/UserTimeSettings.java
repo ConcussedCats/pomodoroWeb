@@ -21,6 +21,7 @@ public class UserTimeSettings {
     @ToString.Exclude
     @OneToOne
     @JoinColumn(name = "user_id", unique = true, nullable = false)
+    @Setter
     private User user;
 
     @Setter

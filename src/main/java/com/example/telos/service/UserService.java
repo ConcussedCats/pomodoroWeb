@@ -3,6 +3,7 @@ package com.example.telos.service;
 import com.example.telos.dto.UserPasswordDto;
 import com.example.telos.dto.UserPasswordResponseDto;
 import com.example.telos.dto.UserUsernameResponseDto;
+import com.example.telos.dto.RegisterRequest;
 
 import com.example.telos.model.User;
 
@@ -12,6 +13,7 @@ public interface UserService {
     User findById(Long id);
     User findByEmail(String email);
     User findByUsername(String username);
+    User register(RegisterRequest registerRequest);
     User create(User user);
     User update(User newUser);
     void delete(User user);
