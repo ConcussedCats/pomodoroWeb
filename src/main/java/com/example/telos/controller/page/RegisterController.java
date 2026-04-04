@@ -2,9 +2,18 @@ package com.example.telos.controller.page;
 
 import com.example.telos.dto.RegisterRequest;
 import com.example.telos.exception.UsernameAlreadyTakenException;
+import com.example.telos.model.User;
 import com.example.telos.service.UserService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.AllArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class RegisterController {
 
     private final UserService userService;
+    private final AuthenticationManager authenticationManager;
 
     @GetMapping
     public String register() {
@@ -28,6 +38,7 @@ public class RegisterController {
     @PostMapping
     public String registerUser(@Valid @ModelAttribute RegisterRequest registerRequest,
                                BindingResult bindingResult,
+                               HttpServletRequest request,
                                Model model) {
         if (bindingResult.hasErrors()) {
             fillFormModel(model, registerRequest, bindingResult.getFieldError() != null
@@ -37,12 +48,26 @@ public class RegisterController {
         }
 
         try {
-            userService.register(registerRequest);
-            return "redirect:/login";
+            User user = userService.register(registerRequest);
+            authenticateUser(user.getEmail(), registerRequest.getPassword(), request);
+            return "redirect:/user";
         } catch (UsernameAlreadyTakenException | IllegalArgumentException exception) {
             fillFormModel(model, registerRequest, exception.getMessage());
             return "register";
         }
+    }
+
+    private void authenticateUser(String login, String password, HttpServletRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(login, password)
+        );
+
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        HttpSession session = request.getSession(true);
+        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
     }
 
     private void fillFormModel(Model model, RegisterRequest registerRequest, String errorMessage) {

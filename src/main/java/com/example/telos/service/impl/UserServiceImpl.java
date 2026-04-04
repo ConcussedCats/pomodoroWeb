@@ -9,8 +9,8 @@ import com.example.telos.exception.UsernameAlreadyTakenException;
 import com.example.telos.model.User;
 import com.example.telos.model.UserTimeSettings;
 import com.example.telos.repository.UserRepository;
+import com.example.telos.repository.UserTimeSettingsRepository;
 import com.example.telos.service.UserService;
-import com.example.telos.service.UserTimeSettingsService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -24,8 +24,8 @@ import java.util.Optional;
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final UserTimeSettingsRepository userTimeSettingsRepository;
     private final PasswordEncoder passwordEncoder;
-    private final UserTimeSettingsService userTimeSettingsService;
 
     @Override
     public User findById(Long id) {
@@ -165,6 +165,6 @@ public class UserServiceImpl implements UserService {
         userTimeSettings.setLongBreakMinutes(15);
         userTimeSettings.setPomoCycles(4);
         userTimeSettings.setSoundsEnable(true);
-        userTimeSettingsService.create(userTimeSettings);
+        userTimeSettingsRepository.save(userTimeSettings);
     }
 }
