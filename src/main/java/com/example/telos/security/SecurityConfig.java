@@ -63,7 +63,8 @@ public class SecurityConfig {
                                 "/helpus",
                                 "/css/**",
                                 "/js/**",
-                                "/assets/**"
+                                "/assets/**",
+                                "/register"
                         ).permitAll()
                         .requestMatchers("/user/**", "/api/**").authenticated()
                         .anyRequest().authenticated()
