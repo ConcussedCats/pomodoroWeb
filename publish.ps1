@@ -52,7 +52,6 @@ function Invoke-MavenWrapper {
 
     $commandLine = '".\mvnw.cmd" ' + ($escapedArguments -join ' ')
     & cmd.exe /c $commandLine
-    return $LASTEXITCODE
 }
 
 if ($RunTests -and $SkipTests) {
@@ -94,7 +93,8 @@ if ($skipTestsForBuild) {
 
 $testsMode = if ($skipTestsForBuild) { "skip tests" } else { "run tests" }
 Write-Host "==> Building application ($testsMode)..."
-$mavenExitCode = Invoke-MavenWrapper -Arguments $mavenArgs
+$null = Invoke-MavenWrapper -Arguments $mavenArgs
+$mavenExitCode = $LASTEXITCODE
 if ($mavenExitCode -ne 0) {
     throw "Maven build failed with exit code $mavenExitCode."
 }
