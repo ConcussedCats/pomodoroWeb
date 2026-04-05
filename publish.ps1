@@ -55,9 +55,6 @@ if (-not (Test-Path ".\Increment-Version.ps1")) {
 }
 
 & .\Increment-Version.ps1 -Branch $Branch -PomPath $pomPath
-if ($LASTEXITCODE -ne 0) {
-    throw "Version increment failed with exit code $LASTEXITCODE."
-}
 
 $skipTestsForBuild = $true
 if ($RunTests) {
