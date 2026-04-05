@@ -4,7 +4,7 @@ param(
     [string]$Dockerfile = ".\telos.docker",
     [string]$ImageName = "telos-local",
     [string]$JarPattern = ".\target\*.jar",
-    [string]$PomPath = ".\pom.xml",
+    [string]$VersionFilePath = ".\version.json",
     [string]$BranchName = "",
     [switch]$SkipDockerLogin,
     [string]$DockerUsername = $env:DOCKERHUB_USERNAME,
@@ -15,6 +15,16 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+function Get-VersionFileVersion {
+    param([Parameter(Mandatory = $true)][string]$VersionFilePath)
+
+    $versionData = Get-Content -LiteralPath $VersionFilePath -Raw | ConvertFrom-Json
+    if (-not ($versionData.PSObject.Properties.Name -contains 'version')) {
+        throw "Version file '$VersionFilePath' must contain a 'version' property."
+    }
+
+    return [string]$versionData.version
+}
 
 function Require-Command {
     param([Parameter(Mandatory = $true)][string]$Name)
@@ -42,13 +52,6 @@ function Get-BuildJar {
     }
 
     return $jar
-}
-
-function Get-ProjectVersion {
-    param([Parameter(Mandatory = $true)][string]$PomPath)
-
-    [xml]$pom = Get-Content -LiteralPath $PomPath
-    return [string]$pom.project.version
 }
 
 function Get-BranchName {
@@ -92,14 +95,14 @@ if (-not (Test-Path -LiteralPath $Dockerfile)) {
     throw "Dockerfile not found: $Dockerfile"
 }
 
-if (-not (Test-Path -LiteralPath $PomPath)) {
-    throw "pom.xml not found: $PomPath"
+if (-not (Test-Path -LiteralPath $VersionFilePath)) {
+    throw "version.json not found: $VersionFilePath"
 }
 
 $jar = Get-BuildJar -Pattern $JarPattern
 Write-Host "==> Using JAR: $($jar.FullName)"
 
-$version = Get-ProjectVersion -PomPath $PomPath
+$version = Get-VersionFileVersion -VersionFilePath $VersionFilePath
 $branch = ConvertTo-ImageTagPart -Value (Get-BranchName -ProvidedBranchName $BranchName)
 $versionTag = "$(ConvertTo-ImageTagPart -Value $version)-$branch"
 Write-Host "==> Version tag: $versionTag"

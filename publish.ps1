@@ -7,6 +7,17 @@ param(
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+function Get-VersionFileVersion {
+    param([Parameter(Mandatory = $true)][string]$VersionFilePath)
+
+    $versionData = Get-Content -LiteralPath $VersionFilePath -Raw | ConvertFrom-Json
+    if (-not ($versionData.PSObject.Properties.Name -contains 'version')) {
+        throw "Version file '$VersionFilePath' must contain a 'version' property."
+    }
+
+    return [string]$versionData.version
+}
+
 function Require-Command {
     param([string]$Name)
 
@@ -28,6 +39,22 @@ function Get-JavaMajorVersion {
     return $null
 }
 
+function Invoke-MavenWrapper {
+    param([string[]]$Arguments)
+
+    $escapedArguments = $Arguments | ForEach-Object {
+        if ($_ -match '[\s"]') {
+            '"' + ($_ -replace '"', '\"') + '"'
+        } else {
+            $_
+        }
+    }
+
+    $commandLine = '".\mvnw.cmd" ' + ($escapedArguments -join ' ')
+    & cmd.exe /c $commandLine
+    return $LASTEXITCODE
+}
+
 if ($RunTests -and $SkipTests) {
     throw "Use either -RunTests or -SkipTests, not both."
 }
@@ -45,16 +72,12 @@ if (-not (Test-Path ".\mvnw.cmd")) {
     throw "mvnw.cmd was not found. Run this script from the project root."
 }
 
-$pomPath = ".\pom.xml"
-if (-not (Test-Path -LiteralPath $pomPath)) {
-    throw "pom.xml was not found. Run this script from the project root."
+$versionFilePath = ".\version.json"
+if (-not (Test-Path -LiteralPath $versionFilePath)) {
+    throw "version.json was not found. Run this script from the project root."
 }
 
-if (-not (Test-Path ".\Increment-Version.ps1")) {
-    throw "Increment-Version.ps1 was not found. Run this script from the project root."
-}
-
-& .\Increment-Version.ps1 -Branch $Branch -PomPath $pomPath
+$currentVersion = Get-VersionFileVersion -VersionFilePath $versionFilePath
 
 $skipTestsForBuild = $true
 if ($RunTests) {
@@ -71,9 +94,9 @@ if ($skipTestsForBuild) {
 
 $testsMode = if ($skipTestsForBuild) { "skip tests" } else { "run tests" }
 Write-Host "==> Building application ($testsMode)..."
-& .\mvnw.cmd @mavenArgs
-if ($LASTEXITCODE -ne 0) {
-    throw "Maven build failed with exit code $LASTEXITCODE."
+$mavenExitCode = Invoke-MavenWrapper -Arguments $mavenArgs
+if ($mavenExitCode -ne 0) {
+    throw "Maven build failed with exit code $mavenExitCode."
 }
 
 $jar = Get-ChildItem ".\target\*.jar" |
@@ -91,4 +114,5 @@ if (-not $jar) {
 }
 
 Write-Host "==> Build completed."
+Write-Host "==> Version: $currentVersion"
 Write-Host "==> JAR: $($jar.FullName)"

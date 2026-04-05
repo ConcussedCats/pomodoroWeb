@@ -1,17 +1,36 @@
 [CmdletBinding()]
 param(
     [string]$Branch = "",
-    [string]$PomPath = ".\pom.xml"
+    [string]$VersionFilePath = ".\version.json"
 )
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
-function Get-ProjectVersion {
-    param([Parameter(Mandatory = $true)][string]$PomPath)
+function Get-VersionFileVersion {
+    param([Parameter(Mandatory = $true)][string]$VersionFilePath)
 
-    [xml]$pom = Get-Content -LiteralPath $PomPath
-    return [string]$pom.project.version
+    $versionData = Get-Content -LiteralPath $VersionFilePath -Raw | ConvertFrom-Json
+    if (-not ($versionData.PSObject.Properties.Name -contains 'version')) {
+        throw "Version file '$VersionFilePath' must contain a 'version' property."
+    }
+
+    return [string]$versionData.version
+}
+
+function Set-VersionFileVersion {
+    param(
+        [Parameter(Mandatory = $true)][string]$VersionFilePath,
+        [Parameter(Mandatory = $true)][string]$Version
+    )
+
+    $versionData = [ordered]@{
+        version = $Version
+    }
+
+    $json = $versionData | ConvertTo-Json
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText((Resolve-Path -LiteralPath $VersionFilePath), $json + [Environment]::NewLine, $utf8NoBom)
 }
 
 function Get-EffectiveBranchName {
@@ -56,34 +75,15 @@ function Get-IncrementedVersion {
     return "$major.$minor.$patch"
 }
 
-function Set-ProjectVersion {
-    param(
-        [Parameter(Mandatory = $true)][string]$PomPath,
-        [Parameter(Mandatory = $true)][string]$Version
-    )
-
-    [xml]$pom = Get-Content -LiteralPath $PomPath
-    $pom.project.version = $Version
-    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-    $writer = New-Object System.IO.StreamWriter($PomPath, $false, $utf8NoBom)
-
-    try {
-        $pom.Save($writer)
-    }
-    finally {
-        $writer.Dispose()
-    }
-}
-
-if (-not (Test-Path -LiteralPath $PomPath)) {
-    throw "pom.xml was not found: $PomPath"
+if (-not (Test-Path -LiteralPath $VersionFilePath)) {
+    throw "version.json was not found: $VersionFilePath"
 }
 
 $Branch = Get-EffectiveBranchName -ProvidedBranch $Branch
-$currentVersion = Get-ProjectVersion -PomPath $PomPath
+$currentVersion = Get-VersionFileVersion -VersionFilePath $VersionFilePath
 $nextVersion = Get-IncrementedVersion -Version $currentVersion -Branch $Branch
 
 Write-Host "==> Branch: $Branch"
 Write-Host "==> Bumping project version from $currentVersion to $nextVersion..."
-Set-ProjectVersion -PomPath $PomPath -Version $nextVersion
+Set-VersionFileVersion -VersionFilePath $VersionFilePath -Version $nextVersion
 Write-Host "==> Version: $nextVersion"
