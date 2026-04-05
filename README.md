@@ -1,4 +1,4 @@
-# Pomodoro Web
+# Overview of the Project
 
 A web-based Pomodoro timer that runs in your browser tab to help you stay focused and productive.
 
