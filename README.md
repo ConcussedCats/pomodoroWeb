@@ -1,6 +1,6 @@
 # Pomodoro Productivity Web App
 
-## 📌 Overview
+## 📌 Project Overview
 
 This project is a web-based productivity application built around the Pomodoro technique.
 It helps users manage tasks, track focus sessions, and improve productivity.
