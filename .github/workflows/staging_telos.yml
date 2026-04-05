@@ -1,0 +1,72 @@
+name: Staging Publish Push Deploy
+
+on:
+  push:
+    branches:
+      - staging_telos
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish_push_img:
+    name: Publish Push Img
+    runs-on:
+      - self-hosted
+      - windows
+      - build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Publish build
+        shell: powershell
+        env:
+          PUBLISH_BRANCH: staging_telos
+        run: .\publish.ps1 -Branch $env:PUBLISH_BRANCH
+
+      - name: Commit bumped version
+        shell: powershell
+        run: |
+          [xml]$pom = Get-Content .\pom.xml
+          $version = $pom.project.version
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pom.xml
+          git commit -m "bump version to $version [skip ci]"
+          git push origin HEAD:refs/heads/staging_telos
+
+      - name: Build and push image
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        shell: powershell
+        env:
+          PUBLISH_BRANCH: staging_telos
+        run: .\CreatePushImg.ps1 -BranchName $env:PUBLISH_BRANCH -SkipDockerLogin
+
+  deploy_to_prod:
+    name: Deploy To Prod
+    runs-on:
+      - self-hosted
+      - windows
+      - host
+    needs: publish_push_img
+
+    steps:
+      - name: Docker Hub login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Deploy
+        shell: powershell
+        run: |
+          cd D:\SourceTree\Telos\docker
+          .\Pull-Deploy.Img.ps1 -SkipDockerLogin
