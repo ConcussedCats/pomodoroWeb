@@ -1,5 +1,3 @@
-# Pomodoro Productivity Web App
-
 ## 📌 Project Overview
 
 This project is a web-based productivity application built around the Pomodoro technique.
