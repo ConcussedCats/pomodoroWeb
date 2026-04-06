@@ -11,6 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class NoteDto {
     @NotBlank(message = "Note text cannot be empty")
-    @Size(max = 1200, message = "size the element must be lower or equal to 1200")
+    @Size(max = 1200, message = "Note text cannot be longer than 1200 characters")
+    @NotBlank(message = "Note text cannot be empty")
     private String noteText;
 }
