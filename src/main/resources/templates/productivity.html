@@ -73,12 +73,46 @@
                                 <input
                                     id="todoInput"
                                     class="settings-input productivity-input"
-                                    name="text"
+                                    name="title"
                                     type="text"
-                                    maxlength="160"
+                                    maxlength="25"
                                     placeholder="Add a task you want to track"
                                     autocomplete="off"
                                 >
+                            </div>
+                            <div class="productivity-field">
+                                <label class="settings-label" for="todoDescriptionInput">Description</label>
+                                <textarea
+                                    id="todoDescriptionInput"
+                                    class="settings-input productivity-input productivity-textarea productivity-textarea--compact"
+                                    name="description"
+                                    rows="3"
+                                    maxlength="1000"
+                                    placeholder="Add details if you need them"
+                                ></textarea>
+                            </div>
+                            <div class="productivity-field-row">
+                                <div class="productivity-field">
+                                    <label class="settings-label" for="todoPriorityInput">Priority</label>
+                                    <select
+                                        id="todoPriorityInput"
+                                        class="settings-input productivity-input"
+                                        name="priority"
+                                    >
+                                        <option value="LOW">Low</option>
+                                        <option value="MEDIUM">Medium</option>
+                                        <option value="HIGH">High</option>
+                                    </select>
+                                </div>
+                                <div class="productivity-field">
+                                    <label class="settings-label" for="todoDeadlineInput">Deadline</label>
+                                    <input
+                                        id="todoDeadlineInput"
+                                        class="settings-input productivity-input"
+                                        name="deadline"
+                                        type="datetime-local"
+                                    >
+                                </div>
                             </div>
                             <div class="productivity-form-actions">
                                 <button class="btn btn--primary productivity-submit" type="submit">Add task</button>
