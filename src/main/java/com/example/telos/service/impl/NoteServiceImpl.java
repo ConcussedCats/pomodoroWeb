@@ -75,7 +75,7 @@ public class NoteServiceImpl implements NoteService {
         User user = userService.findByEmailOrUsername(login);
         Note note = findById(id);
 
-        if (note.getUser().getUserId().equals(user.getUserId())) throw new EntityNotFoundException("Note not found with id: " + id);
+        if (!note.getUser().getUserId().equals(user.getUserId())) throw new EntityNotFoundException("Note not found with id: " + id);
 
         delete(note);
     }
