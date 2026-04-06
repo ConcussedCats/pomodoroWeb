@@ -57,13 +57,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/",
-                                "/login",
                                 "/productivity",
                                 "/about",
                                 "/helpus",
                                 "/css/**",
                                 "/js/**",
                                 "/assets/**",
+                                "/login",
                                 "/register"
                         ).permitAll()
                         .requestMatchers("/user/**", "/api/**").authenticated()
