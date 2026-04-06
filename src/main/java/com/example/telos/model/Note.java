@@ -17,7 +17,7 @@ public class Note {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "note_id", nullable = false)
-    private Long id;
+    private Long noteId;
 
 
     @ManyToOne
