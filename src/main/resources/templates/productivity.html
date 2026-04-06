@@ -27,7 +27,7 @@
                 <p class="productivity-guest-text">
                     You should log in to use this page.
                 </p>
-                <a class="btn btn--primary" th:href="@{/login}">Log in</a>
+                <a class="btn btn--primary productivity-guest-button" th:href="@{/login}">Log in</a>
             </section>
 
             <section sec:authorize="isAuthenticated()" class="productivity-surface" aria-label="Productivity tools">
