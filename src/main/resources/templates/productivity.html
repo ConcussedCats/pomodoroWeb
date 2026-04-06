@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -20,7 +20,15 @@
                 </p>
             </div>
 
-            <section class="productivity-surface" aria-label="Productivity tools">
+            <section sec:authorize="isAnonymous()" class="productivity-guest-card">
+                <h3 class="productivity-guest-title">Login required</h3>
+                <p class="productivity-guest-text">
+                    You should log in to use this page.
+                </p>
+                <a class="btn btn--primary" th:href="@{/login}">Log in</a>
+            </section>
+
+            <section sec:authorize="isAuthenticated()" class="productivity-surface" aria-label="Productivity tools">
                 <div class="productivity-tabs" role="tablist" aria-label="Productivity tabs">
                     <button
                         id="productivity-tab-todo"
