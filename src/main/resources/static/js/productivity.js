@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const STORAGE_KEY = "telos.productivity.v1";
     const DEFAULT_TAB = "todo";
     const ITEM_TYPES = ["todo", "notes"];
+    const API_ITEM_TYPES = ["notes"];
     const itemLabels = {
         todo: "task",
         notes: "note"
@@ -20,6 +21,8 @@ document.addEventListener("DOMContentLoaded", () => {
         hour: "2-digit",
         minute: "2-digit"
     });
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
     const tabButtons = Array.from(document.querySelectorAll("[data-tab-trigger]"));
     const panels = Array.from(document.querySelectorAll("[data-tab-panel]"));
@@ -61,6 +64,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return this.load()[type];
         },
         create(type, payload) {
+            if (type === "notes") {
+                throw new Error("Notes are stored on the server");
+            }
+
             const state = this.load();
             const now = new Date().toISOString();
             const nextItem = {
@@ -74,6 +81,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return this.save(state)[type];
         },
         update(type, itemId, changes) {
+            if (type === "notes") {
+                throw new Error("Notes are stored on the server");
+            }
+
             const state = this.load();
             state[type] = state[type].map(item => {
                 if (item.id !== itemId) return item;
@@ -88,6 +99,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return this.save(state)[type];
         },
         delete(type, itemId) {
+            if (type === "notes") {
+                throw new Error("Notes are stored on the server");
+            }
+
             const state = this.load();
             state[type] = state[type].filter(item => item.id !== itemId);
             return this.save(state)[type];
@@ -113,29 +128,114 @@ document.addEventListener("DOMContentLoaded", () => {
                     }))
                 : [];
 
-            safeState.notes = Array.isArray(rawState?.notes)
-                ? rawState.notes
-                    .filter(item => item && typeof item.id === "string" && typeof item.content === "string")
-                    .map(item => ({
-                        id: item.id,
-                        content: item.content,
-                        createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
-                        updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : new Date().toISOString()
-                    }))
-                : [];
-
             return safeState;
         }
     };
 
     const state = {
         activeTab: DEFAULT_TAB,
-        items: storageAdapter.load(),
+        items: {
+            ...storageAdapter.load(),
+            notes: []
+        },
         editingByType: {
             todo: null,
             notes: null
+        },
+        loadingByType: {
+            todo: false,
+            notes: false
         }
     };
+
+    function getRequestHeaders() {
+        return {
+            "Content-Type": "application/json",
+            ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {})
+        };
+    }
+
+    async function parseJsonSafe(response) {
+        const text = await response.text();
+        if (!text) return null;
+
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function getApiErrorMessage(data, fallbackMessage) {
+        return data?.message || fallbackMessage;
+    }
+
+    function mapNoteFromApi(note) {
+        return {
+            id: String(note.noteId),
+            content: note.noteText,
+            createdAt: typeof note.createdAt === "string" ? note.createdAt : new Date().toISOString(),
+            updatedAt: typeof note.updatedAt === "string"
+                ? note.updatedAt
+                : (typeof note.createdAt === "string" ? note.createdAt : new Date().toISOString())
+        };
+    }
+
+    async function fetchNotes() {
+        const response = await fetch("/api/productivity/notes", {
+            method: "GET",
+            headers: csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}
+        });
+        const data = await parseJsonSafe(response);
+
+        if (!response.ok) {
+            throw new Error(getApiErrorMessage(data, "Failed to load notes"));
+        }
+
+        return Array.isArray(data) ? data.map(mapNoteFromApi) : [];
+    }
+
+    async function createNote(payload) {
+        const response = await fetch("/api/productivity/notes", {
+            method: "POST",
+            headers: getRequestHeaders(),
+            body: JSON.stringify(payload)
+        });
+        const data = await parseJsonSafe(response);
+
+        if (!response.ok) {
+            throw new Error(getApiErrorMessage(data, "Failed to create note"));
+        }
+
+        return mapNoteFromApi(data);
+    }
+
+    async function updateNote(itemId, payload) {
+        const response = await fetch(`/api/productivity/notes/${itemId}`, {
+            method: "PATCH",
+            headers: getRequestHeaders(),
+            body: JSON.stringify(payload)
+        });
+        const data = await parseJsonSafe(response);
+
+        if (!response.ok) {
+            throw new Error(getApiErrorMessage(data, "Failed to update note"));
+        }
+
+        return mapNoteFromApi(data);
+    }
+
+    async function deleteNote(itemId) {
+        const response = await fetch(`/api/productivity/notes/${itemId}`, {
+            method: "DELETE",
+            headers: csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}
+        });
+
+        if (!response.ok) {
+            const data = await parseJsonSafe(response);
+            throw new Error(getApiErrorMessage(data, "Failed to delete note"));
+        }
+    }
 
     function createId() {
         if (window.crypto?.randomUUID) {
@@ -164,7 +264,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function syncStateFromStorage() {
-        state.items = storageAdapter.load();
+        state.items.todo = storageAdapter.load().todo;
     }
 
     function clearFormMessage(type) {
@@ -320,7 +420,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const emptyState = emptyStates[type];
         if (emptyState) {
-            emptyState.classList.toggle("hidden", items.length > 0);
+            const shouldHide = state.loadingByType[type] || items.length > 0;
+            emptyState.classList.toggle("hidden", shouldHide);
+
+            if (state.loadingByType[type]) {
+                emptyState.textContent = `Loading ${itemLabels[type]}s...`;
+            } else if (type === "todo") {
+                emptyState.textContent = "No tasks yet. Add the first one to build your list.";
+            } else {
+                emptyState.textContent = "No notes yet. Add one to keep context close to your work.";
+            }
         }
     }
 
@@ -333,7 +442,7 @@ document.addEventListener("DOMContentLoaded", () => {
         setActiveTab(state.activeTab);
     }
 
-    function handleAdd(type, form) {
+    async function handleAdd(type, form) {
         const input = form.querySelector(`[name="${inputNames[type]}"]`);
         const value = getTrimmedValue(type, form);
 
@@ -352,16 +461,26 @@ document.addEventListener("DOMContentLoaded", () => {
                 text: value,
                 completed: false
             });
-        } else {
-            storageAdapter.create("notes", {
-                content: value
-            });
+
+            syncStateFromStorage();
+            form.reset();
+            renderType(type);
+            focusPrimaryInput(type);
+            return;
         }
 
-        syncStateFromStorage();
-        form.reset();
-        renderType(type);
-        focusPrimaryInput(type);
+        try {
+            const createdNote = await createNote({
+                noteText: value
+            });
+            state.items.notes = [createdNote, ...state.items.notes];
+            form.reset();
+            renderType(type);
+            focusPrimaryInput(type);
+            showFormMessage(type, "Note was created successfully", false);
+        } catch (error) {
+            showFormMessage(type, error.message || "Failed to create note");
+        }
     }
 
     function beginEditing(type, itemId) {
@@ -380,7 +499,7 @@ document.addEventListener("DOMContentLoaded", () => {
         renderType(type);
     }
 
-    function saveEdit(itemElement) {
+    async function saveEdit(itemElement) {
         const type = itemElement.dataset.itemType;
         const itemId = itemElement.dataset.itemId;
         const editor = itemElement.querySelector(`[data-edit-field="${type}"]`);
@@ -398,13 +517,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (type === "todo") {
             storageAdapter.update("todo", itemId, { text: nextValue });
-        } else {
-            storageAdapter.update("notes", itemId, { content: nextValue });
+
+            syncStateFromStorage();
+            state.editingByType[type] = null;
+            renderType(type);
+            return;
         }
 
-        syncStateFromStorage();
-        state.editingByType[type] = null;
-        renderType(type);
+        try {
+            const updatedNote = await updateNote(itemId, { noteText: nextValue });
+            state.items.notes = state.items.notes.map(note => note.id === itemId ? updatedNote : note);
+            state.editingByType[type] = null;
+            renderType(type);
+            showFormMessage(type, "Note was updated successfully", false);
+        } catch (error) {
+            showFormMessage(type, error.message || "Failed to update note");
+        }
+    }
+
+    async function loadNotesIntoState() {
+        state.loadingByType.notes = true;
+        renderType("notes");
+
+        try {
+            state.items.notes = await fetchNotes();
+        } catch (error) {
+            state.items.notes = [];
+            showFormMessage("notes", error.message || "Failed to load notes");
+        } finally {
+            state.loadingByType.notes = false;
+            renderType("notes");
+        }
     }
 
     tabButtons.forEach(button => {
@@ -441,12 +584,28 @@ document.addEventListener("DOMContentLoaded", () => {
                     beginEditing(type, itemId);
                     break;
                 case "delete":
-                    storageAdapter.delete(type, itemId);
-                    syncStateFromStorage();
-                    if (state.editingByType[type] === itemId) {
-                        state.editingByType[type] = null;
+                    if (type === "todo") {
+                        storageAdapter.delete(type, itemId);
+                        syncStateFromStorage();
+                        if (state.editingByType[type] === itemId) {
+                            state.editingByType[type] = null;
+                        }
+                        renderType(type);
+                        break;
                     }
-                    renderType(type);
+
+                    deleteNote(itemId)
+                        .then(() => {
+                            state.items.notes = state.items.notes.filter(note => note.id !== itemId);
+                            if (state.editingByType[type] === itemId) {
+                                state.editingByType[type] = null;
+                            }
+                            renderType(type);
+                            showFormMessage(type, "Note was deleted successfully", false);
+                        })
+                        .catch(error => {
+                            showFormMessage(type, error.message || "Failed to delete note");
+                        });
                     break;
                 case "cancel-edit":
                     stopEditing(type);
@@ -500,8 +659,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.key !== STORAGE_KEY) return;
         syncStateFromStorage();
         renderType("todo");
-        renderType("notes");
     });
 
     render();
+    loadNotesIntoState();
 });
