@@ -26,5 +26,6 @@ public class ToDoDto {
 
     @NotNull(message = "Task priority is required")
     private Priority priority;
+
     private LocalDateTime deadline;
 }
