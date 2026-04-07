@@ -4,6 +4,8 @@ This file is the entrypoint for the split test-plan structure under `tests/`.
 
 The original monolithic page plan has been decomposed into page-level and shared-UI folders so each functional slice can later map cleanly to manual checks, automated specs, or implementation tasks.
 
+For the implementation order and automation strategy, see [AutomationRoadmap.md](AutomationRoadmap.md).
+
 ## How To Use This Structure
 
 - Start with the page or fragment you want to test.
@@ -102,6 +104,13 @@ The original monolithic page plan has been decomposed into page-level and shared
 - Numbered files like `01-...md`, `02-...md` define smaller scenarios by block, user story, or functionality.
 - Dynamic pages separate rendering from stateful behavior so future automation can map one file to one test suite concern.
 - Page folders may reference shared behavior, but shared docs remain the canonical source for repeated UI rules.
+
+## Automation Conventions
+
+- Prefer `WebMvc` for route/auth/contract checks.
+- Prefer browser automation for JS-driven UI behavior and cross-tab state.
+- Use the folder README as the place to declare automation priority, stable selectors, and first implementation slices.
+- Treat the split docs as backlog-ready inputs, not just narrative notes.
 
 ## Implementation Notes
 
