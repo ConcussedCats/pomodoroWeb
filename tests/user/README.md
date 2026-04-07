@@ -35,10 +35,31 @@
 - [Footer](../footer/README.md)
 - [Mini timer scripts](../mini-timer-scripts/README.md)
 
+## Automation Notes
+
+- Primary automation layers:
+  - `WebMvc` / integration for auth guards and API contracts
+  - `Playwright` for browser form behavior
+- Priority: `P0`
+- Stable hooks already available:
+  - `#username-form`
+  - `#password-form`
+  - `#username`
+  - `#oldPassword`
+  - `#newPassword`
+  - `#confirmNewPassword`
+  - `#username-message`
+  - `#password-message`
+- First automation slices to implement:
+  - auth guard on `/user`
+  - username happy path and conflict path
+  - password happy path and invalid current password path
+  - CSRF/session contract checks
+
 ## Plans
 
-- [01-page-shell-and-auth-guard.md](01-page-shell-and-auth-guard.md)
-- [02-username-form.md](02-username-form.md)
-- [03-password-form.md](03-password-form.md)
-- [04-session-api-feedback-and-csrf.md](04-session-api-feedback-and-csrf.md)
-- [05-jwt-api-parity-notes.md](05-jwt-api-parity-notes.md)
+- [01-page-shell-and-auth-guard.md](01-page-shell-and-auth-guard.md) — `WebMvc P0`
+- [02-username-form.md](02-username-form.md) — `Playwright` + `WebMvc API`
+- [03-password-form.md](03-password-form.md) — `Playwright` + `WebMvc API`
+- [04-session-api-feedback-and-csrf.md](04-session-api-feedback-and-csrf.md) — `WebMvc / integration P0`
+- [05-jwt-api-parity-notes.md](05-jwt-api-parity-notes.md) — `WebMvc JWT API P1`

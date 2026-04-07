@@ -19,8 +19,18 @@
 - recovery navigation
 - shared header/footer behavior on a custom error page
 
+## Automation Notes
+
+- Primary automation layer: `WebMvc` / integration
+- Secondary layer: `Playwright smoke`
+- Priority: `P1`
+- Good first checks:
+  - forbidden route renders custom 403 page
+  - recovery link points home
+  - no full mini-timer runtime is assumed
+
 ## Plans
 
-- [01-access-denied-content.md](01-access-denied-content.md)
-- [02-recovery-navigation.md](02-recovery-navigation.md)
-- [03-shared-header-footer-behavior.md](03-shared-header-footer-behavior.md)
+- [01-access-denied-content.md](01-access-denied-content.md) — `WebMvc / integration`
+- [02-recovery-navigation.md](02-recovery-navigation.md) — `Playwright smoke`
+- [03-shared-header-footer-behavior.md](03-shared-header-footer-behavior.md) — `Playwright`

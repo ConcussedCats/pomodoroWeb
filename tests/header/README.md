@@ -24,10 +24,26 @@
 - authenticated account menu
 - mini-timer slot rules
 
+## Automation Notes
+
+- Primary automation layer: `Playwright smoke`
+- Secondary layer: `WebMvc` only for page-level active-state assertions where cheaper
+- Priority: `P1`
+- Stable hooks already available:
+  - `#miniTimer`
+  - `#miniTimerMode`
+  - `#miniTimerTime`
+  - `#miniTimerStatus`
+  - `#profileEntry`
+- First automation slices to implement:
+  - active nav state on key pages
+  - anonymous vs authenticated header mode
+  - mini-timer slot presence on non-home pages
+
 ## Plans
 
-- [01-branding-and-home-link.md](01-branding-and-home-link.md)
-- [02-primary-navigation.md](02-primary-navigation.md)
-- [03-anonymous-auth-controls.md](03-anonymous-auth-controls.md)
-- [04-authenticated-account-menu.md](04-authenticated-account-menu.md)
-- [05-mini-timer-slot-rules.md](05-mini-timer-slot-rules.md)
+- [01-branding-and-home-link.md](01-branding-and-home-link.md) — `Playwright smoke`
+- [02-primary-navigation.md](02-primary-navigation.md) — `Playwright` + targeted `WebMvc`
+- [03-anonymous-auth-controls.md](03-anonymous-auth-controls.md) — `Playwright`
+- [04-authenticated-account-menu.md](04-authenticated-account-menu.md) — `Playwright` + `integration`
+- [05-mini-timer-slot-rules.md](05-mini-timer-slot-rules.md) — `Playwright`
