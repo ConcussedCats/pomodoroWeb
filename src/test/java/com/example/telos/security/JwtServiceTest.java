@@ -84,7 +84,7 @@ class JwtServiceTest {
                 .subject("user@test.com")
                 .issuedAt(new Date(pastTime - 1_000))
                 .expiration(new Date(pastTime))
-                .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(Base64.getDecoder().decode(VALID_SECRET)))
+                .signWith(buildKey(VALID_SECRET))
                 .compact();
 
         assertThrows(ExpiredJwtException.class, () -> jwtService.isTokenValid(token, userDetails));
@@ -111,9 +111,13 @@ class JwtServiceTest {
 
     private Claims parseClaims(String token, String secret) {
         return Jwts.parser()
-                .verifyWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret)))
+                .verifyWith(buildKey(secret))
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
+    }
+
+    private javax.crypto.SecretKey buildKey(String secret) {
+        return io.jsonwebtoken.security.Keys.hmacShaKeyFor(Base64.getDecoder().decode(secret));
     }
 }
