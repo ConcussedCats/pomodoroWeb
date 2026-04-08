@@ -5,6 +5,7 @@ This file is the entrypoint for the split test-plan structure under `tests/`.
 The original monolithic page plan has been decomposed into page-level and shared-UI folders so each functional slice can later map cleanly to manual checks, automated specs, or implementation tasks.
 
 For the implementation order and automation strategy, see [AutomationRoadmap.md](AutomationRoadmap.md).
+For the concrete execution backlog, see [AutomationExecutionPlan.md](AutomationExecutionPlan.md).
 
 ## How To Use This Structure
 

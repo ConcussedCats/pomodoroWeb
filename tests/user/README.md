@@ -59,6 +59,8 @@
 
 ## Executable Suites
 
+- [UserRestControllerTest.java](../../src/test/java/com/example/telos/api/UserRestControllerTest.java): session API contract coverage for username/password endpoints, including `401`, `403`, validation, conflict, and business-rule errors
+- [UserJwtControllerTest.java](../../src/test/java/com/example/telos/api/UserJwtControllerTest.java): JWT API contract coverage for username/password/time-settings endpoints, including bearer-auth success and failure paths
 - [user-profile-validation.test.mjs](../unit-js/user-profile-validation.test.mjs): section presence, username validation, password confirm logic, minimum length, valid submit path with mocked fetch
 - [06-validation-execution-results.md](06-validation-execution-results.md): executed frontend validation result
 

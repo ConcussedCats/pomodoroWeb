@@ -58,3 +58,4 @@ This folder captures browser-level user journeys that should later become execut
 
 - [login-remote.spec.js](login-remote.spec.js): live login smoke against `teclos.space`
 - [dev-deployment-smoke.spec.js](dev-deployment-smoke.spec.js): remote dev-deployment smoke for `/`, `/productivity`, `/login`
+- [home-timer.spec.js](home-timer.spec.js): remote browser flow for timer start/pause/resume/reset and reload recovery on `/`

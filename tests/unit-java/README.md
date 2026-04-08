@@ -29,3 +29,10 @@ This folder captures pure Java unit-level scenario coverage that should later be
 - [03-log-error-service.md](03-log-error-service.md)
 - [04-jwt-service.md](04-jwt-service.md)
 - [05-jwt-filter.md](05-jwt-filter.md)
+
+## Executable Suites
+
+- [UserServiceImplTest.java](../../src/test/java/com/example/telos/service/UserServiceImplTest.java): username trimming/conflict handling, password validation, password encoding
+- [UserTimeSettingsServiceImplTest.java](../../src/test/java/com/example/telos/service/UserTimeSettingsServiceImplTest.java): settings lookup, field updates, persistence handoff, null-user guards
+- [JwtServiceTest.java](../../src/test/java/com/example/telos/security/JwtServiceTest.java): token generation, claim extraction, expiry behavior, malformed-token handling
+- [JwtFilterTest.java](../../src/test/java/com/example/telos/security/JwtFilterTest.java): bearer header handling, security-context population, invalid-token short-circuit behavior

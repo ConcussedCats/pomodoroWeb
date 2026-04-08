@@ -2,6 +2,8 @@
 
 This document translates the written scenario coverage under `tests/` into an implementation order for future automation.
 
+For the concrete file-by-file execution backlog, see [AutomationExecutionPlan.md](AutomationExecutionPlan.md).
+
 ## Goals
 
 - convert the most critical documented scenarios into stable automated checks
