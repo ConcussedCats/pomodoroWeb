@@ -91,6 +91,10 @@ Recommendation:
 - decide whether browser automation will live in Playwright or another runner and commit the config to the repo
 - document DB reset strategy for mutable tests
 - keep using the split docs as the source of truth for test cases
+- implement the new technical planning folders first:
+  - `tests/unit-java`
+  - `tests/unit-js`
+  - `tests/e2e`
 
 ### Phase 1: P0 Backend Safety Net
 
@@ -108,6 +112,7 @@ Source docs to start from:
 - `tests/login`
 - `tests/user`
 - `tests/index/08-authenticated-settings-sync.md`
+- `tests/unit-java`
 
 ### Phase 2: P0 Browser Journeys
 
@@ -125,6 +130,7 @@ Source docs to start from:
 - `tests/index`
 - `tests/productivity`
 - `tests/user`
+- `tests/e2e`
 
 ### Phase 3: Shared UI And Error Surfaces
 
@@ -157,6 +163,17 @@ Source docs to start from:
 - `tests/about`
 - `tests/helpus`
 - `tests/error-generic`
+
+### Phase 5: Narrow JS Stabilization
+
+Automate only after the main browser and backend safety nets exist:
+
+- `timer-state.js` normalization and transition helpers
+- productivity storage normalization helpers if they are extracted
+
+Source docs to start from:
+
+- `tests/unit-js`
 
 ## Selector And Hook Strategy
 

@@ -98,6 +98,29 @@ For the implementation order and automation strategy, see [AutomationRoadmap.md]
   - [02-mini-timer-runtime-contract](mini-timer-scripts/02-mini-timer-runtime-contract.md)
   - [03-settings-sync-side-effects](mini-timer-scripts/03-settings-sync-side-effects.md)
 
+### Technical Layers
+
+- [Java unit plans](unit-java/README.md)
+  - [01-user-service](unit-java/01-user-service.md)
+  - [02-user-time-settings-service](unit-java/02-user-time-settings-service.md)
+  - [03-log-error-service](unit-java/03-log-error-service.md)
+  - [04-jwt-service](unit-java/04-jwt-service.md)
+  - [05-jwt-filter](unit-java/05-jwt-filter.md)
+- [JavaScript unit plans](unit-js/README.md)
+  - [01-timer-state-normalization-and-storage](unit-js/01-timer-state-normalization-and-storage.md)
+  - [02-timer-state-transitions-and-projections](unit-js/02-timer-state-transitions-and-projections.md)
+  - [03-productivity-storage-and-sanitization](unit-js/03-productivity-storage-and-sanitization.md)
+- [E2E plans](e2e/README.md)
+  - [01-auth-and-route-guards](e2e/01-auth-and-route-guards.md)
+  - [02-home-timer-core-flow](e2e/02-home-timer-core-flow.md)
+  - [03-home-settings-anonymous](e2e/03-home-settings-anonymous.md)
+  - [04-home-settings-authenticated](e2e/04-home-settings-authenticated.md)
+  - [05-user-profile-management](e2e/05-user-profile-management.md)
+  - [06-productivity-todo-flow](e2e/06-productivity-todo-flow.md)
+  - [07-productivity-notes-and-keyboard-flow](e2e/07-productivity-notes-and-keyboard-flow.md)
+  - [08-cross-tab-sync-and-mini-timer](e2e/08-cross-tab-sync-and-mini-timer.md)
+  - [09-static-and-error-pages-smoke](e2e/09-static-and-error-pages-smoke.md)
+
 ## Folder Conventions
 
 - Every folder contains a `README.md` with the source surface and file index.
