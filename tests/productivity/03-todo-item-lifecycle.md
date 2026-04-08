@@ -26,14 +26,16 @@ As a user, I can complete, edit, save, cancel, and delete an existing todo item.
 - new todo appears at the top of the list
 - checkbox toggles completed state
 - completed state updates visual styling
-- entering edit mode replaces static text with an input editor
-- saving edit updates text and timestamp data
+- entering edit mode replaces static text with editor fields for title, description, priority, deadline, and completion state
+- saving edit updates task data and keeps deadline rendering in sync
 - canceling edit restores non-editing state
 - deleting item removes it from the list
 
 ## Negative / Edge Scenarios
 
 - empty edited text is rejected
+- past edited deadline is rejected
+- `67` / `six seven` is rejected in title or description
 - editing one item should not put unrelated items into edit mode
 - deleting an item being edited should clear edit state safely
 - HTML in task text must be escaped, not executed
@@ -46,5 +48,5 @@ As a user, I can complete, edit, save, cancel, and delete an existing todo item.
 
 ## Data / Auth / Storage Notes
 
-- todo lifecycle mutates `telos.productivity.v1`
+- todo lifecycle uses `/api/productivity/todos/{id}`
 - toggling complete only applies to todo items, not notes

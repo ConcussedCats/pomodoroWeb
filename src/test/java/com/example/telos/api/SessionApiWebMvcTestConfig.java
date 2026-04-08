@@ -5,6 +5,14 @@ import com.example.telos.dto.UserPasswordResponseDto;
 import com.example.telos.dto.UserTimeSettingsDto;
 import com.example.telos.dto.UserTimeSettingsResponseDto;
 import com.example.telos.dto.UserUsernameResponseDto;
+import com.example.telos.dto.RegisterRequest;
+import com.example.telos.dto.NoteDto;
+import com.example.telos.dto.NoteResponseDto;
+import com.example.telos.dto.ToDoDto;
+import com.example.telos.dto.ToDoResponseDto;
+import com.example.telos.model.Priority;
+import com.example.telos.service.NoteService;
+import com.example.telos.service.ToDoService;
 import com.example.telos.model.User;
 import com.example.telos.model.UserTimeSettings;
 import com.example.telos.security.JwtService;
@@ -23,6 +31,7 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.util.Base64;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @TestConfiguration
@@ -93,6 +102,26 @@ class SessionApiWebMvcTestConfig {
         return stubUserTimeSettingsService;
     }
 
+    @Bean
+    StubToDoService stubToDoService() {
+        return new StubToDoService();
+    }
+
+    @Bean
+    ToDoService toDoService(StubToDoService stubToDoService) {
+        return stubToDoService;
+    }
+
+    @Bean
+    StubNoteService stubNoteService() {
+        return new StubNoteService();
+    }
+
+    @Bean
+    NoteService noteService(StubNoteService stubNoteService) {
+        return stubNoteService;
+    }
+
     static final class NoOpLogErrorService implements LogErrorService {
         @Override
         public void logWarn(HttpServletRequest request, HttpStatus httpStatus, Exception exception) {
@@ -130,6 +159,11 @@ class SessionApiWebMvcTestConfig {
 
         @Override
         public User findByUsername(String username) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public User register(RegisterRequest registerRequest) {
             throw new UnsupportedOperationException();
         }
 
@@ -237,6 +271,171 @@ class SessionApiWebMvcTestConfig {
                 throw findException;
             }
             return nextFindSettingsResponse;
+        }
+    }
+
+    static final class StubToDoService implements ToDoService {
+        List<ToDoResponseDto> nextToDos = List.of(defaultTodoResponse(null));
+        ToDoResponseDto nextCreateResponse = defaultTodoResponse("Task was created successfully");
+        ToDoResponseDto nextUpdateResponse = defaultTodoResponse("Task was updated successfully");
+        RuntimeException listException;
+        RuntimeException createException;
+        RuntimeException updateException;
+        RuntimeException deleteException;
+
+        void reset() {
+            nextToDos = List.of(defaultTodoResponse(null));
+            nextCreateResponse = defaultTodoResponse("Task was created successfully");
+            nextUpdateResponse = defaultTodoResponse("Task was updated successfully");
+            listException = null;
+            createException = null;
+            updateException = null;
+            deleteException = null;
+        }
+
+        private static ToDoResponseDto defaultTodoResponse(String message) {
+            ToDoResponseDto dto = new ToDoResponseDto();
+            dto.setTodoId(1L);
+            dto.setTitle("Default task");
+            dto.setDescription("Default description");
+            dto.setIsDone(false);
+            dto.setPriority(Priority.LOW);
+            dto.setDeadline(LocalDateTime.of(2099, 1, 1, 10, 0));
+            dto.setCreatedAt(LocalDateTime.of(2099, 1, 1, 9, 0));
+            dto.setMessage(message);
+            return dto;
+        }
+
+        @Override
+        public com.example.telos.model.ToDo findById(long id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public com.example.telos.model.ToDo create(com.example.telos.model.ToDo toDo) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public com.example.telos.model.ToDo update(com.example.telos.model.ToDo toDo) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<com.example.telos.model.ToDo> findAllByUser(User user) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<ToDoResponseDto> getUserToDos(String login) {
+            if (listException != null) {
+                throw listException;
+            }
+            return nextToDos;
+        }
+
+        @Override
+        public ToDoResponseDto createNewToDo(String login, ToDoDto toDoDto) {
+            if (createException != null) {
+                throw createException;
+            }
+            return nextCreateResponse;
+        }
+
+        @Override
+        public ToDoResponseDto updateToDo(String login, long todoId, ToDoDto toDoDto) {
+            if (updateException != null) {
+                throw updateException;
+            }
+            return nextUpdateResponse;
+        }
+
+        @Override
+        public void deleteToDo(String login, long id) {
+            if (deleteException != null) {
+                throw deleteException;
+            }
+        }
+
+        @Override
+        public void delete(com.example.telos.model.ToDo toDo) {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    static final class StubNoteService implements NoteService {
+        List<NoteResponseDto> nextNotes = List.of(new NoteResponseDto(1L, "Default note", null));
+        NoteResponseDto nextCreateResponse = new NoteResponseDto(2L, "Created note", "Note was created successfully");
+        NoteResponseDto nextUpdateResponse = new NoteResponseDto(2L, "Updated note", "Note was updated successfully");
+        RuntimeException listException;
+        RuntimeException createException;
+        RuntimeException updateException;
+        RuntimeException deleteException;
+
+        void reset() {
+            nextNotes = List.of(new NoteResponseDto(1L, "Default note", null));
+            nextCreateResponse = new NoteResponseDto(2L, "Created note", "Note was created successfully");
+            nextUpdateResponse = new NoteResponseDto(2L, "Updated note", "Note was updated successfully");
+            listException = null;
+            createException = null;
+            updateException = null;
+            deleteException = null;
+        }
+
+        @Override
+        public com.example.telos.model.Note findById(long id) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public com.example.telos.model.Note create(com.example.telos.model.Note note) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public com.example.telos.model.Note update(com.example.telos.model.Note note) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<com.example.telos.model.Note> findAllByUser(User user) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public List<NoteResponseDto> getUserNotes(String login) {
+            if (listException != null) {
+                throw listException;
+            }
+            return nextNotes;
+        }
+
+        @Override
+        public NoteResponseDto updateNote(String login, long noteId, NoteDto noteDto) {
+            if (updateException != null) {
+                throw updateException;
+            }
+            return nextUpdateResponse;
+        }
+
+        @Override
+        public NoteResponseDto createNewNote(String login, NoteDto noteDto) {
+            if (createException != null) {
+                throw createException;
+            }
+            return nextCreateResponse;
+        }
+
+        @Override
+        public void deleteNote(String login, long id) {
+            if (deleteException != null) {
+                throw deleteException;
+            }
+        }
+
+        @Override
+        public void delete(com.example.telos.model.Note note) {
+            throw new UnsupportedOperationException();
         }
     }
 }

@@ -1,8 +1,8 @@
-# Local Storage And Cross Tab Sync
+# API Hydration And Load Failure Handling
 
 ## Purpose
 
-Validate persistence, normalization, and cross-tab synchronization for the productivity page.
+Validate initial API hydration and safe fallback behavior when productivity data cannot be loaded.
 
 ## Source Surface
 
@@ -10,33 +10,34 @@ Validate persistence, normalization, and cross-tab synchronization for the produ
 
 ## User Story / Functional Slice
 
-As a user, I can keep tasks and notes persisted in the browser and see updates reflected in another open tab.
+As a user, I can open the productivity page and either see current todos/notes from the backend or a safe empty state with readable feedback if the API fails.
 
 ## Dependencies
 
-- local storage key `telos.productivity.v1`
-- `window.addEventListener("storage", ...)`
-- storage adapter load/save/normalize behavior
+- `GET /api/productivity/todos`
+- `GET /api/productivity/notes`
+- list renderers and empty-state handling in `productivity.js`
 
 ## Happy Path Scenarios
 
-- tasks and notes survive page reload
-- valid storage is normalized and rendered correctly
-- updates in one tab trigger list refresh in another tab
-- empty state is rebuilt correctly from stored data
+- tasks and notes are loaded from the backend on page init
+- valid API payloads are mapped into rendered todo and note items
+- empty states hide when API returns existing items
+- guest/authenticated split keeps the tabbed workspace hidden from anonymous users
 
 ## Negative / Edge Scenarios
 
-- corrupted JSON falls back to empty safe state
-- missing arrays or malformed items are filtered out during normalization
-- cross-tab sync must not duplicate items or create stale editing state
+- todo load failure falls back to an empty safe state
+- note load failure falls back to an empty safe state
+- backend error message is surfaced in the correct form message container
+- partial API data must not crash the page shell
 
 ## Accessibility / UI States
 
-- storage-driven rerender should preserve understandable empty/non-empty states
-- content should remain readable after sync updates
+- API-driven rerender preserves understandable empty/non-empty states
+- content remains readable after initial hydration or error fallback
 
 ## Data / Auth / Storage Notes
 
-- page is fully local-storage based in the current implementation
-- backend tables for notes/todos exist but are not part of this page’s current runtime
+- page is API-backed in the current implementation
+- authenticated session and CSRF meta tags are required for mutate flows

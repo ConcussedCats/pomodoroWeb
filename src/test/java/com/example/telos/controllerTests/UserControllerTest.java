@@ -4,6 +4,7 @@ import com.example.telos.controller.page.UserController;
 import com.example.telos.dto.UserPasswordDto;
 import com.example.telos.dto.UserPasswordResponseDto;
 import com.example.telos.dto.UserUsernameResponseDto;
+import com.example.telos.dto.RegisterRequest;
 import com.example.telos.model.User;
 import com.example.telos.service.UserService;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,11 @@ public class UserControllerTest {
         @Override
         public User findByUsername(String username) {
             return buildUser("user@test.com", username);
+        }
+
+        @Override
+        public User register(RegisterRequest registerRequest) {
+            return buildUser(registerRequest.getEmail(), registerRequest.getUsername());
         }
 
         @Override

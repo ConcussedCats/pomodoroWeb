@@ -31,10 +31,10 @@ This folder captures JS unit-level scenarios that should later be automated outs
 - [user-profile-validation.test.mjs](user-profile-validation.test.mjs): profile page section presence, username/password frontend validation, confirm-password logic
 - [settings-validation.test.mjs](settings-validation.test.mjs): timer settings numeric/type/range validation, error messages, correction flow, invalid-save blocking
 - [productivity-tabs.test.mjs](productivity-tabs.test.mjs): productivity tab presence, active-state switching, panel visibility, no-route-change behavior
-- [productivity-interactions.test.mjs](productivity-interactions.test.mjs): todo/note create-edit-delete flows, empty states, invalid states, keyboard save behavior, anti-67 guardrails
-- [productivity-storage.test.mjs](productivity-storage.test.mjs): productivity storage normalization, corrupted storage fallback, cross-tab sync
+- [productivity-interactions.test.mjs](productivity-interactions.test.mjs): todo/note create-edit-delete flows, deadline validation, invalid states, keyboard save behavior, anti-67 guardrails
+- [productivity-api.test.mjs](productivity-api.test.mjs): API hydration, load-failure fallback, and user-visible error handling for the productivity page
 - [dom-test-utils.mjs](dom-test-utils.mjs): shared fake DOM/runtime harness for frontend validation scripts
-- [productivity.test-utils.mjs](productivity.test-utils.mjs): shared fake DOM/runtime harness for `productivity.js`
+- [productivity.test-utils.mjs](productivity.test-utils.mjs): shared fake DOM/runtime harness for API-backed `productivity.js`
 - [timer-state.test-utils.mjs](timer-state.test-utils.mjs): shared isolated runtime helpers for loading `timer-state.js` without UI dependencies
 
 ## Negative-Test Notes

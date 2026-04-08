@@ -3,8 +3,8 @@ import test from "node:test";
 
 import { bootstrapProductivityRuntime } from "./productivity.test-utils.mjs";
 
-test("productivity page renders the available tabs and keeps todo active by default", () => {
-    const runtime = bootstrapProductivityRuntime();
+test("productivity page renders the available tabs and keeps todo active by default", async () => {
+    const runtime = await bootstrapProductivityRuntime();
 
     assert.ok(runtime.tabs.todo);
     assert.ok(runtime.tabs.notes);
@@ -20,8 +20,8 @@ test("productivity page renders the available tabs and keeps todo active by defa
     assert.equal(runtime.panels.notes.getAttribute("aria-hidden"), "true");
 });
 
-test("switching tabs updates active state and shows the matching panel without route navigation", () => {
-    const runtime = bootstrapProductivityRuntime();
+test("switching tabs updates active state and shows the matching panel without route navigation", async () => {
+    const runtime = await bootstrapProductivityRuntime();
     const originalPath = runtime.window.location.pathname;
 
     runtime.tabs.notes.dispatchEvent({
@@ -43,8 +43,8 @@ test("switching tabs updates active state and shows the matching panel without r
     assert.equal(runtime.panels.todo.getAttribute("aria-hidden"), "true");
 });
 
-test("switching back to todo restores the original active state and keeps the page shell intact", () => {
-    const runtime = bootstrapProductivityRuntime();
+test("switching back to todo restores the original active state and keeps the page shell intact", async () => {
+    const runtime = await bootstrapProductivityRuntime();
 
     runtime.tabs.notes.dispatchEvent({
         type: "click",

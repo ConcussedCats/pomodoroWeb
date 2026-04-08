@@ -17,20 +17,27 @@ As a user, I can add a task to the todo list and see a meaningful empty state wh
 
 - todo form with `data-entry-form="todo"`
 - input `todoInput`
+- textarea `todoDescriptionInput`
+- select `todoPriorityInput`
+- input `todoDeadlineInput`
 - list `data-item-list="todo"`
 - empty state `data-empty-state="todo"`
+- `POST /api/productivity/todos`
 
 ## Happy Path Scenarios
 
-- todo input renders with maxlength `160`
+- todo input renders with maxlength `25`
 - empty todo list shows the empty-state message initially
 - valid task submission adds a new todo item
 - empty-state message hides after the first successful add
 - form resets after successful add
+- valid `priority` and future `deadline` values are accepted
 
 ## Negative / Edge Scenarios
 
 - blank or whitespace-only input is rejected
+- past deadline is rejected before submit
+- `67` / `six seven` input is rejected in task fields
 - rejected input marks the field invalid
 - success and error message areas must not leak note-form state into todo form
 
@@ -42,5 +49,5 @@ As a user, I can add a task to the todo list and see a meaningful empty state wh
 
 ## Data / Auth / Storage Notes
 
-- creation writes into `telos.productivity.v1`
-- new todo items are stored with `id`, `text`, `completed`, `createdAt`, `updatedAt`
+- creation goes through `/api/productivity/todos`
+- todo payload includes `title`, `description`, `priority`, `deadline`, and `isDone`

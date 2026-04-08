@@ -19,6 +19,7 @@ As a user, I can add a note with longer freeform text and see a meaningful empty
 - textarea `noteInput`
 - list `data-item-list="notes"`
 - empty state `data-empty-state="notes"`
+- `POST /api/productivity/notes`
 
 ## Happy Path Scenarios
 
@@ -30,6 +31,7 @@ As a user, I can add a note with longer freeform text and see a meaningful empty
 ## Negative / Edge Scenarios
 
 - blank or whitespace-only note input is rejected
+- `67` / `six seven` note input is rejected
 - rejected note marks textarea invalid
 - todo form and note form messages remain isolated
 
@@ -41,5 +43,5 @@ As a user, I can add a note with longer freeform text and see a meaningful empty
 
 ## Data / Auth / Storage Notes
 
-- creation writes note records to `telos.productivity.v1`
-- note records store `id`, `content`, `createdAt`, `updatedAt`
+- creation goes through `/api/productivity/notes`
+- note records are created from `noteText` payloads and mapped back into rendered notes
