@@ -72,15 +72,20 @@ class JwtServiceTest {
     }
 
     @Test
-    void shouldThrowForExpiredTokenValidation() throws InterruptedException {
-        JwtService jwtService = new JwtService(VALID_SECRET, 1);
+    void shouldThrowForExpiredTokenValidation() {
+        JwtService jwtService = new JwtService(VALID_SECRET, 3_600_000);
         UserDetails userDetails = User.withUsername("user@test.com")
                 .password("ignored")
                 .authorities("ROLE_USER")
                 .build();
 
-        String token = jwtService.generateToken("user@test.com");
-        Thread.sleep(20);
+        long pastTime = System.currentTimeMillis() - 10_000;
+        String token = Jwts.builder()
+                .subject("user@test.com")
+                .issuedAt(new Date(pastTime - 1_000))
+                .expiration(new Date(pastTime))
+                .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(Base64.getDecoder().decode(VALID_SECRET)))
+                .compact();
 
         assertThrows(ExpiredJwtException.class, () -> jwtService.isTokenValid(token, userDetails));
     }

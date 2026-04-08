@@ -132,7 +132,8 @@ document.addEventListener("DOMContentLoaded", () => {
             clearMessage(usernameMessage);
 
             if (!validateUsername()) {
-                showMessage(usernameMessage, "Username cannot be empty", false);
+                const validationMessage = usernameError?.textContent?.trim() || "Username cannot be empty";
+                showMessage(usernameMessage, validationMessage, false);
                 return;
             }
 
