@@ -11,6 +11,7 @@ import com.example.telos.model.UserTimeSettings;
 import com.example.telos.repository.UserRepository;
 import com.example.telos.repository.UserTimeSettingsRepository;
 import com.example.telos.service.UserService;
+import com.example.telos.validation.Forbidden67Policy;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -120,6 +121,9 @@ public class UserServiceImpl implements UserService {
         if (username == null || username.isBlank())
             throw new NullEntityReferenceException("Username cannot be empty");
 
+        if (Forbidden67Policy.containsForbiddenToken(username))
+            throw new IllegalArgumentException(Forbidden67Policy.DEFAULT_MESSAGE);
+
         Optional<User> checkUser = userRepository.findByUsername(username.trim());
         User user = findByEmailOrUsername(login);
 
@@ -146,6 +150,9 @@ public class UserServiceImpl implements UserService {
 
         if (!userPasswordDto.getNewPassword().equals(userPasswordDto.getConfirmNewPassword()))
             throw new IllegalArgumentException("New password and confirm password don't match");
+
+        if (userPasswordDto.getNewPassword().length() < 8)
+            throw new IllegalArgumentException("New password must be at least 8 characters");
 
         User user = findByEmailOrUsername(login);
 

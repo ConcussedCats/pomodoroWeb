@@ -99,17 +99,44 @@ function showSettingsMessage(message, isError = true) {
 function validateSettingsDraft() {
     clearValidationState();
 
+    const rawDraft = {
+        pomodoro: String(pomodoroInput.value ?? "").trim(),
+        shortBreak: String(shortBreakInput.value ?? "").trim(),
+        longBreak: String(longBreakInput.value ?? "").trim(),
+        focusCycles: String(focusCyclesInput.value ?? "").trim()
+    };
+
     const draft = {
-        pomodoro: Number(pomodoroInput.value),
-        shortBreak: Number(shortBreakInput.value),
-        longBreak: Number(longBreakInput.value),
+        pomodoro: Number(rawDraft.pomodoro),
+        shortBreak: Number(rawDraft.shortBreak),
+        longBreak: Number(rawDraft.longBreak),
         soundEnabled: soundEnabledInput.checked,
-        focusCycles: Number(focusCyclesInput.value)
+        focusCycles: Number(rawDraft.focusCycles)
     };
 
     for (const { input, key, label, min, max } of fieldConfig) {
+        const rawValue = rawDraft[key];
         const value = draft[key];
-        if (!Number.isInteger(value) || value < min || value > max) {
+
+        if (!rawValue) {
+            showValidationError(`${label} is required.`, [input]);
+            input.focus();
+            return null;
+        }
+
+        if (Number.isNaN(value)) {
+            showValidationError(`${label} must be a number.`, [input]);
+            input.focus();
+            return null;
+        }
+
+        if (!Number.isInteger(value)) {
+            showValidationError(`${label} must be a whole number.`, [input]);
+            input.focus();
+            return null;
+        }
+
+        if (value < min || value > max) {
             showValidationError(`${label} must be between ${min} and ${max}.`, [input]);
             input.focus();
             return null;

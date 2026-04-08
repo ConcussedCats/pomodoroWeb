@@ -29,12 +29,14 @@ As a user, I can open the Productivity page, understand its purpose, and switch 
 - todo tab is active by default
 - notes tab is inactive by default
 - clicking each tab updates active styles and visible panel
+- current implementation exposes two tabs only: `To-do` and `Notes`
 
 ## Negative / Edge Scenarios
 
 - both panels must not be simultaneously active by default
 - both tabs must not show `aria-selected="true"` at the same time
 - missing tab-to-panel mapping is a regression
+- a `Reminders` tab is not present in the current template and should be treated as out of scope until implemented
 
 ## Accessibility / UI States
 

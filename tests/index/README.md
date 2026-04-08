@@ -75,3 +75,9 @@
 - [06-settings-panel-fields.md](06-settings-panel-fields.md) — `Playwright`
 - [07-settings-save-cancel-validation.md](07-settings-save-cancel-validation.md) — `Playwright P0`
 - [08-authenticated-settings-sync.md](08-authenticated-settings-sync.md) — `WebMvc API` + `Playwright P0`
+
+## Executable Suites
+
+- [UserTimeSettingsRestControllerTest.java](../../src/test/java/com/example/telos/api/UserTimeSettingsRestControllerTest.java): session API contract coverage for timer settings `GET/PATCH`, including `401`, `403`, validation, and malformed body handling
+- [UserJwtControllerTest.java](../../src/test/java/com/example/telos/api/UserJwtControllerTest.java): JWT API contract coverage for timer settings `GET/PATCH` with bearer auth and invalid-token handling
+- [../e2e/home-timer.spec.js](../e2e/home-timer.spec.js): browser flow for timer start/pause/resume/reset and reload recovery on the home page
