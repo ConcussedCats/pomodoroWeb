@@ -44,6 +44,8 @@
 
 - [login-validation.test.mjs](../unit-js/login-validation.test.mjs): required fields, disabled submit state, client-side error state
 - [05-validation-execution-results.md](05-validation-execution-results.md): executed frontend validation result
+- [../e2e/login-remote.spec.js](../e2e/login-remote.spec.js): live `teclos.space` smoke for login form rendering, invalid submit, protected-route redirect, optional successful login
+- [06-remote-smoke-execution-results.md](06-remote-smoke-execution-results.md): executed remote login smoke result
 
 ## Plans
 

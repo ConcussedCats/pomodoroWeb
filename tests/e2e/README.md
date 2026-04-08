@@ -32,6 +32,14 @@ This folder captures browser-level user journeys that should later become execut
   - `pomodoroTimerState`
   - `telos.productivity.v1`
 - Use one dedicated mutable test account for username/password mutation flows
+- Remote smoke target:
+  - `https://teclos.space`
+- Executable remote auth smoke:
+  - [login-remote.spec.js](login-remote.spec.js)
+  - safe-by-default coverage uses anonymous and invalid-credentials flows
+  - successful login is optional and enabled with:
+    - `E2E_LOGIN_USERNAME`
+    - `E2E_LOGIN_PASSWORD`
 
 ## Plans
 
