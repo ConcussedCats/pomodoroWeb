@@ -52,3 +52,9 @@ This folder captures browser-level user journeys that should later become execut
 - [07-productivity-notes-and-keyboard-flow.md](07-productivity-notes-and-keyboard-flow.md)
 - [08-cross-tab-sync-and-mini-timer.md](08-cross-tab-sync-and-mini-timer.md)
 - [09-static-and-error-pages-smoke.md](09-static-and-error-pages-smoke.md)
+- [10-dev-deployment-smoke.md](10-dev-deployment-smoke.md)
+
+## Executable Suites
+
+- [login-remote.spec.js](login-remote.spec.js): live login smoke against `teclos.space`
+- [dev-deployment-smoke.spec.js](dev-deployment-smoke.spec.js): remote dev-deployment smoke for `/`, `/productivity`, `/login`
