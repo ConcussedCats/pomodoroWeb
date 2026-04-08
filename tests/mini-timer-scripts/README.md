@@ -40,6 +40,14 @@
   - storage-driven updates
   - authenticated sync side effects
 
+## Executable Coverage
+
+- [mini-timer.test.mjs](../unit-js/mini-timer.test.mjs) now validates:
+  - persisted running state hydration
+  - mode/time/status mirroring after `timer:state-updated`
+  - storage-driven updates without reload
+  - state continuity across a new page bootstrap with shared storage
+
 ## Plans
 
 - [01-script-injection-order.md](01-script-injection-order.md) — `Playwright smoke`

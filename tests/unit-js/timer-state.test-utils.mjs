@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 
-function createLocalStorage() {
-    const store = new Map();
+export function createLocalStorage(initialEntries = {}) {
+    const store = new Map(Object.entries(initialEntries));
 
     return {
         getItem(key) {
@@ -17,6 +17,9 @@ function createLocalStorage() {
         },
         clear() {
             store.clear();
+        },
+        snapshot() {
+            return Object.fromEntries(store.entries());
         }
     };
 }

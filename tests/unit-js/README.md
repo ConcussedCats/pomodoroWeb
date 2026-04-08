@@ -26,4 +26,5 @@ This folder captures JS unit-level scenarios that should later be automated outs
 
 - [timer-state.test.mjs](timer-state.test.mjs): pure timer state-machine logic, mode switching, transitions, counters, projections
 - [timer-persistence.test.mjs](timer-persistence.test.mjs): settings storage, timer serialization, reload recovery, timestamp-based hydration
+- [mini-timer.test.mjs](mini-timer.test.mjs): mini timer hydration, state mirroring, storage-driven sync, cross-page recovery
 - [timer-state.test-utils.mjs](timer-state.test-utils.mjs): shared isolated runtime helpers for loading `timer-state.js` without UI dependencies
