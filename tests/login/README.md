@@ -13,7 +13,8 @@
 - Session auth entrypoint: `POST /login`
 - Security redirect target: `/user`
 - CSRF hidden form field
-- No page-owned JavaScript file
+- Page script:
+  - [login-validation.js](../../src/main/resources/static/js/login-validation.js)
 
 ## Covered Blocks
 
@@ -21,6 +22,7 @@
 - login form fields and CSRF
 - successful login and redirect
 - error states for invalid credentials
+- frontend validation execution results
 
 ## Automation Notes
 
@@ -36,6 +38,12 @@
   - GET `/login` smoke
   - valid login redirect to `/user`
   - invalid credentials stay in login flow with error message
+  - frontend required-field validation without auth integration
+
+## Executable Suites
+
+- [login-validation.test.mjs](../unit-js/login-validation.test.mjs): required fields, disabled submit state, client-side error state
+- [05-validation-execution-results.md](05-validation-execution-results.md): executed frontend validation result
 
 ## Plans
 
@@ -43,3 +51,4 @@
 - [02-login-form-fields-and-csrf.md](02-login-form-fields-and-csrf.md) — `WebMvc`
 - [03-login-success-and-redirect.md](03-login-success-and-redirect.md) — `integration` + `Playwright P0`
 - [04-login-error-and-invalid-credentials.md](04-login-error-and-invalid-credentials.md) — `integration` + `Playwright P0`
+- [05-validation-execution-results.md](05-validation-execution-results.md) — executed JS frontend suite
