@@ -29,9 +29,15 @@ This folder captures JS unit-level scenarios that should later be automated outs
 - [mini-timer.test.mjs](mini-timer.test.mjs): mini timer hydration, state mirroring, storage-driven sync, cross-page recovery
 - [login-validation.test.mjs](login-validation.test.mjs): login form required-field validation, disabled submit state, client-side error feedback
 - [user-profile-validation.test.mjs](user-profile-validation.test.mjs): profile page section presence, username/password frontend validation, confirm-password logic
+- [settings-validation.test.mjs](settings-validation.test.mjs): timer settings numeric/type/range validation, error messages, correction flow, invalid-save blocking
 - [productivity-tabs.test.mjs](productivity-tabs.test.mjs): productivity tab presence, active-state switching, panel visibility, no-route-change behavior
-- [productivity-interactions.test.mjs](productivity-interactions.test.mjs): todo/note create-edit-delete flows, empty states, invalid states, keyboard save behavior
+- [productivity-interactions.test.mjs](productivity-interactions.test.mjs): todo/note create-edit-delete flows, empty states, invalid states, keyboard save behavior, anti-67 guardrails
 - [productivity-storage.test.mjs](productivity-storage.test.mjs): productivity storage normalization, corrupted storage fallback, cross-tab sync
 - [dom-test-utils.mjs](dom-test-utils.mjs): shared fake DOM/runtime harness for frontend validation scripts
 - [productivity.test-utils.mjs](productivity.test-utils.mjs): shared fake DOM/runtime harness for `productivity.js`
 - [timer-state.test-utils.mjs](timer-state.test-utils.mjs): shared isolated runtime helpers for loading `timer-state.js` without UI dependencies
+
+## Negative-Test Notes
+
+- JS negative tests use inline labels like `[ui-negative]`.
+- See [NegativeTestLanes.md](../NegativeTestLanes.md) for the current lane split and run commands.

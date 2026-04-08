@@ -59,3 +59,10 @@ This folder captures browser-level user journeys that should later become execut
 - [login-remote.spec.js](login-remote.spec.js): live login smoke against `teclos.space`
 - [dev-deployment-smoke.spec.js](dev-deployment-smoke.spec.js): remote dev-deployment smoke for `/`, `/productivity`, `/login`
 - [home-timer.spec.js](home-timer.spec.js): remote browser flow for timer start/pause/resume/reset and reload recovery on `/`
+- [negative-browser-flows.spec.js](negative-browser-flows.spec.js): browser-visible negative validation for home settings, login identifier blocking, and productivity forbidden-input handling
+
+## Negative-Test Notes
+
+- Browser negative tests use inline tags like `@ui-negative`.
+- The current negative browser spec intentionally skips on [teclos.space](https://teclos.space) when the deployed assets are known to lag behind the current branch.
+- See [NegativeTestLanes.md](../NegativeTestLanes.md) for lane separation and commands.

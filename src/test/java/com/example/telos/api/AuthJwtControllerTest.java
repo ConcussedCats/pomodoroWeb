@@ -8,6 +8,7 @@ import com.example.telos.security.JwtService;
 import com.example.telos.security.RestAccessDeniedHandler;
 import com.example.telos.security.RestAuthenticationEntryPoint;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import java.util.Map;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         JwtFilter.class,
         JwtApiWebMvcTestConfig.class
 })
+@Tag("contract")
 class AuthJwtControllerTest {
 
     @Autowired
@@ -99,5 +102,59 @@ class AuthJwtControllerTest {
                 .andExpect(jsonPath("$.path").value("/api/jwt/auth/login"))
                 .andExpect(jsonPath("$.method").value("POST"))
                 .andExpect(jsonPath("$.errorCode").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    @Tag("negative")
+    void shouldRejectBlankJwtLoginFieldValues() throws Exception {
+        mockMvc.perform(post("/api/jwt/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "login": "   ",
+                                  "password": "test-password"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("login cannot be empty"));
+    }
+
+    @Test
+    @Tag("negative")
+    void shouldRejectForbidden67JwtLoginIdentifier() throws Exception {
+        mockMvc.perform(post("/api/jwt/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "login": "six seven",
+                                  "password": "test-password"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("67 and six seven are not allowed here"));
+    }
+
+    @Test
+    @Tag("negative")
+    void shouldRejectMalformedJwtLoginBody() throws Exception {
+        mockMvc.perform(post("/api/jwt/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "login":
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("MALFORMED_BODY"));
+    }
+
+    @Test
+    @Tag("negative")
+    void shouldRejectUnsupportedMethodForJwtLoginEndpoint() throws Exception {
+        mockMvc.perform(patch("/api/jwt/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isMethodNotAllowed());
     }
 }

@@ -4,8 +4,10 @@ import com.example.telos.controller.api.session.UserTimeSettingsRestController;
 import com.example.telos.exception.RestExceptionHandler;
 import com.example.telos.security.RestAccessDeniedHandler;
 import com.example.telos.security.RestAuthenticationEntryPoint;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
@@ -16,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         RestAccessDeniedHandler.class,
         SessionApiWebMvcTestConfig.class
 })
+@Tag("contract")
 class UserTimeSettingsRestControllerTest {
 
     @Autowired
@@ -153,5 +157,75 @@ class UserTimeSettingsRestControllerTest {
                 .andExpect(jsonPath("$.path").value("/api/user/time-settings"))
                 .andExpect(jsonPath("$.method").value("PATCH"))
                 .andExpect(jsonPath("$.errorCode").value("MALFORMED_BODY"));
+    }
+
+    @Test
+    @Tag("negative")
+    @WithMockUser(username = "user@test.com")
+    void shouldRejectNonNumericTimeSettingsValue() throws Exception {
+        mockMvc.perform(patch("/api/user/time-settings")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "pomodoroMinutes": "abc",
+                                  "shortBreakMinutes": 7,
+                                  "longBreakMinutes": 20,
+                                  "pomoCycles": 3,
+                                  "soundsEnabled": false
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("MALFORMED_BODY"));
+    }
+
+    @Test
+    @Tag("negative")
+    @WithMockUser(username = "user@test.com")
+    void shouldCurrentlyCoerceDecimalTimeSettingsValueInsteadOfRejectingIt() throws Exception {
+        mockMvc.perform(patch("/api/user/time-settings")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "pomodoroMinutes": 25.5,
+                                  "shortBreakMinutes": 7,
+                                  "longBreakMinutes": 20,
+                                  "pomoCycles": 3,
+                                  "soundsEnabled": false
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Settings updated"));
+    }
+
+    @Test
+    @Tag("negative")
+    @Tag("known-gap")
+    @EnabledIfSystemProperty(named = "runKnownGaps", matches = "true")
+    @WithMockUser(username = "user@test.com")
+    void shouldRejectDecimalTimeSettingsValueWhenStrictIntegerValidationIsEnabled() throws Exception {
+        mockMvc.perform(patch("/api/user/time-settings")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "pomodoroMinutes": 25.5,
+                                  "shortBreakMinutes": 7,
+                                  "longBreakMinutes": 20,
+                                  "pomoCycles": 3,
+                                  "soundsEnabled": false
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Tag("negative")
+    @WithMockUser(username = "user@test.com")
+    void shouldRejectUnsupportedMethodForTimeSettingsEndpoint() throws Exception {
+        mockMvc.perform(post("/api/user/time-settings")
+                        .with(csrf()))
+                .andExpect(status().isMethodNotAllowed());
     }
 }

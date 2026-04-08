@@ -6,6 +6,7 @@ The original monolithic page plan has been decomposed into page-level and shared
 
 For the implementation order and automation strategy, see [AutomationRoadmap.md](AutomationRoadmap.md).
 For the concrete execution backlog, see [AutomationExecutionPlan.md](AutomationExecutionPlan.md).
+For blocking vs known-gap negative execution, see [NegativeTestLanes.md](NegativeTestLanes.md).
 
 ## How To Use This Structure
 

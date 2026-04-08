@@ -136,3 +136,47 @@ test("valid login input clears error state and passes frontend validation withou
     assert.equal(runtime.identifierError.classList.contains("hidden"), true);
     assert.equal(runtime.passwordError.classList.contains("hidden"), true);
 });
+
+test("[ui-negative] whitespace-only login input stays disabled and shows required-field errors on submit", () => {
+    const runtime = bootstrapLoginPage();
+
+    runtime.identifierInput.value = "   ";
+    runtime.passwordInput.value = "   ";
+    runtime.identifierInput.dispatchEvent({ type: "input", target: runtime.identifierInput });
+    runtime.passwordInput.dispatchEvent({ type: "input", target: runtime.passwordInput });
+
+    assert.equal(runtime.submitButton.disabled, true);
+
+    const submitEvent = {
+        type: "submit",
+        target: runtime.form
+    };
+    runtime.form.dispatchEvent(submitEvent);
+
+    assert.equal(submitEvent.defaultPrevented, true);
+    assert.equal(runtime.identifierError.textContent, "Email or username is required");
+    assert.equal(runtime.passwordError.textContent, "Password is required");
+});
+
+test("[ui-negative] forbidden 67-style login identifiers are blocked client-side with a visible message", () => {
+    const runtime = bootstrapLoginPage();
+
+    runtime.identifierInput.value = " Six   Seven ";
+    runtime.passwordInput.value = "valid-password";
+    runtime.identifierInput.dispatchEvent({ type: "input", target: runtime.identifierInput });
+    runtime.passwordInput.dispatchEvent({ type: "input", target: runtime.passwordInput });
+
+    assert.equal(runtime.submitButton.disabled, true);
+    assert.equal(runtime.identifierError.classList.contains("hidden"), false);
+    assert.equal(runtime.identifierError.textContent, "67 and six seven are not allowed here.");
+
+    const submitEvent = {
+        type: "submit",
+        target: runtime.form
+    };
+    runtime.form.dispatchEvent(submitEvent);
+
+    assert.equal(submitEvent.defaultPrevented, true);
+    assert.equal(runtime.formMessage.classList.contains("hidden"), false);
+    assert.equal(runtime.formMessage.textContent, "67 and six seven are not allowed here.");
+});

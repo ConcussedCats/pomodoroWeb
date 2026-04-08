@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const MIN_PASSWORD_LENGTH = 8;
+    const FORBIDDEN_VALUE_MESSAGE = "67 and six seven are not allowed here";
     const usernameForm = document.querySelector("#username-form");
     const passwordForm = document.querySelector("#password-form");
     const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
@@ -44,12 +45,22 @@ document.addEventListener("DOMContentLoaded", () => {
         element.style.color = "";
     }
 
+    function hasForbiddenUsername(value) {
+        const normalized = value.trim().replace(/\s+/g, " ").toLowerCase();
+        return normalized === "67" || normalized === "six seven";
+    }
+
     function validateUsername() {
         const username = usernameInput.value.trim();
         clearFieldError(usernameInput, usernameError);
 
         if (!username) {
             showFieldError(usernameInput, usernameError, "Username cannot be empty");
+            return false;
+        }
+
+        if (hasForbiddenUsername(username)) {
+            showFieldError(usernameInput, usernameError, FORBIDDEN_VALUE_MESSAGE);
             return false;
         }
 

@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const FORBIDDEN_VALUE_MESSAGE = "67 and six seven are not allowed here.";
     const form = document.querySelector("#loginForm");
     const identifierInput = document.querySelector("#loginIdentifier");
     const passwordInput = document.querySelector("#loginPassword");
@@ -35,6 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
         formMessage.classList.add("form-message--error");
     }
 
+    function hasForbiddenIdentifier(value) {
+        const normalized = value.trim().replace(/\s+/g, " ").toLowerCase();
+        return normalized === "67" || normalized === "six seven";
+    }
+
     function clearFormMessage() {
         if (!formMessage) return;
 
@@ -46,7 +52,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function updateSubmitState() {
         const hasIdentifier = Boolean(identifierInput.value.trim());
         const hasPassword = Boolean(passwordInput.value.trim());
-        const isDisabled = !hasIdentifier || !hasPassword;
+        const hasForbiddenIdentifierValue = hasForbiddenIdentifier(identifierInput.value);
+        const isDisabled = !hasIdentifier || !hasPassword || hasForbiddenIdentifierValue;
 
         submitButton.disabled = isDisabled;
         submitButton.setAttribute("aria-disabled", isDisabled ? "true" : "false");
@@ -58,6 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!identifierInput.value.trim()) {
             showFieldError(identifierInput, identifierError, "Email or username is required");
+            isValid = false;
+        } else if (hasForbiddenIdentifier(identifierInput.value)) {
+            showFieldError(identifierInput, identifierError, FORBIDDEN_VALUE_MESSAGE);
             isValid = false;
         } else {
             clearFieldError(identifierInput, identifierError);
@@ -78,6 +88,9 @@ document.addEventListener("DOMContentLoaded", () => {
         input.addEventListener("input", () => {
             if (input === identifierInput) {
                 clearFieldError(identifierInput, identifierError);
+                if (hasForbiddenIdentifier(identifierInput.value)) {
+                    showFieldError(identifierInput, identifierError, FORBIDDEN_VALUE_MESSAGE);
+                }
             } else {
                 clearFieldError(passwordInput, passwordError);
             }
@@ -90,7 +103,11 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", event => {
         if (!validateForm()) {
             event.preventDefault();
-            showFormMessage("Fill in both required fields before continuing.");
+            showFormMessage(
+                hasForbiddenIdentifier(identifierInput.value)
+                    ? FORBIDDEN_VALUE_MESSAGE
+                    : "Fill in both required fields before continuing."
+            );
         }
     });
 

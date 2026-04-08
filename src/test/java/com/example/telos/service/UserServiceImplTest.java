@@ -8,6 +8,8 @@ import com.example.telos.exception.UsernameAlreadyTakenException;
 import com.example.telos.model.User;
 import com.example.telos.repository.UserRepository;
 import com.example.telos.service.impl.UserServiceImpl;
+import com.example.telos.validation.Forbidden67Policy;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -26,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@Tag("contract")
 class UserServiceImplTest {
 
     @Mock
@@ -83,6 +86,19 @@ class UserServiceImplTest {
     }
 
     @Test
+    @Tag("negative")
+    void shouldRejectForbidden67Username() {
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.updateUsername("user@test.com", " six   seven ")
+        );
+
+        assertEquals(Forbidden67Policy.DEFAULT_MESSAGE, exception.getMessage());
+        verify(userRepository, never()).findByEmailOrUsername(any());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
     void shouldEncodeAndUpdatePasswordWhenCurrentPasswordMatches() {
         User currentUser = buildUser(1L, "user@test.com", "user", "encoded-old-password");
         UserPasswordDto dto = new UserPasswordDto();
@@ -117,6 +133,23 @@ class UserServiceImplTest {
         );
 
         assertEquals("New password and confirm password don't match", exception.getMessage());
+        verify(userRepository, never()).findByEmailOrUsername(any());
+    }
+
+    @Test
+    @Tag("negative")
+    void shouldRejectPasswordUpdateWhenNewPasswordIsTooShort() {
+        UserPasswordDto dto = new UserPasswordDto();
+        dto.setOldPassword("old-password");
+        dto.setNewPassword("short");
+        dto.setConfirmNewPassword("short");
+
+        IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> userService.updatePassword("user@test.com", dto)
+        );
+
+        assertEquals("New password must be at least 8 characters", exception.getMessage());
         verify(userRepository, never()).findByEmailOrUsername(any());
     }
 

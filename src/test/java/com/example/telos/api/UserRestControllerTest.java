@@ -8,6 +8,7 @@ import com.example.telos.exception.UsernameAlreadyTakenException;
 import com.example.telos.security.RestAccessDeniedHandler;
 import com.example.telos.security.RestAuthenticationEntryPoint;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -17,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         RestAccessDeniedHandler.class,
         SessionApiWebMvcTestConfig.class
 })
+@Tag("contract")
 class UserRestControllerTest {
 
     @Autowired
@@ -134,6 +137,48 @@ class UserRestControllerTest {
     }
 
     @Test
+    @Tag("negative")
+    @WithMockUser(username = "user@test.com")
+    void shouldRejectForbidden67Username() throws Exception {
+        mockMvc.perform(patch("/api/user/username")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": " SIX   seven "
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("67 and six seven are not allowed here"));
+    }
+
+    @Test
+    @Tag("negative")
+    @WithMockUser(username = "user@test.com")
+    void shouldRejectMalformedUsernameBody() throws Exception {
+        mockMvc.perform(patch("/api/user/username")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username":
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("MALFORMED_BODY"));
+    }
+
+    @Test
+    @Tag("negative")
+    @WithMockUser(username = "user@test.com")
+    void shouldRejectUnsupportedMethodForUsernameEndpoint() throws Exception {
+        mockMvc.perform(post("/api/user/username")
+                        .with(csrf()))
+                .andExpect(status().isMethodNotAllowed());
+    }
+
+    @Test
     @WithMockUser(username = "user@test.com")
     void shouldUpdatePasswordForAuthenticatedUser() throws Exception {
         userService.nextPasswordResponse = new UserPasswordResponseDto("Password updated");
@@ -172,6 +217,25 @@ class UserRestControllerTest {
                 .andExpect(jsonPath("$.path").value("/api/user/password"))
                 .andExpect(jsonPath("$.method").value("PATCH"))
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    @Tag("negative")
+    @WithMockUser(username = "user@test.com")
+    void shouldRejectShortNewPasswordAtValidationLayer() throws Exception {
+        mockMvc.perform(patch("/api/user/password")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "oldPassword": "current-password",
+                                  "newPassword": "short",
+                                  "confirmNewPassword": "short"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("newPassword must be at least 8 characters"));
     }
 
     @Test

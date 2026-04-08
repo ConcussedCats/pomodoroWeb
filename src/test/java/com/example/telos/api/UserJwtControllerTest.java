@@ -12,6 +12,7 @@ import com.example.telos.security.JwtService;
 import com.example.telos.security.RestAccessDeniedHandler;
 import com.example.telos.security.RestAuthenticationEntryPoint;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -21,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         JwtFilter.class,
         JwtApiWebMvcTestConfig.class
 })
+@Tag("contract")
 class UserJwtControllerTest {
 
     @Autowired
@@ -111,6 +114,22 @@ class UserJwtControllerTest {
     }
 
     @Test
+    @Tag("negative")
+    void shouldRejectForbidden67JwtUsernameUpdate() throws Exception {
+        mockMvc.perform(patch("/api/jwt/user/username")
+                        .header("Authorization", bearerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "67"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("67 and six seven are not allowed here"));
+    }
+
+    @Test
     void shouldUpdatePasswordWithValidJwt() throws Exception {
         mockMvc.perform(patch("/api/jwt/user/password")
                         .header("Authorization", bearerToken)
@@ -143,6 +162,24 @@ class UserJwtControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.errorCode").value("INVALID_ARGUMENT"));
+    }
+
+    @Test
+    @Tag("negative")
+    void shouldRejectShortJwtPasswordAtValidationLayer() throws Exception {
+        mockMvc.perform(patch("/api/jwt/user/password")
+                        .header("Authorization", bearerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "oldPassword": "current-password",
+                                  "newPassword": "short",
+                                  "confirmNewPassword": "short"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("newPassword must be at least 8 characters"));
     }
 
     @Test
@@ -200,5 +237,13 @@ class UserJwtControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401))
                 .andExpect(jsonPath("$.errorCode").value("UNAUTHORIZED"));
+    }
+
+    @Test
+    @Tag("negative")
+    void shouldRejectUnsupportedMethodForJwtUsernameEndpoint() throws Exception {
+        mockMvc.perform(post("/api/jwt/user/username")
+                        .header("Authorization", bearerToken))
+                .andExpect(status().isMethodNotAllowed());
     }
 }

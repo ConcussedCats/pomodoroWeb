@@ -14,13 +14,17 @@ async function flushAsyncWork() {
     await new Promise(resolve => setTimeout(resolve, 0));
 }
 
-function createFetchRecorder() {
+function createFetchRecorder(overrides = {}) {
     const calls = [];
 
     return {
         calls,
         fetch: async (url, options = {}) => {
             calls.push({ url, options });
+            if (typeof overrides.fetch === "function") {
+                return overrides.fetch(url, options);
+            }
+
             return {
                 ok: true,
                 async json() {
@@ -41,7 +45,7 @@ function createFetchRecorder() {
     };
 }
 
-function bootstrapUserProfilePage() {
+function bootstrapUserProfilePage(overrides = {}) {
     const usernameForm = createElement({ tagName: "form", id: "username-form" });
     const usernameTitle = createElement({ tagName: "h3", classNames: ["profile-panel-title"], content: "Profile Data" });
     const usernameInput = createElement({ tagName: "input", id: "username", name: "username", value: "demo-user", classNames: ["settings-input", "auth-input"] });
@@ -83,7 +87,7 @@ function bootstrapUserProfilePage() {
         usernameForm,
         passwordForm
     ]);
-    const fetchRecorder = createFetchRecorder();
+    const fetchRecorder = createFetchRecorder(overrides);
     const context = {
         document,
         window: null,
@@ -210,4 +214,75 @@ test("blank username is blocked client-side and valid username submission succee
     assert.equal(runtime.usernameMessage.classList.contains("hidden"), false);
     assert.equal(runtime.usernameMessage.classList.contains("form-message--success"), true);
     assert.equal(runtime.usernameInput.value, "updated-user");
+});
+
+test("[ui-negative] forbidden 67-style usernames are blocked before the profile form submits", async () => {
+    const runtime = bootstrapUserProfilePage();
+
+    runtime.usernameInput.value = " 67 ";
+    const submitEvent = {
+        type: "submit",
+        target: runtime.usernameForm
+    };
+    runtime.usernameForm.dispatchEvent(submitEvent);
+    await flushAsyncWork();
+
+    assert.equal(runtime.fetchCalls.length, 0);
+    assert.equal(runtime.usernameInput.getAttribute("aria-invalid"), "true");
+    assert.equal(runtime.usernameError.textContent, "67 and six seven are not allowed here");
+    assert.equal(runtime.usernameMessage.classList.contains("form-message--error"), true);
+});
+
+test("[ui-negative] server-side username failures surface a visible profile error message", async () => {
+    const runtime = bootstrapUserProfilePage({
+        fetch: async () => ({
+            ok: false,
+            async json() {
+                return {
+                    message: "Username is already taken"
+                };
+            }
+        })
+    });
+
+    runtime.usernameInput.value = "taken-name";
+    runtime.usernameForm.dispatchEvent({
+        type: "submit",
+        target: runtime.usernameForm
+    });
+    await flushAsyncWork();
+
+    assert.equal(runtime.fetchCalls.length, 1);
+    assert.equal(runtime.usernameMessage.classList.contains("form-message--error"), true);
+    assert.equal(runtime.usernameMessage.textContent, "Username is already taken");
+});
+
+test("[ui-negative] server-side password failures keep the form visible and show an error", async () => {
+    const runtime = bootstrapUserProfilePage({
+        fetch: async (url) => ({
+            ok: false,
+            async json() {
+                return {
+                    message: url.includes("/password")
+                        ? "Current password is incorrect"
+                        : "Username update failed"
+                };
+            }
+        })
+    });
+
+    runtime.oldPasswordInput.value = "wrong-password";
+    runtime.newPasswordInput.value = "long-enough-password";
+    runtime.confirmNewPasswordInput.value = "long-enough-password";
+    runtime.passwordForm.dispatchEvent({
+        type: "submit",
+        target: runtime.passwordForm
+    });
+    await flushAsyncWork();
+
+    assert.equal(runtime.fetchCalls.length, 1);
+    assert.equal(runtime.passwordMessage.classList.contains("form-message--error"), true);
+    assert.equal(runtime.passwordMessage.textContent, "Current password is incorrect");
+    assert.equal(runtime.oldPasswordInput.value, "wrong-password");
+    assert.equal(runtime.newPasswordInput.value, "long-enough-password");
 });

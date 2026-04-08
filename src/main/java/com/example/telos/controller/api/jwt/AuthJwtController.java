@@ -5,6 +5,7 @@ import com.example.telos.dto.AuthResponse;
 import com.example.telos.model.User;
 import com.example.telos.security.JwtService;
 import com.example.telos.service.UserService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,7 +24,7 @@ public class AuthJwtController {
     private final UserService userService;
 
     @PostMapping("/login")
-    public AuthResponse login(@RequestBody AuthRequest authRequest) {
+    public AuthResponse login(@Valid @RequestBody AuthRequest authRequest) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         authRequest.getLogin(),

@@ -163,6 +163,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return dateFormatter.format(date);
     }
 
+    function containsForbiddenValue(value) {
+        const normalized = String(value)
+            .trim()
+            .replace(/\s+/g, " ")
+            .toLowerCase();
+
+        return normalized === "67" || normalized === "six seven";
+    }
+
     function syncStateFromStorage() {
         state.items = storageAdapter.load();
     }
@@ -347,6 +356,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        if (containsForbiddenValue(value)) {
+            markInvalid(input, true);
+            showFormMessage(type, "67 and six seven are not allowed here.");
+            input?.focus();
+            return;
+        }
+
         if (type === "todo") {
             storageAdapter.create("todo", {
                 text: value,
@@ -392,6 +408,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!nextValue) {
             markInvalid(editor, true);
+            showFormMessage(type, `Please enter a ${itemLabels[type]} before saving it.`);
+            editor.focus();
+            return;
+        }
+
+        if (containsForbiddenValue(nextValue)) {
+            markInvalid(editor, true);
+            showFormMessage(type, "67 and six seven are not allowed here.");
             editor.focus();
             return;
         }

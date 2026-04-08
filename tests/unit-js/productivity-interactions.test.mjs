@@ -128,3 +128,48 @@ test("blank note submission marks the field invalid and shows an error message",
     assert.equal(runtime.messages.notes.classList.contains("hidden"), false);
     assert.ok(runtime.messages.notes.textContent.includes("Please enter a note"));
 });
+
+test("[ui-negative] forbidden 67-style todo and note content is rejected without changing storage", () => {
+    const runtime = bootstrapProductivityRuntime();
+
+    runtime.inputs.todo.value = "67";
+    submitForm(runtime, "todo");
+    let stored = getStoredProductivityState(runtime);
+    assert.equal(stored, null);
+    assert.equal(runtime.messages.todo.textContent, "67 and six seven are not allowed here.");
+    assert.equal(runtime.inputs.todo.getAttribute("aria-invalid"), "true");
+
+    runtime.tabs.notes.dispatchEvent({
+        type: "click",
+        target: runtime.tabs.notes
+    });
+    runtime.inputs.notes.value = "Six seven";
+    submitForm(runtime, "notes");
+    stored = getStoredProductivityState(runtime);
+    assert.equal(stored, null);
+    assert.equal(runtime.messages.notes.textContent, "67 and six seven are not allowed here.");
+    assert.equal(runtime.inputs.notes.getAttribute("aria-invalid"), "true");
+});
+
+test("[ui-negative] invalid edit-save keeps the previous productivity item unchanged and shows feedback", () => {
+    const runtime = bootstrapProductivityRuntime();
+
+    runtime.inputs.todo.value = "Ship docs";
+    submitForm(runtime, "todo");
+    let stored = getStoredProductivityState(runtime);
+    const itemId = stored.todo[0].id;
+
+    clickListAction(runtime, "todo", itemId, "edit");
+    const todoEditor = runtime.lists.todo.querySelector(`[data-item-id="${itemId}"] [data-edit-field="todo"]`);
+    todoEditor.value = "   ";
+    clickListAction(runtime, "todo", itemId, "save-edit");
+    stored = getStoredProductivityState(runtime);
+    assert.equal(stored.todo[0].text, "Ship docs");
+    assert.equal(runtime.messages.todo.textContent, "Please enter a task before saving it.");
+
+    todoEditor.value = "six seven";
+    clickListAction(runtime, "todo", itemId, "save-edit");
+    stored = getStoredProductivityState(runtime);
+    assert.equal(stored.todo[0].text, "Ship docs");
+    assert.equal(runtime.messages.todo.textContent, "67 and six seven are not allowed here.");
+});
