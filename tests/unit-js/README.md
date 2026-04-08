@@ -21,3 +21,9 @@ This folder captures JS unit-level scenarios that should later be automated outs
 - [01-timer-state-normalization-and-storage.md](01-timer-state-normalization-and-storage.md)
 - [02-timer-state-transitions-and-projections.md](02-timer-state-transitions-and-projections.md)
 - [03-productivity-storage-and-sanitization.md](03-productivity-storage-and-sanitization.md)
+
+## Executable Suites
+
+- [timer-state.test.mjs](timer-state.test.mjs): pure timer state-machine logic, mode switching, transitions, counters, projections
+- [timer-persistence.test.mjs](timer-persistence.test.mjs): settings storage, timer serialization, reload recovery, timestamp-based hydration
+- [timer-state.test-utils.mjs](timer-state.test-utils.mjs): shared isolated runtime helpers for loading `timer-state.js` without UI dependencies

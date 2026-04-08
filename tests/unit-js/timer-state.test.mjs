@@ -1,72 +1,10 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import test from "node:test";
-import vm from "node:vm";
 
-function createLocalStorage() {
-    const store = new Map();
-
-    return {
-        getItem(key) {
-            return store.has(key) ? store.get(key) : null;
-        },
-        setItem(key, value) {
-            store.set(key, String(value));
-        },
-        removeItem(key) {
-            store.delete(key);
-        },
-        clear() {
-            store.clear();
-        }
-    };
-}
-
-function loadTimerStateModule() {
-    const filePath = path.resolve("src/main/resources/static/js/timer-state.js");
-    const source = readFileSync(filePath, "utf8");
-    const localStorage = createLocalStorage();
-    const context = {
-        console: {
-            warn() {},
-            log() {},
-            error() {}
-        },
-        localStorage,
-        Date,
-        Math,
-        JSON,
-        Number,
-        String,
-        Boolean,
-        Object,
-        Array,
-        Intl
-    };
-
-    context.window = context;
-
-    vm.createContext(context);
-    vm.runInContext(source, context, { filename: "timer-state.js" });
-
-    return {
-        timerState: context.PomodoroTimerState,
-        localStorage
-    };
-}
-
-function getStartedPomodoro(timerState, now = 1_000_000) {
-    const settings = timerState.getDefaultSettings();
-    const state = timerState.getDefaultTimerState(settings);
-
-    return {
-        now,
-        settings,
-        state,
-        started: timerState.startTimerState(state, settings, now)
-    };
-}
+import {
+    getStartedPomodoro,
+    loadTimerStateModule
+} from "./timer-state.test-utils.mjs";
 
 test("normalizes default and valid settings correctly", () => {
     const { timerState } = loadTimerStateModule();
@@ -131,51 +69,6 @@ test("returns the default timer state for a fresh pomodoro session", () => {
     assert.equal(state.remainingSeconds, 25 * 60);
     assert.equal(state.completedPomodorosInCycle, 0);
     assert.equal(state.completedFocusCycles, 0);
-});
-
-test("saves and loads normalized settings through localStorage", () => {
-    const { timerState, localStorage } = loadTimerStateModule();
-
-    const saved = timerState.saveSettings({
-        pomodoro: 40,
-        shortBreak: 8,
-        longBreak: 25,
-        soundEnabled: false,
-        focusCycles: 2
-    });
-    const stored = JSON.parse(localStorage.getItem(timerState.keys.SETTINGS_KEY));
-    const loaded = timerState.loadSettings();
-
-    assert.equal(saved.pomodoro, 40);
-    assert.equal(saved.shortBreak, 8);
-    assert.equal(saved.longBreak, 25);
-    assert.equal(saved.soundEnabled, false);
-    assert.equal(saved.focusCycles, 2);
-
-    assert.equal(stored.pomodoro, 40);
-    assert.equal(stored.shortBreak, 8);
-    assert.equal(stored.longBreak, 25);
-    assert.equal(stored.soundEnabled, false);
-    assert.equal(stored.focusCycles, 2);
-
-    assert.equal(loaded.pomodoro, 40);
-    assert.equal(loaded.shortBreak, 8);
-    assert.equal(loaded.longBreak, 25);
-    assert.equal(loaded.soundEnabled, false);
-    assert.equal(loaded.focusCycles, 2);
-});
-
-test("falls back safely when saved settings JSON is corrupted", () => {
-    const { timerState, localStorage } = loadTimerStateModule();
-
-    localStorage.setItem(timerState.keys.SETTINGS_KEY, "{invalid-json");
-    const loaded = timerState.loadSettings();
-
-    assert.equal(loaded.pomodoro, 25);
-    assert.equal(loaded.shortBreak, 5);
-    assert.equal(loaded.longBreak, 15);
-    assert.equal(loaded.soundEnabled, true);
-    assert.equal(loaded.focusCycles, 1);
 });
 
 test("starts a fresh pomodoro timer with the correct running state", () => {
@@ -414,7 +307,7 @@ test("completes the final long break and marks the focus session as finished", (
 });
 
 test("returns current pomodoro and focus cycle numbers across states", () => {
-    const { timerState, localStorage } = loadTimerStateModule();
+    const { timerState } = loadTimerStateModule();
     const settings = timerState.normalizeSettings({
         pomodoro: 25,
         shortBreak: 5,
@@ -487,56 +380,6 @@ test("compares timer states by all persisted fields", () => {
 
     assert.equal(timerState.areStatesEqual(stateA, stateB), true);
     assert.equal(timerState.areStatesEqual(stateA, stateC), false);
-});
-
-test("normalizes invalid timer state values and corrupted timer JSON safely", () => {
-    const { timerState, localStorage } = loadTimerStateModule();
-    const settings = timerState.getDefaultSettings();
-    const normalized = timerState.saveTimerState({
-        currentMode: "unsupported-mode",
-        isRunning: false,
-        endTime: null,
-        remainingSeconds: -10,
-        completedPomodorosInCycle: -5,
-        completedFocusCycles: -1
-    }, settings);
-
-    assert.equal(normalized.currentMode, "pomodoro");
-    assert.equal(normalized.remainingSeconds, 25 * 60);
-    assert.equal(normalized.completedPomodorosInCycle, 0);
-    assert.equal(normalized.completedFocusCycles, 0);
-
-    localStorage.setItem(timerState.keys.TIMER_STATE_KEY, "{broken-json");
-    const loaded = timerState.loadTimerState(settings);
-
-    assert.equal(loaded.currentMode, "pomodoro");
-    assert.equal(loaded.isRunning, false);
-    assert.equal(loaded.remainingSeconds, 25 * 60);
-});
-
-test("loads and persists timer state through localStorage without UI interaction", () => {
-    const { timerState, localStorage } = loadTimerStateModule();
-    const settings = timerState.getDefaultSettings();
-    const customState = {
-        currentMode: "short-break",
-        isRunning: false,
-        endTime: null,
-        remainingSeconds: 5 * 60,
-        completedPomodorosInCycle: 1,
-        completedFocusCycles: 0
-    };
-
-    timerState.saveTimerState(customState, settings);
-    const stored = JSON.parse(localStorage.getItem(timerState.keys.TIMER_STATE_KEY));
-    const loaded = timerState.loadTimerState(settings);
-
-    assert.equal(stored.currentMode, "short-break");
-    assert.equal(stored.remainingSeconds, 5 * 60);
-
-    // Idle short-break states are intentionally normalized back to a fresh pomodoro state on load.
-    assert.equal(loaded.currentMode, "pomodoro");
-    assert.equal(loaded.isRunning, false);
-    assert.equal(loaded.remainingSeconds, 25 * 60);
 });
 
 test("handles a pathological elapsed running state without producing invalid output", () => {
