@@ -26,6 +26,7 @@
 - note item lifecycle
 - local storage and cross-tab sync
 - keyboard and accessibility states
+- tab behavior execution results
 
 ## Related Shared Docs
 
@@ -55,6 +56,13 @@
   - localStorage persistence
   - cross-tab sync
 
+## Executable Suites
+
+- [productivity-tabs.test.mjs](../unit-js/productivity-tabs.test.mjs): tabs, active state, panel visibility, no-route-change behavior
+- [productivity-interactions.test.mjs](../unit-js/productivity-interactions.test.mjs): todo and note forms, empty states, edit/delete flows, keyboard save behavior, invalid states
+- [productivity-storage.test.mjs](../unit-js/productivity-storage.test.mjs): storage hydration, malformed storage fallback, cross-tab sync
+- [09-executable-coverage-results.md](09-executable-coverage-results.md): consolidated executed result for current productivity coverage
+
 ## Plans
 
 - [01-page-shell-and-tabs.md](01-page-shell-and-tabs.md) — `Playwright smoke`
@@ -64,3 +72,5 @@
 - [05-note-item-lifecycle.md](05-note-item-lifecycle.md) — `Playwright P0`
 - [06-local-storage-and-cross-tab-sync.md](06-local-storage-and-cross-tab-sync.md) — `Playwright P1`
 - [07-keyboard-and-a11y-states.md](07-keyboard-and-a11y-states.md) — `Playwright P1`
+- [08-tab-behavior-execution-results.md](08-tab-behavior-execution-results.md) — executed JS frontend suite
+- [09-executable-coverage-results.md](09-executable-coverage-results.md) — consolidated executable productivity coverage

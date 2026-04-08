@@ -27,4 +27,8 @@ This folder captures JS unit-level scenarios that should later be automated outs
 - [timer-state.test.mjs](timer-state.test.mjs): pure timer state-machine logic, mode switching, transitions, counters, projections
 - [timer-persistence.test.mjs](timer-persistence.test.mjs): settings storage, timer serialization, reload recovery, timestamp-based hydration
 - [mini-timer.test.mjs](mini-timer.test.mjs): mini timer hydration, state mirroring, storage-driven sync, cross-page recovery
+- [productivity-tabs.test.mjs](productivity-tabs.test.mjs): productivity tab presence, active-state switching, panel visibility, no-route-change behavior
+- [productivity-interactions.test.mjs](productivity-interactions.test.mjs): todo/note create-edit-delete flows, empty states, invalid states, keyboard save behavior
+- [productivity-storage.test.mjs](productivity-storage.test.mjs): productivity storage normalization, corrupted storage fallback, cross-tab sync
+- [productivity.test-utils.mjs](productivity.test-utils.mjs): shared fake DOM/runtime harness for `productivity.js`
 - [timer-state.test-utils.mjs](timer-state.test-utils.mjs): shared isolated runtime helpers for loading `timer-state.js` without UI dependencies
