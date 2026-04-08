@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const STORAGE_KEY = "telos.productivity.v1";
     const DEFAULT_TAB = "todo";
     const ITEM_TYPES = ["todo", "notes"];
+    const TODO_PRIORITY_VALUES = ["LOW", "MEDIUM", "HIGH"];
     const itemLabels = {
         todo: "task",
         notes: "note"
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
         notes: "noteInput"
     };
     const inputNames = {
-        todo: "text",
+        todo: "title",
         notes: "content"
     };
     const dateFormatter = new Intl.DateTimeFormat(undefined, {
@@ -20,6 +20,9 @@ document.addEventListener("DOMContentLoaded", () => {
         hour: "2-digit",
         minute: "2-digit"
     });
+
+    const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
 
     const tabButtons = Array.from(document.querySelectorAll("[data-tab-trigger]"));
     const panels = Array.from(document.querySelectorAll("[data-tab-panel]"));
@@ -38,111 +41,148 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!tabButtons.length || !panels.length) return;
 
-    const storageAdapter = {
-        load() {
-            try {
-                const storedValue = window.localStorage.getItem(STORAGE_KEY);
-                if (!storedValue) {
-                    return this.emptyState();
-                }
-
-                const parsed = JSON.parse(storedValue);
-                return this.normalize(parsed);
-            } catch (error) {
-                return this.emptyState();
-            }
-        },
-        save(nextState) {
-            const normalizedState = this.normalize(nextState);
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizedState));
-            return normalizedState;
-        },
-        list(type) {
-            return this.load()[type];
-        },
-        create(type, payload) {
-            const state = this.load();
-            const now = new Date().toISOString();
-            const nextItem = {
-                id: createId(),
-                createdAt: now,
-                updatedAt: now,
-                ...payload
-            };
-
-            state[type] = [nextItem, ...state[type]];
-            return this.save(state)[type];
-        },
-        update(type, itemId, changes) {
-            const state = this.load();
-            state[type] = state[type].map(item => {
-                if (item.id !== itemId) return item;
-
-                return {
-                    ...item,
-                    ...changes,
-                    updatedAt: new Date().toISOString()
-                };
-            });
-
-            return this.save(state)[type];
-        },
-        delete(type, itemId) {
-            const state = this.load();
-            state[type] = state[type].filter(item => item.id !== itemId);
-            return this.save(state)[type];
-        },
-        emptyState() {
-            return {
-                todo: [],
-                notes: []
-            };
-        },
-        normalize(rawState) {
-            const safeState = this.emptyState();
-
-            safeState.todo = Array.isArray(rawState?.todo)
-                ? rawState.todo
-                    .filter(item => item && typeof item.id === "string" && typeof item.text === "string")
-                    .map(item => ({
-                        id: item.id,
-                        text: item.text,
-                        completed: Boolean(item.completed),
-                        createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
-                        updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : new Date().toISOString()
-                    }))
-                : [];
-
-            safeState.notes = Array.isArray(rawState?.notes)
-                ? rawState.notes
-                    .filter(item => item && typeof item.id === "string" && typeof item.content === "string")
-                    .map(item => ({
-                        id: item.id,
-                        content: item.content,
-                        createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
-                        updatedAt: typeof item.updatedAt === "string" ? item.updatedAt : new Date().toISOString()
-                    }))
-                : [];
-
-            return safeState;
-        }
-    };
-
     const state = {
         activeTab: DEFAULT_TAB,
-        items: storageAdapter.load(),
+        items: {
+            todo: [],
+            notes: []
+        },
         editingByType: {
             todo: null,
             notes: null
+        },
+        loadingByType: {
+            todo: false,
+            notes: false
         }
     };
 
-    function createId() {
-        if (window.crypto?.randomUUID) {
-            return window.crypto.randomUUID();
+    function getRequestHeaders() {
+        return {
+            "Content-Type": "application/json",
+            ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {})
+        };
+    }
+
+    async function parseJsonSafe(response) {
+        const text = await response.text();
+        if (!text) return null;
+
+        try {
+            return JSON.parse(text);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function getApiErrorMessage(data, fallbackMessage) {
+        return data?.message || fallbackMessage;
+    }
+
+    function mapNoteFromApi(note) {
+        return {
+            id: String(note.noteId),
+            content: note.noteText,
+            createdAt: typeof note.createdAt === "string" ? note.createdAt : new Date().toISOString(),
+            updatedAt: typeof note.updatedAt === "string"
+                ? note.updatedAt
+                : (typeof note.createdAt === "string" ? note.createdAt : new Date().toISOString())
+        };
+    }
+
+    function mapTodoFromApi(todo) {
+        return {
+            id: String(todo.todoId),
+            title: todo.title || "",
+            description: todo.description || "",
+            completed: Boolean(todo.isDone),
+            priority: TODO_PRIORITY_VALUES.includes(todo.priority) ? todo.priority : "LOW",
+            deadline: typeof todo.deadline === "string" ? todo.deadline : "",
+            createdAt: typeof todo.createdAt === "string" ? todo.createdAt : new Date().toISOString()
+        };
+    }
+
+    function mapTodoToApiPayload(todo) {
+        return {
+            title: todo.title,
+            description: todo.description || null,
+            isDone: Boolean(todo.completed),
+            priority: todo.priority,
+            deadline: todo.deadline || null
+        };
+    }
+
+    async function fetchCollection(url, mapFn, fallbackMessage) {
+        const response = await fetch(url, {
+            method: "GET",
+            headers: csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}
+        });
+        const data = await parseJsonSafe(response);
+
+        if (!response.ok) {
+            throw new Error(getApiErrorMessage(data, fallbackMessage));
         }
 
-        return `item-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        return Array.isArray(data) ? data.map(mapFn) : [];
+    }
+
+    async function submitJson(url, method, payload, mapFn, fallbackMessage) {
+        const response = await fetch(url, {
+            method,
+            headers: getRequestHeaders(),
+            body: JSON.stringify(payload)
+        });
+        const data = await parseJsonSafe(response);
+
+        if (!response.ok) {
+            throw new Error(getApiErrorMessage(data, fallbackMessage));
+        }
+
+        return mapFn ? mapFn(data) : data;
+    }
+
+    async function deleteItem(url, fallbackMessage) {
+        const response = await fetch(url, {
+            method: "DELETE",
+            headers: csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {}
+        });
+
+        if (!response.ok) {
+            const data = await parseJsonSafe(response);
+            throw new Error(getApiErrorMessage(data, fallbackMessage));
+        }
+    }
+
+    async function fetchNotes() {
+        return fetchCollection("/api/productivity/notes", mapNoteFromApi, "Failed to load notes");
+    }
+
+    async function createNote(payload) {
+        return submitJson("/api/productivity/notes", "POST", payload, mapNoteFromApi, "Failed to create note");
+    }
+
+    async function updateNote(itemId, payload) {
+        return submitJson(`/api/productivity/notes/${itemId}`, "PATCH", payload, mapNoteFromApi, "Failed to update note");
+    }
+
+    async function deleteNote(itemId) {
+        return deleteItem(`/api/productivity/notes/${itemId}`, "Failed to delete note");
+    }
+
+    async function fetchTodos() {
+        return fetchCollection("/api/productivity/todos", mapTodoFromApi, "Failed to load tasks");
+    }
+
+    async function createTodo(payload) {
+        return submitJson("/api/productivity/todos", "POST", payload, mapTodoFromApi, "Failed to create task");
+    }
+
+    async function updateTodo(itemId, payload) {
+        return submitJson(`/api/productivity/todos/${itemId}`, "PATCH", payload, mapTodoFromApi, "Failed to update task");
+    }
+
+    async function deleteTodo(itemId) {
+        return deleteItem(`/api/productivity/todos/${itemId}`, "Failed to delete task");
     }
 
     function escapeHtml(value) {
@@ -155,25 +195,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function formatTimestamp(value) {
+        if (!value) return "";
+
         const date = value instanceof Date ? value : new Date(value);
         if (Number.isNaN(date.getTime())) {
-            // Fallback for corrupted or unparsable timestamps
             return "";
         }
+
         return dateFormatter.format(date);
     }
 
-    function containsForbiddenValue(value) {
-        const normalized = String(value)
-            .trim()
-            .replace(/\s+/g, " ")
-            .toLowerCase();
+    function formatDeadlineForInput(value) {
+        if (!value) return "";
 
-        return normalized === "67" || normalized === "six seven";
-    }
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return "";
 
-    function syncStateFromStorage() {
-        state.items = storageAdapter.load();
+        const pad = part => String(part).padStart(2, "0");
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
     }
 
     function clearFormMessage(type) {
@@ -218,14 +257,6 @@ document.addEventListener("DOMContentLoaded", () => {
         focusPrimaryInput(nextTab);
     }
 
-    function getTrimmedValue(type, container) {
-        const fieldName = inputNames[type];
-        const input = container.querySelector(`[name="${fieldName}"]`);
-        if (!input) return "";
-
-        return input.value.trim();
-    }
-
     function markInvalid(input, shouldMark) {
         if (!input) return;
 
@@ -239,22 +270,128 @@ document.addEventListener("DOMContentLoaded", () => {
         input.classList.remove("settings-input--invalid");
     }
 
+    function normalizeTodoDraft(rawDraft) {
+        const title = (rawDraft.title || "").trim();
+        const description = (rawDraft.description || "").trim();
+        const priority = TODO_PRIORITY_VALUES.includes(rawDraft.priority) ? rawDraft.priority : "LOW";
+        const deadline = rawDraft.deadline || "";
+        const completed = Boolean(rawDraft.completed);
+
+        return {
+            title,
+            description,
+            priority,
+            deadline,
+            completed
+        };
+    }
+
+    function readTodoFormDraft(container) {
+        return normalizeTodoDraft({
+            title: container.querySelector('[name="title"]')?.value,
+            description: container.querySelector('[name="description"]')?.value,
+            priority: container.querySelector('[name="priority"]')?.value,
+            deadline: container.querySelector('[name="deadline"]')?.value,
+            completed: container.querySelector('[name="isDone"]')?.checked
+        });
+    }
+
+    function validateTodoDraft(container, draft) {
+        const titleInput = container.querySelector('[name="title"]');
+        const priorityInput = container.querySelector('[name="priority"]');
+
+        markInvalid(titleInput, false);
+        markInvalid(priorityInput, false);
+
+        if (!draft.title) {
+            markInvalid(titleInput, true);
+            titleInput?.focus();
+            return "Please enter a task before adding it.";
+        }
+
+        if (!draft.priority) {
+            markInvalid(priorityInput, true);
+            priorityInput?.focus();
+            return "Please choose a priority.";
+        }
+
+        return null;
+    }
+
+    function getTodoPriorityClass(priority) {
+        const normalizedPriority = String(priority || "LOW").toLowerCase();
+        return `productivity-item__badge--priority-${normalizedPriority}`;
+    }
+
     function renderTodoItem(item) {
         const isEditing = state.editingByType.todo === item.id;
         const completedClass = item.completed ? " productivity-item__content--completed" : "";
+        const descriptionMarkup = item.description
+            ? `<p class="productivity-item__description">${escapeHtml(item.description).replaceAll("\n", "<br>")}</p>`
+            : "";
+        const deadlineLabel = item.deadline
+            ? `<span class="productivity-item__badge">Due ${formatTimestamp(item.deadline)}</span>`
+            : "";
 
         if (isEditing) {
             return `
                 <li class="productivity-item productivity-item--editing" data-item-id="${item.id}" data-item-type="todo">
-                    <div class="productivity-item__editor">
-                        <input
-                            class="settings-input productivity-input productivity-item__editor-input"
-                            data-edit-field="todo"
-                            name="text"
-                            type="text"
-                            maxlength="160"
-                            value="${escapeHtml(item.text)}"
-                        >
+                    <div class="productivity-item__editor productivity-item__editor-grid">
+                        <div class="productivity-field">
+                            <label class="settings-label" for="todo-edit-title-${item.id}">Task</label>
+                            <input
+                                id="todo-edit-title-${item.id}"
+                                class="settings-input productivity-input productivity-item__editor-input"
+                                data-edit-field="todo"
+                                name="title"
+                                type="text"
+                                maxlength="25"
+                                value="${escapeHtml(item.title)}"
+                            >
+                        </div>
+                        <div class="productivity-field">
+                            <label class="settings-label" for="todo-edit-description-${item.id}">Description</label>
+                            <textarea
+                                id="todo-edit-description-${item.id}"
+                                class="settings-input productivity-input productivity-textarea productivity-textarea--compact"
+                                name="description"
+                                rows="3"
+                                maxlength="1000"
+                            >${escapeHtml(item.description)}</textarea>
+                        </div>
+                        <div class="productivity-field-row">
+                            <div class="productivity-field">
+                                <label class="settings-label" for="todo-edit-priority-${item.id}">Priority</label>
+                                <select
+                                    id="todo-edit-priority-${item.id}"
+                                    class="settings-input productivity-input"
+                                    name="priority"
+                                >
+                                    ${TODO_PRIORITY_VALUES.map(priority => `
+                                        <option value="${priority}"${priority === item.priority ? " selected" : ""}>${priority.charAt(0)}${priority.slice(1).toLowerCase()}</option>
+                                    `).join("")}
+                                </select>
+                            </div>
+                            <div class="productivity-field">
+                                <label class="settings-label" for="todo-edit-deadline-${item.id}">Deadline</label>
+                                <input
+                                    id="todo-edit-deadline-${item.id}"
+                                    class="settings-input productivity-input"
+                                    name="deadline"
+                                    type="datetime-local"
+                                    value="${formatDeadlineForInput(item.deadline)}"
+                                >
+                            </div>
+                        </div>
+                        <label class="settings-label checkbox-label">
+                            <input
+                                class="settings-checkbox"
+                                name="isDone"
+                                type="checkbox"
+                                ${item.completed ? "checked" : ""}
+                            >
+                            <span>Completed</span>
+                        </label>
                     </div>
                     <div class="productivity-item__actions">
                         <button class="productivity-action productivity-action--primary" type="button" data-action="save-edit">Save</button>
@@ -273,7 +410,14 @@ document.addEventListener("DOMContentLoaded", () => {
                         data-action="toggle-complete"
                         ${item.completed ? "checked" : ""}
                     >
-                    <span class="productivity-item__content${completedClass}">${escapeHtml(item.text)}</span>
+                    <div class="productivity-item__body">
+                        <span class="productivity-item__content${completedClass}">${escapeHtml(item.title)}</span>
+                        ${descriptionMarkup}
+                        <div class="productivity-item__meta">
+                            <span class="productivity-item__badge ${getTodoPriorityClass(item.priority)}">${escapeHtml(item.priority)}</span>
+                            ${deadlineLabel}
+                        </div>
+                    </div>
                 </label>
                 <div class="productivity-item__actions">
                     <button class="productivity-action" type="button" data-action="edit">Edit</button>
@@ -328,9 +472,19 @@ document.addEventListener("DOMContentLoaded", () => {
         list.innerHTML = items.map(item => type === "todo" ? renderTodoItem(item) : renderNoteItem(item)).join("");
 
         const emptyState = emptyStates[type];
-        if (emptyState) {
-            emptyState.classList.toggle("hidden", items.length > 0);
+        if (!emptyState) return;
+
+        const shouldHide = state.loadingByType[type] || items.length > 0;
+        emptyState.classList.toggle("hidden", shouldHide);
+
+        if (state.loadingByType[type]) {
+            emptyState.textContent = `Loading ${itemLabels[type]}s...`;
+            return;
         }
+
+        emptyState.textContent = type === "todo"
+            ? "No tasks yet. Add the first one to build your list."
+            : "No notes yet. Add one to keep context close to your work.";
     }
 
     function render() {
@@ -342,42 +496,55 @@ document.addEventListener("DOMContentLoaded", () => {
         setActiveTab(state.activeTab);
     }
 
-    function handleAdd(type, form) {
-        const input = form.querySelector(`[name="${inputNames[type]}"]`);
-        const value = getTrimmedValue(type, form);
+    async function handleAddTodo(form) {
+        clearFormMessage("todo");
+
+        const draft = readTodoFormDraft(form);
+        const validationMessage = validateTodoDraft(form, draft);
+        if (validationMessage) {
+            showFormMessage("todo", validationMessage);
+            return;
+        }
+
+        try {
+            const createdTodo = await createTodo(mapTodoToApiPayload(draft));
+            state.items.todo = [createdTodo, ...state.items.todo];
+            form.reset();
+            const priorityInput = form.querySelector('[name="priority"]');
+            if (priorityInput) priorityInput.value = "LOW";
+            renderType("todo");
+            focusPrimaryInput("todo");
+            showFormMessage("todo", "Task was created successfully", false);
+        } catch (error) {
+            showFormMessage("todo", error.message || "Failed to create task");
+        }
+    }
+
+    async function handleAddNote(form) {
+        clearFormMessage("notes");
+
+        const input = form.querySelector('[name="content"]');
+        const value = input?.value.trim() || "";
 
         markInvalid(input, false);
-        clearFormMessage(type);
 
         if (!value) {
             markInvalid(input, true);
-            showFormMessage(type, `Please enter a ${itemLabels[type]} before adding it.`);
+            showFormMessage("notes", "Please enter a note before adding it.");
             input?.focus();
             return;
         }
 
-        if (containsForbiddenValue(value)) {
-            markInvalid(input, true);
-            showFormMessage(type, "67 and six seven are not allowed here.");
-            input?.focus();
-            return;
+        try {
+            const createdNote = await createNote({ noteText: value });
+            state.items.notes = [createdNote, ...state.items.notes];
+            form.reset();
+            renderType("notes");
+            focusPrimaryInput("notes");
+            showFormMessage("notes", "Note was created successfully", false);
+        } catch (error) {
+            showFormMessage("notes", error.message || "Failed to create note");
         }
-
-        if (type === "todo") {
-            storageAdapter.create("todo", {
-                text: value,
-                completed: false
-            });
-        } else {
-            storageAdapter.create("notes", {
-                content: value
-            });
-        }
-
-        syncStateFromStorage();
-        form.reset();
-        renderType(type);
-        focusPrimaryInput(type);
     }
 
     function beginEditing(type, itemId) {
@@ -396,39 +563,113 @@ document.addEventListener("DOMContentLoaded", () => {
         renderType(type);
     }
 
-    function saveEdit(itemElement) {
-        const type = itemElement.dataset.itemType;
+    async function saveTodoEdit(itemElement) {
         const itemId = itemElement.dataset.itemId;
-        const editor = itemElement.querySelector(`[data-edit-field="${type}"]`);
+        const draft = readTodoFormDraft(itemElement);
+        const validationMessage = validateTodoDraft(itemElement, draft);
+
+        if (validationMessage) {
+            showFormMessage("todo", validationMessage);
+            return;
+        }
+
+        try {
+            const updatedTodo = await updateTodo(itemId, mapTodoToApiPayload(draft));
+            state.items.todo = state.items.todo.map(todo => todo.id === itemId ? updatedTodo : todo);
+            state.editingByType.todo = null;
+            renderType("todo");
+            showFormMessage("todo", "Task was updated successfully", false);
+        } catch (error) {
+            showFormMessage("todo", error.message || "Failed to update task");
+        }
+    }
+
+    async function saveNoteEdit(itemElement) {
+        const itemId = itemElement.dataset.itemId;
+        const editor = itemElement.querySelector('[name="content"]');
         const nextValue = editor?.value.trim() || "";
 
         markInvalid(editor, false);
 
-        if (!type || !itemId || !editor) return;
-
         if (!nextValue) {
             markInvalid(editor, true);
-            showFormMessage(type, `Please enter a ${itemLabels[type]} before saving it.`);
-            editor.focus();
+            editor?.focus();
             return;
         }
 
-        if (containsForbiddenValue(nextValue)) {
-            markInvalid(editor, true);
-            showFormMessage(type, "67 and six seven are not allowed here.");
-            editor.focus();
-            return;
+        try {
+            const updatedNote = await updateNote(itemId, { noteText: nextValue });
+            state.items.notes = state.items.notes.map(note => note.id === itemId ? updatedNote : note);
+            state.editingByType.notes = null;
+            renderType("notes");
+            showFormMessage("notes", "Note was updated successfully", false);
+        } catch (error) {
+            showFormMessage("notes", error.message || "Failed to update note");
         }
+    }
 
-        if (type === "todo") {
-            storageAdapter.update("todo", itemId, { text: nextValue });
-        } else {
-            storageAdapter.update("notes", itemId, { content: nextValue });
+    async function deleteTodoAndRender(itemId) {
+        try {
+            await deleteTodo(itemId);
+            state.items.todo = state.items.todo.filter(todo => todo.id !== itemId);
+            if (state.editingByType.todo === itemId) {
+                state.editingByType.todo = null;
+            }
+            renderType("todo");
+            showFormMessage("todo", "Task was deleted successfully", false);
+        } catch (error) {
+            showFormMessage("todo", error.message || "Failed to delete task");
         }
+    }
 
-        syncStateFromStorage();
-        state.editingByType[type] = null;
+    async function deleteNoteAndRender(itemId) {
+        try {
+            await deleteNote(itemId);
+            state.items.notes = state.items.notes.filter(note => note.id !== itemId);
+            if (state.editingByType.notes === itemId) {
+                state.editingByType.notes = null;
+            }
+            renderType("notes");
+            showFormMessage("notes", "Note was deleted successfully", false);
+        } catch (error) {
+            showFormMessage("notes", error.message || "Failed to delete note");
+        }
+    }
+
+    async function toggleTodoCompletion(itemId, completed) {
+        const currentTodo = state.items.todo.find(todo => todo.id === itemId);
+        if (!currentTodo) return;
+
+        const nextDraft = {
+            ...currentTodo,
+            completed
+        };
+
+        try {
+            const updatedTodo = await updateTodo(itemId, mapTodoToApiPayload(nextDraft));
+            state.items.todo = state.items.todo.map(todo => todo.id === itemId ? updatedTodo : todo);
+            renderType("todo");
+        } catch (error) {
+            showFormMessage("todo", error.message || "Failed to update task");
+            renderType("todo");
+        }
+    }
+
+    async function loadType(type) {
+        state.loadingByType[type] = true;
         renderType(type);
+
+        try {
+            state.items[type] = type === "todo"
+                ? await fetchTodos()
+                : await fetchNotes();
+        } catch (error) {
+            state.items[type] = [];
+            showFormMessage(type, error.message || `Failed to load ${itemLabels[type]}s`);
+        } finally {
+            state.loadingByType[type] = false;
+            renderType(type);
+        }
     }
 
     tabButtons.forEach(button => {
@@ -437,14 +678,19 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    ITEM_TYPES.forEach(type => {
-        forms[type]?.addEventListener("submit", event => {
-            event.preventDefault();
-            handleAdd(type, event.currentTarget);
-        });
+    forms.todo?.addEventListener("submit", event => {
+        event.preventDefault();
+        handleAddTodo(event.currentTarget);
+    });
 
+    forms.notes?.addEventListener("submit", event => {
+        event.preventDefault();
+        handleAddNote(event.currentTarget);
+    });
+
+    ITEM_TYPES.forEach(type => {
         forms[type]?.addEventListener("input", event => {
-            const input = event.target.closest(`[name="${inputNames[type]}"]`);
+            const input = event.target.closest("input, textarea, select");
             if (!input) return;
 
             markInvalid(input, false);
@@ -465,18 +711,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     beginEditing(type, itemId);
                     break;
                 case "delete":
-                    storageAdapter.delete(type, itemId);
-                    syncStateFromStorage();
-                    if (state.editingByType[type] === itemId) {
-                        state.editingByType[type] = null;
+                    if (type === "todo") {
+                        deleteTodoAndRender(itemId);
+                    } else {
+                        deleteNoteAndRender(itemId);
                     }
-                    renderType(type);
                     break;
                 case "cancel-edit":
                     stopEditing(type);
                     break;
                 case "save-edit":
-                    saveEdit(itemElement);
+                    if (type === "todo") {
+                        saveTodoEdit(itemElement);
+                    } else {
+                        saveNoteEdit(itemElement);
+                    }
                     break;
                 default:
                     break;
@@ -490,11 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!checkbox || !itemId || type !== "todo") return;
 
-            storageAdapter.update("todo", itemId, {
-                completed: checkbox.checked
-            });
-            syncStateFromStorage();
-            renderType("todo");
+            toggleTodoCompletion(itemId, checkbox.checked);
         });
 
         lists[type]?.addEventListener("keydown", event => {
@@ -503,29 +748,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const itemId = itemElement.dataset.itemId;
             const isEditing = itemId && state.editingByType?.[type] === itemId;
-
-            const keyIsTodoSave = type === "todo" && event.key === "Enter";
-            const keyIsNoteSave = type === "notes" && event.key === "Enter" && (event.metaKey || event.ctrlKey);
-
-            if (!keyIsTodoSave && !keyIsNoteSave) return;
-
-            // Only treat Enter as a save action when the focused element is an editor field
-            // within the item that is currently being edited.
             const editorField = event.target.closest("input, textarea");
             const editorBelongsToItem = editorField && itemElement.contains(editorField);
 
-            if (!isEditing || !editorBelongsToItem) return;
+            const keyIsTodoSave = type === "todo" && event.key === "Enter" && !event.shiftKey;
+            const keyIsNoteSave = type === "notes" && event.key === "Enter" && (event.metaKey || event.ctrlKey);
+
+            if (!editorBelongsToItem || !isEditing) return;
+            if (!keyIsTodoSave && !keyIsNoteSave) return;
+
+            if (type === "todo" && editorField?.tagName === "TEXTAREA") return;
+
             event.preventDefault();
-            saveEdit(itemElement);
+            if (type === "todo") {
+                saveTodoEdit(itemElement);
+            } else {
+                saveNoteEdit(itemElement);
+            }
         });
     });
 
-    window.addEventListener("storage", event => {
-        if (event.key !== STORAGE_KEY) return;
-        syncStateFromStorage();
-        renderType("todo");
-        renderType("notes");
-    });
+    const todoPriorityInput = forms.todo?.querySelector('[name="priority"]');
+    if (todoPriorityInput && !todoPriorityInput.value) {
+        todoPriorityInput.value = "LOW";
+    }
 
     render();
+    loadType("todo");
+    loadType("notes");
 });

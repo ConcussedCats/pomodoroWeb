@@ -18,7 +18,7 @@ public class ToDo {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "todo_id", nullable = false)
-    private Long id;
+    private Long todoId;
 
     @ManyToOne
     @JoinColumn(name="user_id", nullable = false)

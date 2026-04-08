@@ -1,70 +1,59 @@
-# Pomodoro Web
+## 📌 Project Overview
 
-A web-based Pomodoro timer that runs in your browser tab to help you stay focused and productive.
+This project is a web-based productivity application built around the Pomodoro technique.
+It helps users manage tasks, track focus sessions, and improve productivity.
 
-## What is the Pomodoro Technique?
-The Pomodoro Technique is a time‑management method that splits work into focused sessions (Pomodoros) followed by short breaks.  
-It’s more effective than a basic timer because it builds rest into the workflow, reduces burnout, and keeps your focus consistent.
+## 🚀 Features
 
-## Features
-- Pomodoro, Short Break, and Long Break modes
-- Start / Reset controls
-- Configurable session lengths
-- Optional sound notifications
-- Session counter for longer break tracking
+* Pomodoro timer (work / short break / long break)
+* Task management (todo list)
+* Notes
+* Reminders
+* Productivity statistics
+* Mini timer accessible across pages
+* User authentication (login & profile)
+* Dark/light theme
 
-## How to Use
-1. Open the app by following the link: https://docholypancake.github.io/pomodoroWeb/.
-2. Choose your mode (Pomodoro / Short Break / Long Break).
-3. Click **Start** and focus until the timer ends.
-4. Take the suggested break.
-5. Repeat the cycle; after a few sessions, take a longer break.
+## 🛠 Tech Stack
 
-## Please note
-If you use Safari to run our timer, you won't be able to get sound notifications if run in the background, since Safari suspends most background tabs in about 10-15 seconds. Please use Pomodoro Web with Chrome for a better experience!
+* Backend: Spring Boot (Java)
+* Frontend: Thymeleaf, JavaScript, CSS
+* Database: H2 / PostgreSQL (depending on environment)
 
-## Settings
-Click the **Settings** button to customize:
-- Pomodoro duration  
-- Short break duration  
-- Long break duration  
-- Sound notifications  
+## ▶️ Running the Project Localy
 
-Changes apply immediately after saving.
+### 1. Clone repository
 
-## Pages
-- Timer: [index.html](index.html)  
-- About: [about.html](about.html)  
-- Help Us: [helpus.html](helpus.html)
+git clone https://github.com/ConcussedCats/pomodoroWeb.git
 
-## Project Structure
-```
-index.html
-about.html
-helpus.html
-css/
-  style.css
-js/
-  timer.js
-  settings.js
-  worker.js
-assets/
-  icon/
-    icon.ico
-  pictures/
-    author.jpg
-  sounds/
-    timer_sound_up.wav
-    timer_dound_down.wav
-```
+### 2. Run application
 
-## Run Locally
-You can open [index.html](index.html) directly in your browser.  
-For best results, use a local server (prevents asset loading issues).
+./mvnw spring-boot:run
 
-## Contributing
-- Suggest changes or report issues:  
-  https://github.com/docholypancake/pomodoroWeb/issues
+### 3. Open in browser
 
-## License
-See [LICENSE](LICENSE).
+http://localhost:8080
+
+## ▶️ Web version
+
+https://teclos.space/
+
+## 📂 Project Structure
+
+* controllers – handle web requests
+* services – business logic
+* repositories – database layer
+* templates – UI (Thymeleaf)
+* static – JS, CSS
+
+## 🌐 Deployment
+
+Dev environment is deployed from the dev branch.
+
+## 👥 Team
+
+### Vladyslav Hlovatskyy
+### Artem Uiechko
+### Yuriy Pikh
+### Oleh Blazhko
+### Vladyslav Dudych

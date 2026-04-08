@@ -1,12 +1,15 @@
 package com.example.telos.service.impl;
 
+import com.example.telos.dto.RegisterRequest;
 import com.example.telos.dto.UserPasswordDto;
 import com.example.telos.dto.UserPasswordResponseDto;
 import com.example.telos.dto.UserUsernameResponseDto;
 import com.example.telos.exception.NullEntityReferenceException;
 import com.example.telos.exception.UsernameAlreadyTakenException;
 import com.example.telos.model.User;
+import com.example.telos.model.UserTimeSettings;
 import com.example.telos.repository.UserRepository;
+import com.example.telos.repository.UserTimeSettingsRepository;
 import com.example.telos.service.UserService;
 import com.example.telos.validation.Forbidden67Policy;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,6 +25,7 @@ import java.util.Optional;
 @AllArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
+    private final UserTimeSettingsRepository userTimeSettingsRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -40,6 +44,43 @@ public class UserServiceImpl implements UserService {
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found with username: " + username));
+    }
+
+    @Override
+    public User register(RegisterRequest registerRequest) {
+        if (registerRequest == null) throw new NullEntityReferenceException("Register data cannot be null");
+
+        String username = registerRequest.getUsername() == null ? null : registerRequest.getUsername().trim();
+        String email = registerRequest.getEmail() == null ? null : registerRequest.getEmail().trim();
+        String password = registerRequest.getPassword();
+        String confirmPassword = registerRequest.getConfirmPassword();
+
+        if (username == null || username.isBlank())
+            throw new NullEntityReferenceException("Username cannot be empty");
+
+        if (email == null || email.isBlank())
+            throw new NullEntityReferenceException("Email cannot be empty");
+
+        if (password == null || password.isBlank() || confirmPassword == null || confirmPassword.isBlank())
+            throw new NullEntityReferenceException("Password cannot be empty");
+
+        if (!password.equals(confirmPassword))
+            throw new IllegalArgumentException("Password and confirm password don't match");
+
+        if (userRepository.findByUsername(username).isPresent())
+            throw new UsernameAlreadyTakenException("Username is already taken");
+
+        if (userRepository.findByEmail(email).isPresent())
+            throw new IllegalArgumentException("Email is already taken");
+
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+
+        User savedUser = userRepository.save(user);
+        createDefaultTimeSettings(savedUser);
+        return savedUser;
     }
 
     @Override
@@ -121,5 +162,16 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(userPasswordDto.getNewPassword()));
         update(user);
         return new UserPasswordResponseDto("New password was successfully updated");
+    }
+
+    private void createDefaultTimeSettings(User user) {
+        UserTimeSettings userTimeSettings = new UserTimeSettings();
+        userTimeSettings.setUser(user);
+        userTimeSettings.setPomodoroMinutes(25);
+        userTimeSettings.setShortBreakMinutes(5);
+        userTimeSettings.setLongBreakMinutes(15);
+        userTimeSettings.setPomoCycles(4);
+        userTimeSettings.setSoundsEnable(true);
+        userTimeSettingsRepository.save(userTimeSettings);
     }
 }
