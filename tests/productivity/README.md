@@ -11,8 +11,9 @@
 
 ## Linked JS / API Dependencies
 
-- Local storage key: `telos.productivity.v1`
-- No page-owned backend API
+- Session APIs:
+  - `/api/productivity/todos`
+  - `/api/productivity/notes`
 - Keyboard behavior for editing:
   - `Enter` for todo save
   - `Ctrl+Enter` / `Cmd+Enter` for note save
@@ -22,9 +23,10 @@
 - page shell and tabs
 - todo form and empty state
 - todo item lifecycle
+- todo deadline and priority validation
 - notes form and empty state
 - note item lifecycle
-- local storage and cross-tab sync
+- API hydration and load-error handling
 - keyboard and accessibility states
 - tab behavior execution results
 
@@ -41,6 +43,9 @@
 - Priority: `P0`
 - Stable hooks already available:
   - `#todoInput`
+  - `#todoDescriptionInput`
+  - `#todoPriorityInput`
+  - `#todoDeadlineInput`
   - `#noteInput`
   - `data-tab-trigger`
   - `data-tab-panel`
@@ -52,15 +57,15 @@
 - First automation slices to implement:
   - tab switching
   - todo happy path
+  - todo deadline negative path
   - notes happy path
-  - localStorage persistence
-  - cross-tab sync
+  - productivity API error feedback
 
 ## Executable Suites
 
 - [productivity-tabs.test.mjs](../unit-js/productivity-tabs.test.mjs): tabs, active state, panel visibility, no-route-change behavior
-- [productivity-interactions.test.mjs](../unit-js/productivity-interactions.test.mjs): todo and note forms, empty states, edit/delete flows, keyboard save behavior, invalid states
-- [productivity-storage.test.mjs](../unit-js/productivity-storage.test.mjs): storage hydration, malformed storage fallback, cross-tab sync
+- [productivity-interactions.test.mjs](../unit-js/productivity-interactions.test.mjs): todo and note forms, deadline validation, edit/delete flows, keyboard save behavior, invalid states
+- [productivity-api.test.mjs](../unit-js/productivity-api.test.mjs): initial API hydration and load-failure fallback
 - [09-executable-coverage-results.md](09-executable-coverage-results.md): consolidated executed result for current productivity coverage
 
 ## Plans
