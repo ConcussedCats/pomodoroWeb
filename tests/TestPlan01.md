@@ -121,6 +121,11 @@ For the implementation order and automation strategy, see [AutomationRoadmap.md]
   - [08-cross-tab-sync-and-mini-timer](e2e/08-cross-tab-sync-and-mini-timer.md)
   - [09-static-and-error-pages-smoke](e2e/09-static-and-error-pages-smoke.md)
 
+### Manual Checklists
+
+- [Manual checklists index](manual/README.md)
+  - [01-core-flows-regression-checklist](manual/01-core-flows-regression-checklist.md)
+
 ## Folder Conventions
 
 - Every folder contains a `README.md` with the source surface and file index.
