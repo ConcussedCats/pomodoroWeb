@@ -158,6 +158,48 @@ test("[ui-negative] whitespace-only login input stays disabled and shows require
     assert.equal(runtime.passwordError.textContent, "Password is required");
 });
 
+test("[ui-negative] missing identifier keeps submit disabled and only marks the identifier field invalid", () => {
+    const runtime = bootstrapLoginPage();
+
+    runtime.identifierInput.value = "   ";
+    runtime.passwordInput.value = "valid-password";
+    runtime.identifierInput.dispatchEvent({ type: "input", target: runtime.identifierInput });
+    runtime.passwordInput.dispatchEvent({ type: "input", target: runtime.passwordInput });
+
+    assert.equal(runtime.submitButton.disabled, true);
+
+    const submitEvent = {
+        type: "submit",
+        target: runtime.form
+    };
+    runtime.form.dispatchEvent(submitEvent);
+
+    assert.equal(submitEvent.defaultPrevented, true);
+    assert.equal(runtime.identifierError.textContent, "Email or username is required");
+    assert.equal(runtime.passwordError.classList.contains("hidden"), true);
+});
+
+test("[ui-negative] missing password keeps submit disabled and only marks the password field invalid", () => {
+    const runtime = bootstrapLoginPage();
+
+    runtime.identifierInput.value = "user@test.com";
+    runtime.passwordInput.value = "   ";
+    runtime.identifierInput.dispatchEvent({ type: "input", target: runtime.identifierInput });
+    runtime.passwordInput.dispatchEvent({ type: "input", target: runtime.passwordInput });
+
+    assert.equal(runtime.submitButton.disabled, true);
+
+    const submitEvent = {
+        type: "submit",
+        target: runtime.form
+    };
+    runtime.form.dispatchEvent(submitEvent);
+
+    assert.equal(submitEvent.defaultPrevented, true);
+    assert.equal(runtime.identifierError.classList.contains("hidden"), true);
+    assert.equal(runtime.passwordError.textContent, "Password is required");
+});
+
 test("[ui-negative] forbidden 67-style login identifiers are blocked client-side with a visible message", () => {
     const runtime = bootstrapLoginPage();
 
@@ -179,4 +221,23 @@ test("[ui-negative] forbidden 67-style login identifiers are blocked client-side
     assert.equal(submitEvent.defaultPrevented, true);
     assert.equal(runtime.formMessage.classList.contains("hidden"), false);
     assert.equal(runtime.formMessage.textContent, "67 and six seven are not allowed here.");
+});
+
+test("[ui-negative] correcting a forbidden login identifier clears the error and re-enables submit", () => {
+    const runtime = bootstrapLoginPage();
+
+    runtime.identifierInput.value = "67";
+    runtime.passwordInput.value = "valid-password";
+    runtime.identifierInput.dispatchEvent({ type: "input", target: runtime.identifierInput });
+    runtime.passwordInput.dispatchEvent({ type: "input", target: runtime.passwordInput });
+
+    assert.equal(runtime.submitButton.disabled, true);
+    assert.equal(runtime.identifierError.textContent, "67 and six seven are not allowed here.");
+
+    runtime.identifierInput.value = "pancake";
+    runtime.identifierInput.dispatchEvent({ type: "input", target: runtime.identifierInput });
+
+    assert.equal(runtime.identifierError.classList.contains("hidden"), true);
+    assert.equal(runtime.submitButton.disabled, false);
+    assert.equal(runtime.submitButton.getAttribute("aria-disabled"), "false");
 });

@@ -57,7 +57,7 @@ test.describe("home timer flow", () => {
     test("running timer survives page reload and keeps countdown state", async ({ page }) => {
         test.skip(
             baseUrl.includes("teclos.space"),
-            "Known remote issue: the deployed teclos.space home timer resets to 25:00 after reload instead of restoring countdown state."
+            "Retested on April 9, 2026: remote teclos.space still does not provide a stable countdown-reload contract for this spec."
         );
 
         await openHomeWithCleanTimerState(page);
@@ -66,12 +66,14 @@ test.describe("home timer flow", () => {
         const startButton = page.locator("#startBtn");
 
         await startButton.click();
-        await page.waitForTimeout(2200);
+        await expect
+            .poll(async () => parseTime(await timeDisplay.textContent()), { timeout: 5000 })
+            .toBeLessThan(25 * 60);
 
         const beforeReload = await timeDisplay.textContent();
         expect(parseTime(beforeReload)).toBeLessThan(25 * 60);
 
-        await page.reload({ waitUntil: "domcontentloaded" });
+        await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
 
         await expect
             .poll(async () => parseTime(await timeDisplay.textContent()), { timeout: 4000 })
