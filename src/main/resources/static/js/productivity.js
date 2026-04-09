@@ -215,6 +215,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
     }
 
+    function containsForbiddenValue(value) {
+        const normalized = String(value)
+            .trim()
+            .replace(/\s+/g, " ")
+            .toLowerCase();
+
+        return normalized === "67" || normalized === "six seven";
+    }
+
     function clearFormMessage(type) {
         const messageElement = formMessages[type];
         if (!messageElement) return;
@@ -299,9 +308,11 @@ document.addEventListener("DOMContentLoaded", () => {
     function validateTodoDraft(container, draft) {
         const titleInput = container.querySelector('[name="title"]');
         const priorityInput = container.querySelector('[name="priority"]');
+        const deadlineInput = container.querySelector('[name="deadline"]');
 
         markInvalid(titleInput, false);
         markInvalid(priorityInput, false);
+        markInvalid(deadlineInput, false);
 
         if (!draft.title) {
             markInvalid(titleInput, true);
@@ -309,10 +320,31 @@ document.addEventListener("DOMContentLoaded", () => {
             return "Please enter a task before adding it.";
         }
 
+        if (containsForbiddenValue(draft.title) || containsForbiddenValue(draft.description)) {
+            markInvalid(titleInput, true);
+            titleInput?.focus();
+            return "67 and six seven are not allowed here.";
+        }
+
         if (!draft.priority) {
             markInvalid(priorityInput, true);
             priorityInput?.focus();
             return "Please choose a priority.";
+        }
+
+        if (draft.deadline) {
+            const deadline = new Date(draft.deadline);
+            if (Number.isNaN(deadline.getTime())) {
+                markInvalid(deadlineInput, true);
+                deadlineInput?.focus();
+                return "Please enter a valid deadline.";
+            }
+
+            if (deadline.getTime() < Date.now()) {
+                markInvalid(deadlineInput, true);
+                deadlineInput?.focus();
+                return "Deadline cannot be in the past.";
+            }
         }
 
         return null;
@@ -535,6 +567,13 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        if (containsForbiddenValue(value)) {
+            markInvalid(input, true);
+            showFormMessage("notes", "67 and six seven are not allowed here.");
+            input?.focus();
+            return;
+        }
+
         try {
             const createdNote = await createNote({ noteText: value });
             state.items.notes = [createdNote, ...state.items.notes];
@@ -593,6 +632,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!nextValue) {
             markInvalid(editor, true);
+            showFormMessage("notes", "Please enter a note before saving it.");
+            editor?.focus();
+            return;
+        }
+
+        if (containsForbiddenValue(nextValue)) {
+            markInvalid(editor, true);
+            showFormMessage("notes", "67 and six seven are not allowed here.");
             editor?.focus();
             return;
         }

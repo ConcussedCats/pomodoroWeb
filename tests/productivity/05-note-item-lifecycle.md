@@ -32,6 +32,7 @@ As a user, I can edit, save, cancel, and delete existing notes while preserving 
 ## Negative / Edge Scenarios
 
 - empty edited note content is rejected
+- `67` / `six seven` note edits are rejected
 - HTML/script content in notes must be escaped, not executed
 - invalid or corrupted timestamps should degrade to an empty timestamp string instead of crashing
 
@@ -43,5 +44,5 @@ As a user, I can edit, save, cancel, and delete existing notes while preserving 
 
 ## Data / Auth / Storage Notes
 
-- note edits mutate `telos.productivity.v1`
+- note edits use `/api/productivity/notes/{id}`
 - note items do not support completion state

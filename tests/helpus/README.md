@@ -21,9 +21,19 @@
 - donation block and QR image
 - external link behavior
 
+## Automation Notes
+
+- Primary automation layer: `Playwright`
+- Secondary layer: `WebMvc smoke` for page render only
+- Priority: `P2`
+- Good candidates for browser assertions:
+  - external links
+  - QR image presence
+  - support copy visibility
+
 ## Plans
 
-- [01-page-shell-and-static-copy.md](01-page-shell-and-static-copy.md)
-- [02-support-options-links.md](02-support-options-links.md)
-- [03-donation-block-and-image.md](03-donation-block-and-image.md)
-- [04-external-link-behavior.md](04-external-link-behavior.md)
+- [01-page-shell-and-static-copy.md](01-page-shell-and-static-copy.md) — `WebMvc smoke`
+- [02-support-options-links.md](02-support-options-links.md) — `Playwright`
+- [03-donation-block-and-image.md](03-donation-block-and-image.md) — `Playwright`
+- [04-external-link-behavior.md](04-external-link-behavior.md) — `Playwright`

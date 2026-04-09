@@ -28,6 +28,7 @@
 - password form
 - session API feedback and CSRF
 - JWT API parity notes
+- frontend validation execution results
 
 ## Related Shared Docs
 
@@ -35,10 +36,39 @@
 - [Footer](../footer/README.md)
 - [Mini timer scripts](../mini-timer-scripts/README.md)
 
+## Automation Notes
+
+- Primary automation layers:
+  - `WebMvc` / integration for auth guards and API contracts
+  - `Playwright` for browser form behavior
+- Priority: `P0`
+- Stable hooks already available:
+  - `#username-form`
+  - `#password-form`
+  - `#username`
+  - `#oldPassword`
+  - `#newPassword`
+  - `#confirmNewPassword`
+  - `#username-message`
+  - `#password-message`
+- First automation slices to implement:
+  - auth guard on `/user`
+  - username happy path and conflict path
+  - password happy path and invalid current password path
+  - CSRF/session contract checks
+
+## Executable Suites
+
+- [UserRestControllerTest.java](../../src/test/java/com/example/telos/api/UserRestControllerTest.java): session API contract coverage for username/password endpoints, including `401`, `403`, validation, conflict, and business-rule errors
+- [UserJwtControllerTest.java](../../src/test/java/com/example/telos/api/UserJwtControllerTest.java): JWT API contract coverage for username/password/time-settings endpoints, including bearer-auth success and failure paths
+- [user-profile-validation.test.mjs](../unit-js/user-profile-validation.test.mjs): section presence, username validation, password confirm logic, minimum length, valid submit path with mocked fetch
+- [06-validation-execution-results.md](06-validation-execution-results.md): executed frontend validation result
+
 ## Plans
 
-- [01-page-shell-and-auth-guard.md](01-page-shell-and-auth-guard.md)
-- [02-username-form.md](02-username-form.md)
-- [03-password-form.md](03-password-form.md)
-- [04-session-api-feedback-and-csrf.md](04-session-api-feedback-and-csrf.md)
-- [05-jwt-api-parity-notes.md](05-jwt-api-parity-notes.md)
+- [01-page-shell-and-auth-guard.md](01-page-shell-and-auth-guard.md) — `WebMvc P0`
+- [02-username-form.md](02-username-form.md) — `Playwright` + `WebMvc API`
+- [03-password-form.md](03-password-form.md) — `Playwright` + `WebMvc API`
+- [04-session-api-feedback-and-csrf.md](04-session-api-feedback-and-csrf.md) — `WebMvc / integration P0`
+- [05-jwt-api-parity-notes.md](05-jwt-api-parity-notes.md) — `WebMvc JWT API P1`
+- [06-validation-execution-results.md](06-validation-execution-results.md) — executed JS frontend suite

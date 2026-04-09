@@ -21,8 +21,18 @@
 - recovery navigation
 - partial mini-timer script inclusion
 
+## Automation Notes
+
+- Primary automation layer: `WebMvc` / integration
+- Secondary layer: `Playwright`
+- Priority: `P1`
+- Good first checks:
+  - missing route renders custom 404 page
+  - recovery link works
+  - page-specific mini-timer script behavior stays distinct from other pages
+
 ## Plans
 
-- [01-not-found-content.md](01-not-found-content.md)
-- [02-recovery-navigation.md](02-recovery-navigation.md)
-- [03-mini-timer-script-inclusion.md](03-mini-timer-script-inclusion.md)
+- [01-not-found-content.md](01-not-found-content.md) — `WebMvc / integration`
+- [02-recovery-navigation.md](02-recovery-navigation.md) — `Playwright smoke`
+- [03-mini-timer-script-inclusion.md](03-mini-timer-script-inclusion.md) — `Playwright`

@@ -25,8 +25,31 @@
 - runtime contract with header mini-timer markup
 - settings sync side effects
 
+## Automation Notes
+
+- Primary automation layer: `Playwright`
+- Secondary layer: future JS-unit coverage only if the timer runtime gets isolated further
+- Priority: `P1`
+- Stable hooks already available:
+  - `#miniTimer`
+  - `#miniTimerMode`
+  - `#miniTimerTime`
+  - `#miniTimerStatus`
+- First automation slices to implement:
+  - mini-timer hydration on non-home pages
+  - storage-driven updates
+  - authenticated sync side effects
+
+## Executable Coverage
+
+- [mini-timer.test.mjs](../unit-js/mini-timer.test.mjs) now validates:
+  - persisted running state hydration
+  - mode/time/status mirroring after `timer:state-updated`
+  - storage-driven updates without reload
+  - state continuity across a new page bootstrap with shared storage
+
 ## Plans
 
-- [01-script-injection-order.md](01-script-injection-order.md)
-- [02-mini-timer-runtime-contract.md](02-mini-timer-runtime-contract.md)
-- [03-settings-sync-side-effects.md](03-settings-sync-side-effects.md)
+- [01-script-injection-order.md](01-script-injection-order.md) — `Playwright smoke`
+- [02-mini-timer-runtime-contract.md](02-mini-timer-runtime-contract.md) — `Playwright P1`
+- [03-settings-sync-side-effects.md](03-settings-sync-side-effects.md) — `Playwright P1`
