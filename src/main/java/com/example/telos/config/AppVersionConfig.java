@@ -2,7 +2,6 @@ package com.example.telos.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.stereotype.Component;
 
@@ -18,10 +17,6 @@ public class AppVersionConfig {
 
     public AppVersionConfig(ObjectMapper objectMapper) {
         this.version = readVersion(objectMapper);
-    }
-
-    public String getVersion() {
-        return version;
     }
 
     private String readVersion(ObjectMapper objectMapper) {
