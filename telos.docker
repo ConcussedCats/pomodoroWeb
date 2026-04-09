@@ -7,6 +7,7 @@ RUN apk add --no-cache openjdk21-jdk && \
 
 ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} /app/app.jar
+COPY version.json /app/version.json
 
 USER spring
 EXPOSE 8080
