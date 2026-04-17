@@ -1,7 +1,8 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const timerStateStore = window.PomodoroTimerState;
+    const isAuthenticated = window.TelosAuth?.authenticated === true;
 
-    if (!timerStateStore) return;
+    if (!timerStateStore || !isAuthenticated) return;
 
     function mapApiSettingsToLocal(settings) {
         return timerStateStore.normalizeSettings({
