@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
+import java.security.Principal;
+
 public class PostLoginRedirects {
 
     private static final String POST_LOGIN_REDIRECT_KEY = "POST_LOGIN_REDIRECT";
@@ -21,8 +23,9 @@ public class PostLoginRedirects {
         request.getSession(true).setAttribute(POST_LOGIN_REDIRECT_KEY, target);
     }
 
-    public static void saveTargetForAnonymous(Authentication authentication, HttpServletRequest request, String target) {
-        if (authentication == null
+    public static void saveTargetForAnonymous(HttpServletRequest request, String target) {
+        Principal principal = request.getUserPrincipal();
+        if (!(principal instanceof Authentication authentication)
                 || !authentication.isAuthenticated()
                 || authentication instanceof AnonymousAuthenticationToken) {
             saveTarget(request, target);
