@@ -81,7 +81,10 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/user", true)
+                        .successHandler((request, response, authentication) -> {
+                            String redirectTarget = PostLoginRedirects.consumeTarget(request);
+                            response.sendRedirect(request.getContextPath() + redirectTarget);
+                        })
                         .permitAll()
                 )
                 .logout(logout -> logout
