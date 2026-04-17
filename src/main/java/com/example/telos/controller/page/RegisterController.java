@@ -3,6 +3,7 @@ package com.example.telos.controller.page;
 import com.example.telos.dto.RegisterRequest;
 import com.example.telos.exception.UsernameAlreadyTakenException;
 import com.example.telos.model.User;
+import com.example.telos.security.PostLoginRedirects;
 import com.example.telos.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,7 +60,7 @@ public class RegisterController {
         try {
             User user = userService.register(registerRequest);
             authenticateUser(user.getEmail(), registerRequest.getPassword(), request, response);
-            return "redirect:/user";
+            return "redirect:" + PostLoginRedirects.consumeTarget(request);
         } catch (UsernameAlreadyTakenException | IllegalArgumentException exception) {
             fillFormModel(model, registerRequest, exception.getMessage());
             return "register";
