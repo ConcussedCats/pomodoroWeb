@@ -5,6 +5,7 @@ import com.example.telos.validation.NoForbidden67Token;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 public class ToDoDto {
     @NotBlank(message = "ToDo title cannot be empty")
     @Size(max = 25, message = "ToDo title cannot be longer than 25 characters")
+    @Pattern(regexp = "^[^\\p{Cntrl}]+$", message = "ToDo title cannot contain line breaks or control characters")
     @NoForbidden67Token
     private String title;
 
@@ -26,6 +28,7 @@ public class ToDoDto {
     @NoForbidden67Token
     private String description;
 
+    @NotNull(message = "Task completion status is required")
     private Boolean isDone;
 
     @NotNull(message = "Task priority is required")

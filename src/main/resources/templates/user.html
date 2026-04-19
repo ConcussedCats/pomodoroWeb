@@ -27,7 +27,7 @@
 
                         <div class="auth-field">
                             <label class="settings-label" for="username">Username</label>
-                            <input type="text" id="username" class="settings-input auth-input" name="username" autocomplete="username" th:value="${curUsername}">
+                            <input type="text" id="username" class="settings-input auth-input" name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_-]{3,30}" autocomplete="username" th:value="${curUsername}">
                             <p class="form-field-error hidden" data-error-for="username"></p>
                         </div>
 
@@ -47,7 +47,7 @@
 
                         <div class="auth-field">
                             <label class="settings-label" for="newPassword">New Password</label>
-                            <input type="password" id="newPassword" class="settings-input auth-input" name="newPassword" autocomplete="new-password">
+                            <input type="password" id="newPassword" class="settings-input auth-input" name="newPassword" minlength="8" autocomplete="new-password">
                             <p class="form-field-error hidden" data-error-for="newPassword"></p>
                         </div>
 

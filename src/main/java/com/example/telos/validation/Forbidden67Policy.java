@@ -1,6 +1,6 @@
 package com.example.telos.validation;
 
-public final class Forbidden67Policy {
+public class Forbidden67Policy {
 
     public static final String DEFAULT_MESSAGE = "67 and six seven are not allowed here";
 
