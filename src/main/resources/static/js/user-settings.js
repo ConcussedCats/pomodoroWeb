@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const MIN_PASSWORD_LENGTH = 8;
+    const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens";
+    const PASSWORD_MESSAGE = "Password must be at least 8 characters and include uppercase, lowercase, and a number";
     const FORBIDDEN_VALUE_MESSAGE = "67 and six seven are not allowed here";
     const usernameForm = document.querySelector("#username-form");
     const passwordForm = document.querySelector("#password-form");
@@ -50,8 +52,21 @@ document.addEventListener("DOMContentLoaded", () => {
         return normalized === "67" || normalized === "six seven";
     }
 
+    function normalizeUsername(value) {
+        return value.replace(/\s+/g, "_");
+    }
+
+    function isValidUsername(value) {
+        return /^[A-Za-z0-9_-]{3,30}$/.test(value);
+    }
+
+    function isValidPassword(value) {
+        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(value);
+    }
+
     function validateUsername() {
-        const username = usernameInput.value.trim();
+        const username = normalizeUsername(usernameInput.value);
+        usernameInput.value = username;
         clearFieldError(usernameInput, usernameError);
 
         if (!username) {
@@ -61,6 +76,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (hasForbiddenUsername(username)) {
             showFieldError(usernameInput, usernameError, FORBIDDEN_VALUE_MESSAGE);
+            return false;
+        }
+
+        if (!isValidUsername(username)) {
+            showFieldError(usernameInput, usernameError, USERNAME_MESSAGE);
             return false;
         }
 
@@ -89,6 +109,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (newPassword.length < MIN_PASSWORD_LENGTH) {
             showFieldError(newPasswordInput, newPasswordError, `New password must be at least ${MIN_PASSWORD_LENGTH} characters`);
             isValid = false;
+        } else if (!isValidPassword(newPassword)) {
+            showFieldError(newPasswordInput, newPasswordError, PASSWORD_MESSAGE);
+            isValid = false;
         }
 
         if (!confirmNewPassword) {
@@ -103,6 +126,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     usernameInput?.addEventListener("input", () => {
+        const normalizedUsername = normalizeUsername(usernameInput.value);
+        if (usernameInput.value !== normalizedUsername) {
+            usernameInput.value = normalizedUsername;
+        }
         clearFieldError(usernameInput, usernameError);
         clearMessage(usernameMessage);
     });
@@ -128,7 +155,8 @@ document.addEventListener("DOMContentLoaded", () => {
         usernameForm.addEventListener("submit", async (event) => {
             event.preventDefault();
 
-            const username = usernameInput.value.trim();
+            const username = normalizeUsername(usernameInput.value);
+            usernameInput.value = username;
             clearMessage(usernameMessage);
 
             if (!validateUsername()) {

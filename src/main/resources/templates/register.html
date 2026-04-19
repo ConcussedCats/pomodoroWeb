@@ -28,6 +28,9 @@
                                 id="registerUsername"
                                 class="settings-input auth-input"
                                 name="username"
+                                minlength="3"
+                                maxlength="30"
+                                pattern="[A-Za-z0-9_-]{3,30}"
                                 autocomplete="username"
                                 th:value="${username}">
                         <p class="form-field-error hidden" data-error-for="registerUsername"></p>
@@ -51,6 +54,7 @@
                                 type="password"
                                 id="registerPassword"
                                 class="settings-input auth-input"
+                                minlength="8"
                                 name="password"
                                 autocomplete="new-password">
                         <p class="form-field-error hidden" data-error-for="registerPassword"></p>
@@ -83,5 +87,6 @@
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
     <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+    <script th:src="@{/js/register-validation.js}"></script>
 </body>
 </html>

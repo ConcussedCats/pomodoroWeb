@@ -11,6 +11,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -94,8 +95,15 @@ public class ToDoServiceImpl implements ToDoService {
     }
 
     private void applyDto(ToDo toDo, ToDoDto toDoDto) {
-        toDo.setTitle(toDoDto.getTitle());
-        toDo.setDescription(toDoDto.getDescription());
+        if (toDoDto.getDeadline() != null && toDoDto.getDeadline().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Deadline cannot be in the past");
+        }
+
+        String title = toDoDto.getTitle().trim();
+        String description = toDoDto.getDescription() == null ? null : toDoDto.getDescription().trim();
+
+        toDo.setTitle(title);
+        toDo.setDescription(description == null || description.isBlank() ? null : description);
         toDo.setIsDone(toDoDto.getIsDone());
         toDo.setPriority(toDoDto.getPriority());
         toDo.setDeadline(toDoDto.getDeadline());

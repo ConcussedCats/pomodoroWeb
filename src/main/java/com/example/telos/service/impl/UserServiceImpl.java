@@ -12,6 +12,7 @@ import com.example.telos.repository.UserRepository;
 import com.example.telos.repository.UserTimeSettingsRepository;
 import com.example.telos.service.UserService;
 import com.example.telos.validation.Forbidden67Policy;
+import com.example.telos.validation.InputValidationPolicy;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -63,6 +64,15 @@ public class UserServiceImpl implements UserService {
 
         if (password == null || password.isBlank() || confirmPassword == null || confirmPassword.isBlank())
             throw new NullEntityReferenceException("Password cannot be empty");
+
+        if (Forbidden67Policy.containsForbiddenToken(username))
+            throw new IllegalArgumentException(Forbidden67Policy.DEFAULT_MESSAGE);
+
+        if (!InputValidationPolicy.isValidUsername(username))
+            throw new IllegalArgumentException(InputValidationPolicy.USERNAME_MESSAGE);
+
+        if (!InputValidationPolicy.isValidPassword(password))
+            throw new IllegalArgumentException(InputValidationPolicy.PASSWORD_MESSAGE);
 
         if (!password.equals(confirmPassword))
             throw new IllegalArgumentException("Password and confirm password don't match");
@@ -124,13 +134,17 @@ public class UserServiceImpl implements UserService {
         if (Forbidden67Policy.containsForbiddenToken(username))
             throw new IllegalArgumentException(Forbidden67Policy.DEFAULT_MESSAGE);
 
-        Optional<User> checkUser = userRepository.findByUsername(username.trim());
+        String trimmedUsername = username.trim();
+        if (!InputValidationPolicy.isValidUsername(trimmedUsername))
+            throw new IllegalArgumentException(InputValidationPolicy.USERNAME_MESSAGE);
+
+        Optional<User> checkUser = userRepository.findByUsername(trimmedUsername);
         User user = findByEmailOrUsername(login);
 
         if  (checkUser.isPresent() && !checkUser.get().getUserId().equals(user.getUserId()))
             throw new UsernameAlreadyTakenException("Username is already taken");
 
-        user.setUsername(username.trim());
+        user.setUsername(trimmedUsername);
         update(user);
         return new UserUsernameResponseDto(
                 user.getUsername(),
@@ -154,10 +168,16 @@ public class UserServiceImpl implements UserService {
         if (userPasswordDto.getNewPassword().length() < 8)
             throw new IllegalArgumentException("New password must be at least 8 characters");
 
+        if (!InputValidationPolicy.isValidPassword(userPasswordDto.getNewPassword()))
+            throw new IllegalArgumentException(InputValidationPolicy.PASSWORD_MESSAGE);
+
         User user = findByEmailOrUsername(login);
 
         if (!passwordEncoder.matches(userPasswordDto.getOldPassword(), user.getPassword()))
             throw new IllegalArgumentException("Current password is incorrect");
+
+        if (passwordEncoder.matches(userPasswordDto.getNewPassword(), user.getPassword()))
+            throw new IllegalArgumentException("New password must be different from current password");
 
         user.setPassword(passwordEncoder.encode(userPasswordDto.getNewPassword()));
         update(user);
