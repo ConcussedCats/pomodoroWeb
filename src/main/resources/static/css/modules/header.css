@@ -264,6 +264,13 @@
 
 .account-menu__button {
     font-family: inherit;
+    color: var(--color-primary-light);
+}
+
+.account-menu__link,
+.account-menu__link:link,
+.account-menu__link:visited {
+    color: var(--color-text);
 }
 
 .account-menu__form {
@@ -281,6 +288,11 @@
     color: var(--color-text);
     text-decoration: none;
     transition: border-color var(--transition-normal), background-color var(--transition-normal), transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.profile-entry--compact {
+    gap: 0.55rem;
+    padding: 0.42rem;
 }
 
 .profile-entry:hover,
