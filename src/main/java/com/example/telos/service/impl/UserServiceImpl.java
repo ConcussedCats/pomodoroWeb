@@ -14,7 +14,6 @@ import com.example.telos.service.UserService;
 import com.example.telos.validation.Forbidden67Policy;
 import com.example.telos.validation.InputValidationPolicy;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
