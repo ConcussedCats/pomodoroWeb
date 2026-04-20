@@ -3,6 +3,7 @@ const timerSection = document.getElementById("timerSection");
 const settingsSection = document.getElementById("settingsSection");
 const saveSettingsBtn = document.getElementById("saveSettings");
 const cancelSettingsBtn = document.getElementById("cancelSettings");
+const settingsCloseBtn = document.getElementById("settingsClose");
 
 const pomodoroInput = document.getElementById("pomodoroTime");
 const shortBreakInput = document.getElementById("shortBreakTime");
@@ -10,9 +11,12 @@ const longBreakInput = document.getElementById("longBreakTime");
 const soundEnabledInput = document.getElementById("soundEnabled");
 const focusCyclesInput = document.getElementById("focusCycles");
 const settingsError = document.getElementById("settingsError");
+const settingsSummaryFocus = document.getElementById("settingsSummaryFocus");
+const settingsSummaryTotal = document.getElementById("settingsSummaryTotal");
 const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
 const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
-const isAuthenticated = document.querySelector('meta[name="is-authenticated"]')?.content === "true";
+const isAuthenticated = window.TelosAuth?.authenticated === true
+    || document.querySelector('meta[name="is-authenticated"]')?.content === "true";
 
 const timerStateStore = window.PomodoroTimerState;
 
@@ -62,6 +66,63 @@ function applySettingsToInputs(settings) {
     longBreakInput.value = settings.longBreak;
     soundEnabledInput.checked = settings.soundEnabled;
     focusCyclesInput.value = settings.focusCycles;
+    updateSettingsSummary();
+}
+
+async function parseJsonResponse(response) {
+    const text = await response.text();
+    if (!text) return {};
+
+    try {
+        return JSON.parse(text);
+    } catch (error) {
+        return {};
+    }
+}
+
+function createApiError(response, data, fallbackMessage) {
+    const error = new Error(data.message || fallbackMessage);
+    error.status = response.status;
+    return error;
+}
+
+function updateSettingsSummary() {
+    if (!settingsSummaryFocus || !pomodoroInput) return;
+
+    const focusMinutes = getSummaryNumber(pomodoroInput, savedSettings.pomodoro);
+    const shortBreakMinutes = getSummaryNumber(shortBreakInput, savedSettings.shortBreak);
+    const focusCycles = getSummaryNumber(focusCyclesInput, savedSettings.focusCycles);
+    const totalMinutes = getTotalSessionMinutes(focusMinutes, shortBreakMinutes, focusCycles);
+
+    settingsSummaryFocus.textContent = formatDuration(focusMinutes);
+    if (settingsSummaryTotal) {
+        settingsSummaryTotal.textContent = formatDuration(totalMinutes);
+    }
+}
+
+function getSummaryNumber(input, fallback) {
+    const value = Number(String(input?.value ?? "").trim());
+    return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
+function getTotalSessionMinutes(focusMinutes, shortBreakMinutes, focusCycles) {
+    return (focusMinutes + shortBreakMinutes) * focusCycles;
+}
+
+function formatDuration(totalMinutes) {
+    const safeMinutes = Math.max(0, Math.round(totalMinutes));
+    const hours = Math.floor(safeMinutes / 60);
+    const minutes = safeMinutes % 60;
+
+    if (hours <= 0) {
+        return `${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
+    }
+
+    if (minutes === 0) {
+        return `${hours} ${hours === 1 ? "hour" : "hours"}`;
+    }
+
+    return `${hours} ${hours === 1 ? "hour" : "hours"} ${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
 }
 
 function clearValidationState() {
@@ -150,45 +211,60 @@ function openSettings() {
     savedSettings = loadSettingsFromStorage();
     applySettingsToInputs(savedSettings);
     clearValidationState();
-    timerSection.classList.add("hidden");
+    document.body.classList.add("settings-modal-open");
     settingsSection.classList.remove("hidden");
 }
 
 function closeSettings() {
     settingsSection.classList.add("hidden");
-    timerSection.classList.remove("hidden");
+    document.body.classList.remove("settings-modal-open");
 }
 
 async function fetchSettingsFromApi() {
     const response = await fetch("/api/user/time-settings", {
         method: "GET",
+        credentials: "same-origin",
         headers: {
             ...(csrfToken && csrfHeader ? { [csrfHeader]: csrfToken } : {})
         }
     });
 
     if (!response.ok) {
-        throw new Error("Failed to load settings from server");
+        const data = await parseJsonResponse(response);
+        throw createApiError(response, data, "Failed to load settings from server");
     }
 
-    const data = await response.json();
+    const data = await parseJsonResponse(response);
     return mapApiSettingsToLocal(data);
 }
 
 async function saveSettingsToApi(settings) {
     const response = await fetch("/api/user/time-settings", {
         method: "PATCH",
+        credentials: "same-origin",
         headers: getRequestHeaders(),
         body: JSON.stringify(mapLocalSettingsToApi(settings))
     });
 
-    const data = await response.json();
+    const data = await parseJsonResponse(response);
 
     if (!response.ok) {
-        throw new Error(data.message || "Failed to sync settings with server");
+        throw createApiError(response, data, "Failed to sync settings with server");
     }
 
     return mapApiSettingsToLocal(data);
+}
+
+function isAnonymousApiError(error) {
+    return error.status === 401 || error.status === 403;
+}
+
+async function getSettingsForSave(validatedSettings) {
+    if (!isAuthenticated) {
+        return validatedSettings;
+    }
+
+    return saveSettingsToApi(validatedSettings);
 }
 
 async function saveSettings() {
@@ -196,9 +272,7 @@ async function saveSettings() {
     if (!validatedSettings) return;
 
     try {
-        const nextSettings = isAuthenticated
-            ? await saveSettingsToApi(validatedSettings)
-            : validatedSettings;
+        const nextSettings = await getSettingsForSave(validatedSettings);
 
         savedSettings = timerStateStore.saveSettings(nextSettings);
         document.dispatchEvent(new CustomEvent("settings:updated", { detail: savedSettings }));
@@ -221,6 +295,7 @@ settingsToggle?.addEventListener("click", () => {
 
 saveSettingsBtn?.addEventListener("click", saveSettings);
 cancelSettingsBtn?.addEventListener("click", cancelSettings);
+settingsCloseBtn?.addEventListener("click", cancelSettings);
 
 fieldConfig.forEach(({ input }) => {
     input.addEventListener("input", () => {
@@ -232,7 +307,15 @@ fieldConfig.forEach(({ input }) => {
             settingsError.classList.add("hidden");
             settingsError.style.color = "";
         }
+
+        updateSettingsSummary();
     });
+});
+
+document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && settingsSection && !settingsSection.classList.contains("hidden")) {
+        cancelSettings();
+    }
 });
 
 window.addEventListener("storage", (event) => {
@@ -262,7 +345,9 @@ async function syncSettingsOnLoad() {
     } catch (error) {
         savedSettings = loadSettingsFromStorage();
         applySettingsToInputs(savedSettings);
-        showSettingsMessage("Failed to sync timer settings from server");
+        if (isAuthenticated || !isAnonymousApiError(error)) {
+            showSettingsMessage("Failed to sync timer settings from server");
+        }
         document.dispatchEvent(new CustomEvent("settings:loaded", { detail: savedSettings }));
     }
 }

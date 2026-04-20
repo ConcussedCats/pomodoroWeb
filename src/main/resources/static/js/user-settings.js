@@ -1,7 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     const MIN_PASSWORD_LENGTH = 8;
+    const MAX_PASSWORD_LENGTH = 64;
     const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens";
-    const PASSWORD_MESSAGE = "Password must be at least 8 characters and include uppercase, lowercase, and a number";
+    const PASSWORD_MESSAGE = `Password must be ${MIN_PASSWORD_LENGTH}-${MAX_PASSWORD_LENGTH} characters and include uppercase, lowercase, and a number`;
     const FORBIDDEN_VALUE_MESSAGE = "67 and six seven are not allowed here";
     const usernameForm = document.querySelector("#username-form");
     const passwordForm = document.querySelector("#password-form");
@@ -12,6 +13,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const oldPasswordInput = document.querySelector("#oldPassword");
     const newPasswordInput = document.querySelector("#newPassword");
     const confirmNewPasswordInput = document.querySelector("#confirmNewPassword");
+    const profilePasswordRules = document.querySelector("#profilePasswordRules");
+    const profilePasswordRuleItems = {
+        length: document.querySelector('[data-profile-password-rule="length"]'),
+        max: document.querySelector('[data-profile-password-rule="max"]'),
+        lowercase: document.querySelector('[data-profile-password-rule="lowercase"]'),
+        uppercase: document.querySelector('[data-profile-password-rule="uppercase"]'),
+        number: document.querySelector('[data-profile-password-rule="number"]')
+    };
 
     const usernameMessage = document.querySelector("#username-message");
     const passwordMessage = document.querySelector("#password-message");
@@ -61,7 +70,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function isValidPassword(value) {
-        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(value);
+        return value.length >= MIN_PASSWORD_LENGTH
+            && value.length <= MAX_PASSWORD_LENGTH
+            && /[a-z]/.test(value)
+            && /[A-Z]/.test(value)
+            && /\d/.test(value);
+    }
+
+    function getPasswordRuleState(value) {
+        return {
+            length: value.length >= MIN_PASSWORD_LENGTH,
+            max: value.length <= MAX_PASSWORD_LENGTH,
+            lowercase: /[a-z]/.test(value),
+            uppercase: /[A-Z]/.test(value),
+            number: /\d/.test(value)
+        };
+    }
+
+    function updateProfilePasswordRules() {
+        if (!profilePasswordRules) return;
+
+        const password = newPasswordInput?.value || "";
+        profilePasswordRules.classList.toggle("hidden", password.length === 0);
+
+        const ruleState = getPasswordRuleState(password);
+        Object.entries(profilePasswordRuleItems).forEach(([rule, item]) => {
+            if (!item) return;
+
+            item.classList.toggle("password-rule--valid", ruleState[rule]);
+            item.classList.toggle("password-rule--invalid", !ruleState[rule]);
+        });
     }
 
     function validateUsername() {
@@ -109,6 +147,9 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (newPassword.length < MIN_PASSWORD_LENGTH) {
             showFieldError(newPasswordInput, newPasswordError, `New password must be at least ${MIN_PASSWORD_LENGTH} characters`);
             isValid = false;
+        } else if (newPassword.length > MAX_PASSWORD_LENGTH) {
+            showFieldError(newPasswordInput, newPasswordError, `New password cannot be longer than ${MAX_PASSWORD_LENGTH} characters`);
+            isValid = false;
         } else if (!isValidPassword(newPassword)) {
             showFieldError(newPasswordInput, newPasswordError, PASSWORD_MESSAGE);
             isValid = false;
@@ -142,6 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (input === newPasswordInput) {
                 clearFieldError(newPasswordInput, newPasswordError);
                 clearFieldError(confirmNewPasswordInput, confirmNewPasswordError);
+                updateProfilePasswordRules();
             }
             if (input === confirmNewPasswordInput) {
                 clearFieldError(confirmNewPasswordInput, confirmNewPasswordError);
@@ -223,6 +265,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (response.ok) {
                     showMessage(passwordMessage, data.message, true);
                     passwordForm.reset();
+                    updateProfilePasswordRules();
                 } else {
                     showMessage(passwordMessage, data.message || "Failed to update password", false);
                 }
@@ -241,4 +284,6 @@ document.addEventListener("DOMContentLoaded", () => {
         element.classList.add(isSuccess ? "form-message--success" : "form-message--error");
         element.style.color = isSuccess ? "#4CAF50" : "#ff4d4f";
     }
+
+    updateProfilePasswordRules();
 });

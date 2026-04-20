@@ -8,24 +8,35 @@
     <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
 </head>
 <body>
-    <!-- Header Section --> 
     <th:block th:replace="~{fragments/header :: header('about')}"></th:block>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <div class="container">
-            <h2>About Telos</h2>
-            <p>
-                We will tell you about this a bit later.
-            </p>
-            <p>
-                The product and the team are evolving right now, so this page will be
-                updated once the new story and direction are ready to share.
-            </p>
+    <main class="main-content info-main">
+        <div class="container info-shell">
+            <section class="info-card">
+                <span class="info-card__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z"></path>
+                        <path d="M12 10.5v5"></path>
+                        <path d="M12 7.6h.01"></path>
+                    </svg>
+                </span>
+                <h2 class="info-card__title">About Telos</h2>
+                <p class="info-card__text">
+                    Telos is a focused workspace for deep work sessions, practical tasks, and the small rituals
+                    that make concentration easier to return to.
+                </p>
+                <p class="info-card__text">
+                    The product and the team are still evolving, so the story here will grow as Telos finds its
+                    sharper shape.
+                </p>
+                <div class="info-card__actions">
+                    <a class="btn btn--primary info-card__button info-card__button--primary" th:href="@{/}">Go to timer</a>
+                    <a class="btn btn--secondary info-card__button info-card__button--secondary" th:href="@{/productivity}">Open productivity</a>
+                </div>
+            </section>
         </div>
     </main>
 
-    <!-- Footer -->
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
     <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>

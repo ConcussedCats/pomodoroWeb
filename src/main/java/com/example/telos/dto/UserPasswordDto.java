@@ -17,7 +17,11 @@ public class UserPasswordDto {
     private String oldPassword;
 
     @NotBlank(message = "newPassword cannot be empty")
-    @Size(min = 8, message = "new password must be at least 8 characters")
+    @Size(
+            min = InputValidationPolicy.PASSWORD_MIN_LENGTH,
+            max = InputValidationPolicy.PASSWORD_MAX_LENGTH,
+            message = InputValidationPolicy.PASSWORD_MESSAGE
+    )
     @Pattern(regexp = InputValidationPolicy.PASSWORD_PATTERN, message = InputValidationPolicy.PASSWORD_MESSAGE)
     private String newPassword;
 
