@@ -63,6 +63,9 @@
                         <div class="profile-field">
                             <label class="profile-label" for="confirmNewPassword">Confirm New Password</label>
                             <input type="password" id="confirmNewPassword" class="settings-input profile-input" name="confirmNewPassword" maxlength="64" autocomplete="new-password" placeholder="Repeat new password">
+                            <ul class="password-rules profile-password-match hidden" id="profilePasswordMatchRule" aria-live="polite">
+                                <li data-profile-password-rule="match">Passwords match</li>
+                            </ul>
                             <p class="form-field-error hidden" data-error-for="confirmNewPassword"></p>
                         </div>
 
