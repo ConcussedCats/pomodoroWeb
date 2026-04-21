@@ -22,6 +22,50 @@
     z-index: 1;
 }
 
+.mobile-menu-toggle {
+    display: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.32rem;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-primary-light);
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.mobile-menu-toggle:hover,
+.mobile-menu-toggle:focus-visible {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-primary);
+    outline: none;
+}
+
+.mobile-menu-toggle__line {
+    width: 1.35rem;
+    height: 0.13rem;
+    border-radius: 999px;
+    background: currentColor;
+    transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.header--menu-open .mobile-menu-toggle__line:nth-child(1) {
+    transform: translateY(0.45rem) rotate(45deg);
+}
+
+.header--menu-open .mobile-menu-toggle__line:nth-child(2) {
+    opacity: 0;
+}
+
+.header--menu-open .mobile-menu-toggle__line:nth-child(3) {
+    transform: translateY(-0.45rem) rotate(-45deg);
+}
+
 .header-side {
     justify-self: end;
     display: flex;

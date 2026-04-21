@@ -6,13 +6,18 @@
         //jgs    \(__)|
     </script>
     <div class="header-container">
+        <button class="mobile-menu-toggle" type="button" aria-label="Open navigation menu" aria-controls="primaryNavigation" aria-expanded="false">
+            <span class="mobile-menu-toggle__line" aria-hidden="true"></span>
+            <span class="mobile-menu-toggle__line" aria-hidden="true"></span>
+            <span class="mobile-menu-toggle__line" aria-hidden="true"></span>
+        </button>
         <div class="logo-container">
             <a th:href="@{/}" class="logo-link">
                 <img th:src="@{/assets/icon/icon.ico}" alt="Telos Logo" class="logo-img">
             </a>
             <h1 class="logo">Telos</h1>
         </div>
-        <nav class="nav">
+        <nav class="nav" id="primaryNavigation">
             <a class="nav-btn" th:classappend="${activePage == 'home'} ? ' nav-btn--active' : ''" th:href="@{/}">Timer</a>
             <a class="nav-btn" th:classappend="${activePage == 'productivity'} ? ' nav-btn--active' : ''" th:href="@{/productivity}">Productivity</a>
             <a class="nav-btn" th:classappend="${activePage == 'about'} ? ' nav-btn--active' : ''" th:href="@{/about}">About</a>
@@ -62,4 +67,52 @@
             </div>
         </div>
     </div>
+    <script>
+        (() => {
+            const currentScript = document.currentScript;
+            const header = currentScript.closest(".header");
+            const toggle = header.querySelector(".mobile-menu-toggle");
+            const nav = header.querySelector("#primaryNavigation");
+            const accountMenus = header.querySelectorAll(".account-menu");
+
+            if (!toggle || !nav) return;
+
+            const setMenuOpen = (isOpen) => {
+                header.classList.toggle("header--menu-open", isOpen);
+                toggle.setAttribute("aria-expanded", String(isOpen));
+                toggle.setAttribute("aria-label", isOpen ? "Close navigation menu" : "Open navigation menu");
+            };
+
+            const closeAccountMenus = () => {
+                accountMenus.forEach((menu) => {
+                    menu.open = false;
+                });
+            };
+
+            toggle.addEventListener("click", () => {
+                setMenuOpen(!header.classList.contains("header--menu-open"));
+                closeAccountMenus();
+            });
+
+            nav.addEventListener("click", (event) => {
+                if (event.target.closest("a")) {
+                    setMenuOpen(false);
+                }
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    setMenuOpen(false);
+                    closeAccountMenus();
+                }
+            });
+
+            document.addEventListener("click", (event) => {
+                if (!header.contains(event.target)) {
+                    setMenuOpen(false);
+                    closeAccountMenus();
+                }
+            });
+        })();
+    </script>
 </header>

@@ -439,6 +439,10 @@
     gap: 0.5rem;
 }
 
+.productivity-field--deadline {
+    justify-content: end;
+}
+
 .productivity-field--priority {
     display: flex;
     flex-direction: column;
@@ -857,6 +861,24 @@
     text-transform: uppercase;
 }
 
+.productivity-item__badge--priority-high {
+    background: rgba(255, 85, 69, 0.08);
+    color: #ffb4a9;
+    border: 1px solid rgba(255, 85, 69, 0.22);
+}
+
+.productivity-item__badge--priority-medium {
+    background: rgba(255, 180, 169, 0.08);
+    color: #ffd5cf;
+    border: 1px solid rgba(255, 180, 169, 0.18);
+}
+
+.productivity-item__badge--priority-low {
+    background: rgba(229, 226, 225, 0.04);
+    color: rgba(229, 189, 184, 0.82);
+    border: 1px solid rgba(229, 226, 225, 0.08);
+}
+
 .productivity-item__actions {
     display: flex;
     align-items: center;
@@ -897,44 +919,21 @@
     outline: none;
 }
 
-.productivity-action--priority {
-    min-width: 5rem;
-    cursor: default;
-}
-
-.productivity-action--priority:hover {
-    transform: none;
-}
-
-.productivity-action--priority-high {
-    border-color: rgba(255, 85, 69, 0.36);
-    background: rgba(255, 85, 69, 0.1);
-    color: var(--color-primary-light);
-}
-
-.productivity-action--priority-medium {
-    border-color: rgba(255, 180, 169, 0.3);
-    background: rgba(255, 180, 169, 0.08);
-    color: var(--color-primary-light);
-}
-
-.productivity-action--priority-low {
-    border-color: rgba(229, 189, 184, 0.25);
-    color: rgba(229, 189, 184, 0.82);
-}
-
 .productivity-action--menu {
     width: 2rem;
     min-width: 2rem;
     padding: 0;
     border-color: transparent;
-    font-size: 1.25rem;
-    letter-spacing: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.productivity-action--menu span {
+.productivity-action__icon {
+    width: 0.95rem;
+    height: 0.95rem;
+    fill: currentColor;
     display: block;
-    line-height: 1;
 }
 
 .productivity-action-menu {
@@ -1048,6 +1047,17 @@ select.productivity-input option {
     display: flex;
     align-items: center;
     gap: 0.65rem;
+}
+
+.productivity-deadline-toggle--editor {
+    width: 100%;
+    min-height: 3rem;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.productivity-edit-message {
+    margin: 0.1rem 0 0;
 }
 
 .productivity-note__meta {

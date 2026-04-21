@@ -557,6 +557,11 @@
     margin-top: -0.15rem;
 }
 
+.profile-password-match {
+    grid-template-columns: 1fr;
+    margin-top: -0.15rem;
+}
+
 @media (max-width: 768px) {
     .user-settings-main {
         padding-top: clamp(8rem, 18vh, 10rem);

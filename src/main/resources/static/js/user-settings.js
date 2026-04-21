@@ -14,12 +14,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const newPasswordInput = document.querySelector("#newPassword");
     const confirmNewPasswordInput = document.querySelector("#confirmNewPassword");
     const profilePasswordRules = document.querySelector("#profilePasswordRules");
+    const profilePasswordMatchRule = document.querySelector("#profilePasswordMatchRule");
     const profilePasswordRuleItems = {
         length: document.querySelector('[data-profile-password-rule="length"]'),
         max: document.querySelector('[data-profile-password-rule="max"]'),
         lowercase: document.querySelector('[data-profile-password-rule="lowercase"]'),
         uppercase: document.querySelector('[data-profile-password-rule="uppercase"]'),
-        number: document.querySelector('[data-profile-password-rule="number"]')
+        number: document.querySelector('[data-profile-password-rule="number"]'),
+        match: document.querySelector('[data-profile-password-rule="match"]')
     };
 
     const usernameMessage = document.querySelector("#username-message");
@@ -77,13 +79,14 @@ document.addEventListener("DOMContentLoaded", () => {
             && /\d/.test(value);
     }
 
-    function getPasswordRuleState(value) {
+    function getPasswordRuleState(value, confirmValue) {
         return {
             length: value.length >= MIN_PASSWORD_LENGTH,
             max: value.length <= MAX_PASSWORD_LENGTH,
             lowercase: /[a-z]/.test(value),
             uppercase: /[A-Z]/.test(value),
-            number: /\d/.test(value)
+            number: /\d/.test(value),
+            match: value.length > 0 && confirmValue.length > 0 && value === confirmValue
         };
     }
 
@@ -91,9 +94,11 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!profilePasswordRules) return;
 
         const password = newPasswordInput?.value || "";
+        const confirmPassword = confirmNewPasswordInput?.value || "";
         profilePasswordRules.classList.toggle("hidden", password.length === 0);
+        profilePasswordMatchRule?.classList.toggle("hidden", confirmPassword.length === 0);
 
-        const ruleState = getPasswordRuleState(password);
+        const ruleState = getPasswordRuleState(password, confirmPassword);
         Object.entries(profilePasswordRuleItems).forEach(([rule, item]) => {
             if (!item) return;
 
@@ -159,7 +164,10 @@ document.addEventListener("DOMContentLoaded", () => {
             showFieldError(confirmNewPasswordInput, confirmNewPasswordError, "Confirm password is required");
             isValid = false;
         } else if (newPassword && confirmNewPassword !== newPassword) {
-            showFieldError(confirmNewPasswordInput, confirmNewPasswordError, "Passwords do not match");
+            confirmNewPasswordInput.setAttribute("aria-invalid", "true");
+            confirmNewPasswordInput.classList.add("settings-input--invalid");
+            confirmNewPasswordError.textContent = "";
+            confirmNewPasswordError.classList.add("hidden");
             isValid = false;
         }
 
@@ -187,6 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (input === confirmNewPasswordInput) {
                 clearFieldError(confirmNewPasswordInput, confirmNewPasswordError);
+                updateProfilePasswordRules();
             }
 
             clearMessage(passwordMessage);
@@ -238,7 +247,6 @@ document.addEventListener("DOMContentLoaded", () => {
             clearMessage(passwordMessage);
 
             if (!validatePasswordForm()) {
-                showMessage(passwordMessage, "Fix the highlighted password fields", false);
                 return;
             }
 
