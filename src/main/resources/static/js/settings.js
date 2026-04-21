@@ -10,6 +10,7 @@ const shortBreakInput = document.getElementById("shortBreakTime");
 const longBreakInput = document.getElementById("longBreakTime");
 const soundEnabledInput = document.getElementById("soundEnabled");
 const focusCyclesInput = document.getElementById("focusCycles");
+const patternTypeInput = document.getElementById("patternType");
 const settingsError = document.getElementById("settingsError");
 const settingsSummaryFocus = document.getElementById("settingsSummaryFocus");
 const settingsSummaryTotal = document.getElementById("settingsSummaryTotal");
@@ -39,7 +40,8 @@ function mapApiSettingsToLocal(settings) {
         shortBreak: settings.shortBreakMinutes,
         longBreak: settings.longBreakMinutes,
         soundEnabled: settings.soundsEnabled,
-        focusCycles: settings.pomoCycles
+        focusCycles: settings.pomoCycles,
+        patternType: settings.patternType
     });
 }
 
@@ -49,7 +51,8 @@ function mapLocalSettingsToApi(settings) {
         shortBreakMinutes: settings.shortBreak,
         longBreakMinutes: settings.longBreak,
         pomoCycles: settings.focusCycles,
-        soundsEnabled: settings.soundEnabled
+        soundsEnabled: settings.soundEnabled,
+        patternType: settings.patternType
     };
 }
 
@@ -66,6 +69,9 @@ function applySettingsToInputs(settings) {
     longBreakInput.value = settings.longBreak;
     soundEnabledInput.checked = settings.soundEnabled;
     focusCyclesInput.value = settings.focusCycles;
+    if (patternTypeInput) {
+        patternTypeInput.value = settings.patternType;
+    }
     updateSettingsSummary();
 }
 
@@ -91,8 +97,10 @@ function updateSettingsSummary() {
 
     const focusMinutes = getSummaryNumber(pomodoroInput, savedSettings.pomodoro);
     const shortBreakMinutes = getSummaryNumber(shortBreakInput, savedSettings.shortBreak);
+    const longBreakMinutes = getSummaryNumber(longBreakInput, savedSettings.longBreak);
     const focusCycles = getSummaryNumber(focusCyclesInput, savedSettings.focusCycles);
-    const totalMinutes = getTotalSessionMinutes(focusMinutes, shortBreakMinutes, focusCycles);
+    const patternType = timerStateStore.normalizePatternType(patternTypeInput?.value || savedSettings.patternType);
+    const totalMinutes = getTotalSessionMinutes(focusMinutes, shortBreakMinutes, longBreakMinutes, focusCycles, patternType);
 
     settingsSummaryFocus.textContent = formatDuration(focusMinutes);
     if (settingsSummaryTotal) {
@@ -105,8 +113,15 @@ function getSummaryNumber(input, fallback) {
     return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
-function getTotalSessionMinutes(focusMinutes, shortBreakMinutes, focusCycles) {
-    return (focusMinutes + shortBreakMinutes) * focusCycles;
+function getTotalSessionMinutes(focusMinutes, shortBreakMinutes, longBreakMinutes, focusCycles, patternType) {
+    const workPhases = timerStateStore.getWorkPhasesPerCycle(patternType);
+    const shortBreaks = workPhases - 1;
+
+    return (
+        (focusMinutes * workPhases)
+        + (shortBreakMinutes * shortBreaks)
+        + longBreakMinutes
+    ) * focusCycles;
 }
 
 function formatDuration(totalMinutes) {
@@ -164,7 +179,8 @@ function validateSettingsDraft() {
         pomodoro: String(pomodoroInput.value ?? "").trim(),
         shortBreak: String(shortBreakInput.value ?? "").trim(),
         longBreak: String(longBreakInput.value ?? "").trim(),
-        focusCycles: String(focusCyclesInput.value ?? "").trim()
+        focusCycles: String(focusCyclesInput.value ?? "").trim(),
+        patternType: String(patternTypeInput?.value ?? "").trim()
     };
 
     const draft = {
@@ -172,7 +188,8 @@ function validateSettingsDraft() {
         shortBreak: Number(rawDraft.shortBreak),
         longBreak: Number(rawDraft.longBreak),
         soundEnabled: soundEnabledInput.checked,
-        focusCycles: Number(rawDraft.focusCycles)
+        focusCycles: Number(rawDraft.focusCycles),
+        patternType: rawDraft.patternType
     };
 
     for (const { input, key, label, min, max } of fieldConfig) {
@@ -297,19 +314,27 @@ saveSettingsBtn?.addEventListener("click", saveSettings);
 cancelSettingsBtn?.addEventListener("click", cancelSettings);
 settingsCloseBtn?.addEventListener("click", cancelSettings);
 
+function clearInlineSettingsErrorState() {
+    if (settingsError) {
+        settingsError.textContent = "";
+        settingsError.classList.add("hidden");
+        settingsError.style.color = "";
+    }
+}
+
 fieldConfig.forEach(({ input }) => {
     input.addEventListener("input", () => {
         input.removeAttribute("aria-invalid");
         input.classList.remove("settings-input--invalid");
-
-        if (settingsError) {
-            settingsError.textContent = "";
-            settingsError.classList.add("hidden");
-            settingsError.style.color = "";
-        }
+        clearInlineSettingsErrorState();
 
         updateSettingsSummary();
     });
+});
+
+patternTypeInput?.addEventListener("input", () => {
+    clearInlineSettingsErrorState();
+    updateSettingsSummary();
 });
 
 document.addEventListener("keydown", (event) => {

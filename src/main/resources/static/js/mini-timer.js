@@ -56,14 +56,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getStatusText() {
-        const remainingSeconds = timerStateStore.getRemainingSeconds(timerState);
-        const fullModeSeconds = timerStateStore.getModeDurationSeconds(settings, timerState.currentMode);
+        if (timerState.sessionCompleted) {
+            return "Completed";
+        }
 
         if (timerState.isRunning) {
             return "Running";
         }
 
-        if (timerState.currentMode === "pomodoro" && remainingSeconds === fullModeSeconds) {
+        const remainingSeconds = timerStateStore.getRemainingSeconds(timerState);
+        const fullModeSeconds = timerStateStore.getModeDurationSeconds(settings, timerState.currentMode);
+
+        if (
+            timerState.currentMode === "pomodoro"
+            && timerState.currentCycleIndex === 0
+            && timerState.currentPhaseIndex === 0
+            && remainingSeconds === fullModeSeconds
+        ) {
             return "Ready";
         }
 

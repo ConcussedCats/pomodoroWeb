@@ -3,6 +3,7 @@ package com.example.telos.dto;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -33,4 +34,8 @@ public class UserTimeSettingsDto {
 
     @NotNull(message = "Sounds enabled is required")
     private Boolean soundsEnabled;
+
+    @NotNull(message = "Pattern type is required")
+    @Pattern(regexp = "classic|compact", message = "Pattern type must be classic or compact")
+    private String patternType;
 }

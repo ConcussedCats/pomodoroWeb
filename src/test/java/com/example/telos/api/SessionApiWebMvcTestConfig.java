@@ -1,5 +1,6 @@
 package com.example.telos.api;
 
+import com.example.telos.config.AppVersionConfig;
 import com.example.telos.dto.UserPasswordDto;
 import com.example.telos.dto.UserPasswordResponseDto;
 import com.example.telos.dto.UserTimeSettingsDto;
@@ -9,6 +10,7 @@ import com.example.telos.dto.RegisterRequest;
 import com.example.telos.dto.NoteDto;
 import com.example.telos.dto.NoteResponseDto;
 import com.example.telos.dto.ToDoDto;
+import com.example.telos.dto.ToDoCompletionDto;
 import com.example.telos.dto.ToDoResponseDto;
 import com.example.telos.model.Priority;
 import com.example.telos.service.NoteService;
@@ -33,6 +35,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import java.util.Base64;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Collections;
 
 @TestConfiguration
 class SessionApiWebMvcTestConfig {
@@ -63,6 +66,11 @@ class SessionApiWebMvcTestConfig {
     @Bean
     LogErrorService logErrorService() {
         return new NoOpLogErrorService();
+    }
+
+    @Bean
+    AppVersionConfig appVersionConfig() {
+        return new AppVersionConfig(new com.fasterxml.jackson.databind.ObjectMapper());
     }
 
     @Bean
@@ -129,6 +137,11 @@ class SessionApiWebMvcTestConfig {
 
         @Override
         public void logError(HttpServletRequest request, HttpStatus httpStatus, Exception exception) {
+        }
+
+        @Override
+        public List<com.example.telos.model.ErrorLog> findAllByNewestFirst() {
+            return Collections.emptyList();
         }
     }
 
@@ -214,15 +227,15 @@ class SessionApiWebMvcTestConfig {
 
     static final class StubUserTimeSettingsService implements UserTimeSettingsService {
         UserTimeSettingsResponseDto nextFindSettingsResponse =
-                new UserTimeSettingsResponseDto(25, 5, 15, 4, true, "Settings loaded");
+                new UserTimeSettingsResponseDto(25, 5, 15, 4, true, "classic", "Settings loaded");
         UserTimeSettingsResponseDto nextUpdateSettingsResponse =
-                new UserTimeSettingsResponseDto(30, 7, 20, 3, false, "Settings updated");
+                new UserTimeSettingsResponseDto(30, 7, 20, 3, false, "compact", "Settings updated");
         RuntimeException findException;
         RuntimeException updateException;
 
         void reset() {
-            nextFindSettingsResponse = new UserTimeSettingsResponseDto(25, 5, 15, 4, true, "Settings loaded");
-            nextUpdateSettingsResponse = new UserTimeSettingsResponseDto(30, 7, 20, 3, false, "Settings updated");
+            nextFindSettingsResponse = new UserTimeSettingsResponseDto(25, 5, 15, 4, true, "classic", "Settings loaded");
+            nextUpdateSettingsResponse = new UserTimeSettingsResponseDto(30, 7, 20, 3, false, "compact", "Settings updated");
             findException = null;
             updateException = null;
         }
@@ -344,6 +357,14 @@ class SessionApiWebMvcTestConfig {
 
         @Override
         public ToDoResponseDto updateToDo(String login, long todoId, ToDoDto toDoDto) {
+            if (updateException != null) {
+                throw updateException;
+            }
+            return nextUpdateResponse;
+        }
+
+        @Override
+        public ToDoResponseDto updateCompletion(String login, long todoId, ToDoCompletionDto toDoCompletionDto) {
             if (updateException != null) {
                 throw updateException;
             }

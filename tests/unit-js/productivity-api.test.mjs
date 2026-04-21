@@ -25,7 +25,7 @@ test("productivity page hydrates todo and notes lists from the API on initial lo
     });
 
     assert.ok(runtime.lists.todo.innerHTML.includes("Persisted task"));
-    assert.ok(runtime.lists.todo.innerHTML.includes("HIGH"));
+    assert.ok(runtime.lists.todo.innerHTML.includes("high"));
     assert.ok(runtime.lists.notes.innerHTML.includes("Persisted note"));
     assert.equal(runtime.emptyStates.todo.classList.contains("hidden"), true);
     assert.equal(runtime.emptyStates.notes.classList.contains("hidden"), true);

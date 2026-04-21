@@ -13,5 +13,6 @@ public class UserTimeSettingsResponseDto {
     private int longBreakMinutes;
     private int pomoCycles;
     private boolean soundsEnabled;
+    private String patternType;
     private String message;
 }
