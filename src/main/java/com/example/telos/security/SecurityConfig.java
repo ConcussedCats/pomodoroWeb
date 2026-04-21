@@ -67,7 +67,7 @@ public class SecurityConfig {
                                 "/register"
                         ).permitAll()
                         .requestMatchers("/user/**", "/api/**").authenticated()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .exceptionHandling(ex -> ex
                         .defaultAuthenticationEntryPointFor(
