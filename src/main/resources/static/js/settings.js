@@ -10,7 +10,7 @@ const shortBreakInput = document.getElementById("shortBreakTime");
 const longBreakInput = document.getElementById("longBreakTime");
 const soundEnabledInput = document.getElementById("soundEnabled");
 const focusCyclesInput = document.getElementById("focusCycles");
-const patternTypeInput = document.getElementById("patternType");
+const patternTypeInputs = Array.from(document.querySelectorAll('[name="patternType"]'));
 const settingsError = document.getElementById("settingsError");
 const settingsSummaryFocus = document.getElementById("settingsSummaryFocus");
 const settingsSummaryTotal = document.getElementById("settingsSummaryTotal");
@@ -69,10 +69,16 @@ function applySettingsToInputs(settings) {
     longBreakInput.value = settings.longBreak;
     soundEnabledInput.checked = settings.soundEnabled;
     focusCyclesInput.value = settings.focusCycles;
-    if (patternTypeInput) {
-        patternTypeInput.value = settings.patternType;
-    }
+    const selectedPatternType = timerStateStore.normalizePatternType(settings.patternType);
+    patternTypeInputs.forEach(input => {
+        input.checked = input.value === selectedPatternType;
+    });
     updateSettingsSummary();
+}
+
+function getSelectedPatternType() {
+    const checkedInput = patternTypeInputs.find(input => input.checked);
+    return timerStateStore.normalizePatternType(checkedInput?.value || savedSettings.patternType);
 }
 
 async function parseJsonResponse(response) {
@@ -99,7 +105,7 @@ function updateSettingsSummary() {
     const shortBreakMinutes = getSummaryNumber(shortBreakInput, savedSettings.shortBreak);
     const longBreakMinutes = getSummaryNumber(longBreakInput, savedSettings.longBreak);
     const focusCycles = getSummaryNumber(focusCyclesInput, savedSettings.focusCycles);
-    const patternType = timerStateStore.normalizePatternType(patternTypeInput?.value || savedSettings.patternType);
+    const patternType = getSelectedPatternType();
     const totalMinutes = getTotalSessionMinutes(focusMinutes, shortBreakMinutes, longBreakMinutes, focusCycles, patternType);
 
     settingsSummaryFocus.textContent = formatDuration(focusMinutes);
@@ -180,7 +186,7 @@ function validateSettingsDraft() {
         shortBreak: String(shortBreakInput.value ?? "").trim(),
         longBreak: String(longBreakInput.value ?? "").trim(),
         focusCycles: String(focusCyclesInput.value ?? "").trim(),
-        patternType: String(patternTypeInput?.value ?? "").trim()
+        patternType: getSelectedPatternType()
     };
 
     const draft = {
@@ -332,9 +338,11 @@ fieldConfig.forEach(({ input }) => {
     });
 });
 
-patternTypeInput?.addEventListener("input", () => {
-    clearInlineSettingsErrorState();
-    updateSettingsSummary();
+patternTypeInputs.forEach(input => {
+    input.addEventListener("input", () => {
+        clearInlineSettingsErrorState();
+        updateSettingsSummary();
+    });
 });
 
 document.addEventListener("keydown", (event) => {
