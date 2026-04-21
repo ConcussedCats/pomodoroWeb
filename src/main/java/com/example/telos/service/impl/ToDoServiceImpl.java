@@ -1,6 +1,7 @@
 package com.example.telos.service.impl;
 
 import com.example.telos.dto.ToDoDto;
+import com.example.telos.dto.ToDoCompletionDto;
 import com.example.telos.dto.ToDoResponseDto;
 import com.example.telos.model.ToDo;
 import com.example.telos.model.User;
@@ -75,6 +76,21 @@ public class ToDoServiceImpl implements ToDoService {
 
         ToDo updatedToDo = update(toDo);
         return mapToResponse(updatedToDo, "Task was updated successfully");
+    }
+
+    @Override
+    public ToDoResponseDto updateCompletion(String login, long todoId, ToDoCompletionDto toDoCompletionDto) {
+        User user = userService.findByEmailOrUsername(login);
+        ToDo toDo = findById(todoId);
+
+        if (!toDo.getUser().getUserId().equals(user.getUserId())) {
+            throw new EntityNotFoundException("ToDo not found with id: " + todoId);
+        }
+
+        toDo.setIsDone(toDoCompletionDto.getIsDone());
+
+        ToDo updatedToDo = update(toDo);
+        return mapToResponse(updatedToDo, "Task completion was updated successfully");
     }
 
     @Override
