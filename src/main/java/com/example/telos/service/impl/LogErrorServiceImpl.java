@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @AllArgsConstructor
 public class LogErrorServiceImpl implements LogErrorService {
@@ -41,6 +43,11 @@ public class LogErrorServiceImpl implements LogErrorService {
         } catch (Exception logException) {
             logger.error("Failed to log error", logException);
         }
+    }
+
+    @Override
+    public List<ErrorLog> findAllByNewestFirst() {
+        return logErrorRepository.findAllByOrderByOccurredAtDesc();
     }
 
     private String buildDescription(HttpServletRequest request, HttpStatus httpStatus, Exception exception) {
