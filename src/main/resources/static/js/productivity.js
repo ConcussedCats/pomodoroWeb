@@ -58,6 +58,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const menuIconMarkup = `
+        <svg class="productivity-action__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="5" r="1.8"></circle>
+            <circle cx="12" cy="12" r="1.8"></circle>
+            <circle cx="12" cy="19" r="1.8"></circle>
+        </svg>
+    `;
+
     function getRequestHeaders() {
         return {
             "Content-Type": "application/json",
@@ -254,6 +262,25 @@ document.addEventListener("DOMContentLoaded", () => {
         messageElement.classList.toggle("form-message--success", !isError);
     }
 
+    function clearInlineEditMessage(itemElement) {
+        const messageElement = itemElement?.querySelector("[data-edit-message]");
+        if (!messageElement) return;
+
+        messageElement.textContent = "";
+        messageElement.classList.add("hidden");
+        messageElement.classList.remove("form-message--error", "form-message--success");
+    }
+
+    function showInlineEditMessage(itemElement, message, isError = true) {
+        const messageElement = itemElement?.querySelector("[data-edit-message]");
+        if (!messageElement) return;
+
+        messageElement.textContent = message;
+        messageElement.classList.remove("hidden");
+        messageElement.classList.toggle("form-message--error", isError);
+        messageElement.classList.toggle("form-message--success", !isError);
+    }
+
     function focusPrimaryInput(type) {
         document.getElementById(inputIds[type])?.focus();
     }
@@ -401,15 +428,11 @@ document.addEventListener("DOMContentLoaded", () => {
         return `productivity-item__badge--priority-${normalizedPriority}`;
     }
 
-    function getTodoPriorityActionClass(priority) {
-        const normalizedPriority = String(priority || "LOW").toLowerCase();
-        return `productivity-action--priority-${normalizedPriority}`;
-    }
-
     function renderTodoItem(item) {
         const isEditing = state.editingByType.todo === item.id;
         const completedClass = item.completed ? " productivity-item__content--completed" : "";
         const priorityLabel = String(item.priority || "LOW").toLowerCase();
+        const priorityMarkup = `<span class="productivity-item__badge ${getTodoPriorityClass(item.priority)}">${escapeHtml(priorityLabel)}</span>`;
         const descriptionMarkup = item.description
             ? `<p class="productivity-item__description">${escapeHtml(item.description).replaceAll("\n", "<br>")}</p>`
             : "";
@@ -422,7 +445,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <li class="productivity-item productivity-item--editing" data-item-id="${item.id}" data-item-type="todo">
                     <div class="productivity-item__editor productivity-item__editor-grid">
                         <div class="productivity-field">
-                            <label class="settings-label" for="todo-edit-title-${item.id}">Task</label>
+                            <label class="productivity-label" for="todo-edit-title-${item.id}">Task</label>
                             <input
                                 id="todo-edit-title-${item.id}"
                                 class="settings-input productivity-input productivity-item__editor-input"
@@ -434,7 +457,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             >
                         </div>
                         <div class="productivity-field">
-                            <label class="settings-label" for="todo-edit-description-${item.id}">Description</label>
+                            <label class="productivity-label" for="todo-edit-description-${item.id}">Description</label>
                             <textarea
                                 id="todo-edit-description-${item.id}"
                                 class="settings-input productivity-input productivity-textarea productivity-textarea--compact"
@@ -444,30 +467,38 @@ document.addEventListener("DOMContentLoaded", () => {
                             >${escapeHtml(item.description)}</textarea>
                         </div>
                         <div class="productivity-field-row">
-                            <div class="productivity-field">
-                                <label class="settings-label" for="todo-edit-priority-${item.id}">Priority</label>
-                                <select
-                                    id="todo-edit-priority-${item.id}"
-                                    class="settings-input productivity-input"
-                                    name="priority"
-                                >
+                            <fieldset class="productivity-field productivity-field--priority">
+                                <legend class="productivity-label">Priority</legend>
+                                <div class="productivity-priority-options">
                                     ${TODO_PRIORITY_VALUES.map(priority => `
-                                        <option value="${priority}"${priority === item.priority ? " selected" : ""}>${priority.charAt(0)}${priority.slice(1).toLowerCase()}</option>
+                                        <label class="productivity-priority-option">
+                                            <input type="radio" name="priority" value="${priority}"${priority === item.priority ? " checked" : ""}>
+                                            <span>${priority.charAt(0)}${priority.slice(1).toLowerCase()}</span>
+                                        </label>
                                     `).join("")}
-                                </select>
-                            </div>
-                            <div class="productivity-field">
-                                <label class="settings-label" for="todo-edit-deadline-${item.id}">Deadline</label>
-                                <input
-                                    id="todo-edit-deadline-${item.id}"
-                                    class="settings-input productivity-input"
-                                    name="deadline"
-                                    type="datetime-local"
-                                    value="${formatDeadlineForInput(item.deadline)}"
-                                >
+                                </div>
+                            </fieldset>
+                            <div class="productivity-field productivity-field--deadline">
+                                <label class="productivity-deadline-toggle productivity-deadline-toggle--editor">
+                                    <input
+                                        class="productivity-checkbox"
+                                        type="checkbox"
+                                        data-deadline-toggle
+                                        ${item.deadline ? "checked" : ""}
+                                    >
+                                    <span>Set Deadline</span>
+                                    <input
+                                        id="todo-edit-deadline-${item.id}"
+                                        class="settings-input productivity-input"
+                                        name="deadline"
+                                        type="datetime-local"
+                                        value="${formatDeadlineForInput(item.deadline)}"
+                                        ${item.deadline ? "" : "disabled"}
+                                    >
+                                </label>
                             </div>
                         </div>
-                        <label class="settings-label checkbox-label">
+                        <label class="productivity-deadline-toggle productivity-deadline-toggle--editor">
                             <input
                                 class="productivity-checkbox productivity-edit-checkbox"
                                 name="isDone"
@@ -476,6 +507,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             >
                             <span>Completed</span>
                         </label>
+                        <p class="form-message productivity-panel-message hidden productivity-edit-message" data-edit-message aria-live="polite"></p>
                     </div>
                     <div class="productivity-item__actions">
                         <button class="productivity-action productivity-action--primary" type="button" data-action="save-edit">Save</button>
@@ -498,15 +530,15 @@ document.addEventListener("DOMContentLoaded", () => {
                         <span class="productivity-item__content${completedClass}">${escapeHtml(item.title)}</span>
                         ${descriptionMarkup}
                         <div class="productivity-item__meta">
+                            ${priorityMarkup}
                             ${deadlineLabel}
                         </div>
                     </div>
                 </label>
                 <div class="productivity-item__actions">
-                    <span class="productivity-action productivity-action--priority ${getTodoPriorityActionClass(item.priority)}">${escapeHtml(priorityLabel)}</span>
                     <div class="productivity-action-menu">
                         <button class="productivity-action productivity-action--menu" type="button" aria-label="Open task actions" aria-haspopup="true">
-                            <span aria-hidden="true">&#8942;</span>
+                            ${menuIconMarkup}
                         </button>
                         <div class="productivity-action-menu__panel" role="menu">
                             <button class="productivity-action-menu__item" type="button" data-action="edit" role="menuitem">Edit</button>
@@ -532,6 +564,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             rows="5"
                             maxlength="1200"
                         >${escapeHtml(item.content)}</textarea>
+                        <p class="form-message productivity-panel-message hidden productivity-edit-message" data-edit-message aria-live="polite"></p>
                     </div>
                     <div class="productivity-item__actions">
                         <button class="productivity-action productivity-action--primary" type="button" data-action="save-edit">Save</button>
@@ -550,7 +583,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="productivity-item__actions">
                     <div class="productivity-action-menu">
                         <button class="productivity-action productivity-action--menu" type="button" aria-label="Open note actions" aria-haspopup="true">
-                            <span aria-hidden="true">&#8942;</span>
+                            ${menuIconMarkup}
                         </button>
                         <div class="productivity-action-menu__panel" role="menu">
                             <button class="productivity-action-menu__item" type="button" data-action="edit" role="menuitem">Edit</button>
@@ -675,9 +708,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const itemId = itemElement.dataset.itemId;
         const draft = readTodoFormDraft(itemElement);
         const validationMessage = validateTodoDraft(itemElement, draft);
+        clearInlineEditMessage(itemElement);
 
         if (validationMessage) {
-            showFormMessage("todo", validationMessage);
+            showInlineEditMessage(itemElement, validationMessage);
             return;
         }
 
@@ -688,7 +722,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderType("todo");
             showFormMessage("todo", "Task was updated successfully", false);
         } catch (error) {
-            showFormMessage("todo", error.message || "Failed to update task");
+            showInlineEditMessage(itemElement, error.message || "Failed to update task");
         }
     }
 
@@ -696,19 +730,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const itemId = itemElement.dataset.itemId;
         const editor = itemElement.querySelector('[name="content"]');
         const nextValue = editor?.value.trim() || "";
+        clearInlineEditMessage(itemElement);
 
         markInvalid(editor, false);
 
         if (!nextValue) {
             markInvalid(editor, true);
-            showFormMessage("notes", "Please enter a note before saving it.");
+            showInlineEditMessage(itemElement, "Please enter a note before saving it.");
             editor?.focus();
             return;
         }
 
         if (containsForbiddenValue(nextValue)) {
             markInvalid(editor, true);
-            showFormMessage("notes", "67 and six seven are not allowed here.");
+            showInlineEditMessage(itemElement, "67 and six seven are not allowed here.");
             editor?.focus();
             return;
         }
@@ -720,7 +755,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderType("notes");
             showFormMessage("notes", "Note was updated successfully", false);
         } catch (error) {
-            showFormMessage("notes", error.message || "Failed to update note");
+            showInlineEditMessage(itemElement, error.message || "Failed to update note");
         }
     }
 
@@ -849,6 +884,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         lists[type]?.addEventListener("change", event => {
+            const editedItem = event.target.closest("[data-item-id]");
+            if (editedItem) {
+                clearInlineEditMessage(editedItem);
+                if (event.target.matches("[data-deadline-toggle]")) {
+                    syncDeadlineInputState(editedItem);
+                }
+            }
+
             const checkbox = event.target.closest('[data-action="toggle-complete"]');
             const itemElement = checkbox?.closest("[data-item-id]");
             const itemId = itemElement?.dataset.itemId;
@@ -881,6 +924,25 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 saveNoteEdit(itemElement);
             }
+        });
+
+        lists[type]?.addEventListener("input", event => {
+            const input = event.target.closest("input, textarea, select");
+            if (!input) return;
+
+            const itemElement = input.closest("[data-item-id]");
+            if (!itemElement) return;
+
+            if (input.name === "deadline") {
+                const deadlineToggle = itemElement.querySelector("[data-deadline-toggle]");
+                if (deadlineToggle && input.value) {
+                    deadlineToggle.checked = true;
+                    syncDeadlineInputState(itemElement);
+                }
+            }
+
+            markInvalid(input, false);
+            clearInlineEditMessage(itemElement);
         });
     });
 
