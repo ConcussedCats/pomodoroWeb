@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Telos</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
+</head>
+<body class="admin-page">
+<th:block th:replace="~{fragments/header :: header('')}"></th:block>
+
+<main class="main-content admin-main">
+    <div class="container admin-shell">
+        <section class="admin-panel">
+            <header class="admin-panel__header">
+                <p class="profile-eyebrow">Admin</p>
+                <h1 class="page-title admin-title">Error Log</h1>
+                <p class="page-lead admin-lead">
+                    Server errors persisted to the database, newest first.
+                </p>
+            </header>
+
+            <div class="admin-table-wrap" th:if="${!#lists.isEmpty(errorLogs)}">
+                <div class="admin-controls">
+                    <label class="admin-control">
+                        <span class="admin-control__label">Filter</span>
+                        <input
+                                id="adminFilterInput"
+                                class="admin-control__input"
+                                type="search"
+                                placeholder="Search by ID, status, date or description"
+                        >
+                    </label>
+
+                    <label class="admin-control">
+                        <span class="admin-control__label">Sort by</span>
+                        <span class="admin-control__select-wrap">
+                            <select id="adminSortField" class="admin-control__input admin-control__select">
+                                <option value="occurredAt">Date</option>
+                                <option value="errorId">ID</option>
+                                <option value="httpError">Status code</option>
+                            </select>
+                        </span>
+                    </label>
+
+                    <label class="admin-control">
+                        <span class="admin-control__label">Order</span>
+                        <span class="admin-control__select-wrap">
+                            <select id="adminSortDirection" class="admin-control__input admin-control__select">
+                                <option value="desc">Descending</option>
+                                <option value="asc">Ascending</option>
+                            </select>
+                        </span>
+                    </label>
+                </div>
+
+                <p id="adminNoMatches" class="admin-no-matches hidden">No errors match the current filter.</p>
+
+                <table class="admin-table" id="adminTable">
+                    <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">HTTP</th>
+                        <th scope="col">Occurred At</th>
+                        <th scope="col">Description</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="log : ${errorLogs}"
+                        th:attr="data-error-id=${log.errorId},data-http-error=${log.httpError},data-occurred-at=${#temporals.format(log.occurredAt, 'yyyy-MM-dd HH:mm:ss')}">
+                        <td th:text="${log.errorId}"></td>
+                        <td>
+                            <span class="admin-badge" th:text="${log.httpError}"></span>
+                        </td>
+                        <td th:text="${#temporals.format(log.occurredAt, 'yyyy-MM-dd HH:mm:ss')}"></td>
+                        <td class="admin-table__description" th:text="${log.errorDescription}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="admin-empty" th:if="${#lists.isEmpty(errorLogs)}">
+                <h2>No stored errors yet</h2>
+                <p>The table will show only persisted server-side errors from the database.</p>
+            </div>
+        </section>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+<th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+<script th:src="@{/js/admin.js}"></script>
+</body>
+</html>
