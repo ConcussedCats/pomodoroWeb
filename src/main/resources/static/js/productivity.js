@@ -190,6 +190,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return submitJson(`/api/productivity/todos/${itemId}`, "PATCH", payload, mapTodoFromApi, "Failed to update task");
     }
 
+    async function updateTodoCompletion(itemId, completed) {
+        return submitJson(`/api/productivity/todos/${itemId}/completion`, "PATCH", {
+            isDone: Boolean(completed)
+        }, mapTodoFromApi, "Failed to update task");
+    }
+
     async function deleteTodo(itemId) {
         return deleteItem(`/api/productivity/todos/${itemId}`, "Failed to delete task");
     }
@@ -791,13 +797,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const currentTodo = state.items.todo.find(todo => todo.id === itemId);
         if (!currentTodo) return;
 
-        const nextDraft = {
-            ...currentTodo,
-            completed
-        };
-
         try {
-            const updatedTodo = await updateTodo(itemId, mapTodoToApiPayload(nextDraft));
+            const updatedTodo = await updateTodoCompletion(itemId, completed);
             state.items.todo = state.items.todo.map(todo => todo.id === itemId ? updatedTodo : todo);
             renderType("todo");
         } catch (error) {

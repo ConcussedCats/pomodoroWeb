@@ -1,5 +1,6 @@
 package com.example.telos.controller.api.jwt;
 
+import com.example.telos.dto.ToDoCompletionDto;
 import com.example.telos.dto.ToDoDto;
 import com.example.telos.dto.ToDoResponseDto;
 import com.example.telos.service.ToDoService;
@@ -24,6 +25,11 @@ public class ToDoJwtController {
     @PatchMapping("/{id}")
     public ToDoResponseDto updateToDo(Principal principal, @PathVariable long id, @Valid @RequestBody ToDoDto todoDto) {
         return toDoService.updateToDo(principal.getName(), id, todoDto);
+    }
+
+    @PatchMapping("/{id}/completion")
+    public ToDoResponseDto updateCompletion(Principal principal, @PathVariable long id, @Valid @RequestBody ToDoCompletionDto toDoCompletionDto) {
+        return toDoService.updateCompletion(principal.getName(), id, toDoCompletionDto);
     }
 
     @PostMapping
