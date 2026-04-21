@@ -165,8 +165,9 @@ public class UserServiceImpl implements UserService {
         if (!userPasswordDto.getNewPassword().equals(userPasswordDto.getConfirmNewPassword()))
             throw new IllegalArgumentException("New password and confirm password don't match");
 
-        if (userPasswordDto.getNewPassword().length() < 8)
-            throw new IllegalArgumentException("New password must be at least 8 characters");
+        if (userPasswordDto.getNewPassword().length() < InputValidationPolicy.PASSWORD_MIN_LENGTH ||
+                userPasswordDto.getNewPassword().length() > InputValidationPolicy.PASSWORD_MAX_LENGTH)
+            throw new IllegalArgumentException(InputValidationPolicy.PASSWORD_MESSAGE);
 
         if (!InputValidationPolicy.isValidPassword(userPasswordDto.getNewPassword()))
             throw new IllegalArgumentException(InputValidationPolicy.PASSWORD_MESSAGE);

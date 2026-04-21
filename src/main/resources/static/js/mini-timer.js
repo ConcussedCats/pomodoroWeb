@@ -22,6 +22,19 @@ document.addEventListener("DOMContentLoaded", () => {
     let timerTick = null;
     let settings = timerStateStore.loadSettings();
     let timerState = timerStateStore.loadTimerState(settings);
+    let initialTransitionsReleased = false;
+
+    function releaseInitialTransitions() {
+        if (initialTransitionsReleased) return;
+        initialTransitionsReleased = true;
+
+        const scheduleFrame = window.requestAnimationFrame || ((callback) => window.setTimeout(callback, 0));
+        scheduleFrame(() => {
+            scheduleFrame(() => {
+                miniTimer.classList.remove("mini-timer--hydrating");
+            });
+        });
+    }
 
     function formatTime(totalSeconds) {
         const safeSeconds = Math.max(0, totalSeconds);
@@ -65,8 +78,13 @@ document.addEventListener("DOMContentLoaded", () => {
         miniTimerMode.textContent = labelText[timerState.currentMode] || "Timer";
         miniTimerTime.textContent = formatTime(timerStateStore.getRemainingSeconds(timerState));
         miniTimerStatus.textContent = getStatusText();
+        miniTimer.setAttribute(
+            "aria-label",
+            `${miniTimerMode.textContent} ${miniTimerTime.textContent}, ${miniTimerStatus.textContent}. Open timer page`
+        );
 
         setTicking(timerState.isRunning);
+        releaseInitialTransitions();
     }
 
     function syncState(now = Date.now()) {

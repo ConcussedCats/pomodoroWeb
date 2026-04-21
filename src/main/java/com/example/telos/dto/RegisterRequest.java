@@ -5,6 +5,7 @@ import com.example.telos.validation.ValidUsername;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +24,11 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "password cannot be empty")
+    @Size(
+            min = InputValidationPolicy.PASSWORD_MIN_LENGTH,
+            max = InputValidationPolicy.PASSWORD_MAX_LENGTH,
+            message = InputValidationPolicy.PASSWORD_MESSAGE
+    )
     @Pattern(regexp = InputValidationPolicy.PASSWORD_PATTERN, message = InputValidationPolicy.PASSWORD_MESSAGE)
     private String password;
 

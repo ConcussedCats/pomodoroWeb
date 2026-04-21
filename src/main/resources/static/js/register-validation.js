@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const MIN_PASSWORD_LENGTH = 8;
+    const MAX_PASSWORD_LENGTH = 64;
     const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens";
-    const PASSWORD_MESSAGE = "Password must be at least 8 characters and include uppercase, lowercase, and a number";
+    const PASSWORD_MESSAGE = `Password must be ${MIN_PASSWORD_LENGTH}-${MAX_PASSWORD_LENGTH} characters and include uppercase, lowercase, and a number`;
     const FORBIDDEN_VALUE_MESSAGE = "67 and six seven are not allowed here";
     const form = document.querySelector("#registerForm");
 
@@ -11,6 +13,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const passwordInput = document.querySelector("#registerPassword");
     const confirmPasswordInput = document.querySelector("#registerConfirmPassword");
     const formMessage = document.querySelector("[data-form-message]");
+    const passwordRules = document.querySelector("#passwordRules");
+    const passwordRuleItems = {
+        length: document.querySelector('[data-password-rule="length"]'),
+        max: document.querySelector('[data-password-rule="max"]'),
+        lowercase: document.querySelector('[data-password-rule="lowercase"]'),
+        uppercase: document.querySelector('[data-password-rule="uppercase"]'),
+        number: document.querySelector('[data-password-rule="number"]')
+    };
 
     const usernameError = document.querySelector('[data-error-for="registerUsername"]');
     const emailError = document.querySelector('[data-error-for="registerEmail"]');
@@ -31,7 +41,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function isValidPassword(value) {
-        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(value);
+        return value.length >= MIN_PASSWORD_LENGTH
+            && value.length <= MAX_PASSWORD_LENGTH
+            && /[a-z]/.test(value)
+            && /[A-Z]/.test(value)
+            && /\d/.test(value);
+    }
+
+    function getPasswordRuleState(value) {
+        return {
+            length: value.length >= MIN_PASSWORD_LENGTH,
+            max: value.length <= MAX_PASSWORD_LENGTH,
+            lowercase: /[a-z]/.test(value),
+            uppercase: /[A-Z]/.test(value),
+            number: /\d/.test(value)
+        };
+    }
+
+    function updatePasswordRules() {
+        if (!passwordRules) return;
+
+        const password = passwordInput?.value || "";
+        passwordRules.classList.toggle("hidden", password.length === 0);
+
+        const ruleState = getPasswordRuleState(password);
+        Object.entries(passwordRuleItems).forEach(([rule, item]) => {
+            if (!item) return;
+
+            item.classList.toggle("password-rule--valid", ruleState[rule]);
+            item.classList.toggle("password-rule--invalid", !ruleState[rule]);
+        });
     }
 
     function showFieldError(input, errorElement, message) {
@@ -118,6 +157,7 @@ document.addEventListener("DOMContentLoaded", () => {
             showFieldError(passwordInput, passwordError, PASSWORD_MESSAGE);
             isValid = false;
         }
+        updatePasswordRules();
 
         if (!confirmPassword) {
             showFieldError(confirmPasswordInput, confirmPasswordError, "Confirm password cannot be empty");
@@ -142,6 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (input === passwordInput) {
                 clearFieldError(passwordInput, passwordError);
                 clearFieldError(confirmPasswordInput, confirmPasswordError);
+                updatePasswordRules();
             }
             if (input === confirmPasswordInput) clearFieldError(confirmPasswordInput, confirmPasswordError);
             clearFormMessage();
@@ -151,7 +192,8 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", event => {
         if (!validateForm()) {
             event.preventDefault();
-            showFormMessage("Fix the highlighted fields before creating your account.");
         }
     });
+
+    updatePasswordRules();
 });

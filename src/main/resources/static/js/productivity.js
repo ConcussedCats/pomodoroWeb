@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const formMessages = Object.fromEntries(
         ITEM_TYPES.map(type => [type, document.querySelector(`[data-form-message="${type}"]`)])
     );
+    const activeCountElement = document.querySelector("[data-active-count]");
 
     if (!tabButtons.length || !panels.length) return;
 
@@ -108,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
             description: todo.description || null,
             isDone: Boolean(todo.completed),
             priority: todo.priority,
-            deadline: todo.deadline || null
+            deadline: normalizeDeadlineForApi(todo.deadline) || null
         };
     }
 
@@ -215,6 +216,16 @@ document.addEventListener("DOMContentLoaded", () => {
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
     }
 
+    function normalizeDeadlineForApi(value) {
+        if (!value) return "";
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return `${value}T23:59`;
+        }
+
+        return value;
+    }
+
     function containsForbiddenValue(value) {
         const normalized = String(value)
             .trim()
@@ -295,12 +306,47 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
+    function getPriorityValue(container) {
+        return container.querySelector('[name="priority"]:checked')?.value
+            || container.querySelector('select[name="priority"]')?.value
+            || container.querySelector('[name="priority"]')?.value;
+    }
+
+    function getDeadlineValue(container) {
+        const deadlineInput = container.querySelector('[name="deadline"]');
+        const deadlineToggle = container.querySelector("[data-deadline-toggle]");
+
+        if (deadlineToggle && !deadlineToggle.checked) {
+            return "";
+        }
+
+        return deadlineInput?.value || "";
+    }
+
+    function syncDeadlineInputState(form) {
+        const deadlineToggle = form?.querySelector("[data-deadline-toggle]");
+        const deadlineInput = form?.querySelector('[name="deadline"]');
+        if (!deadlineToggle || !deadlineInput) return;
+
+        deadlineInput.disabled = !deadlineToggle.checked;
+    }
+
+    function syncFormToggleState(form) {
+        const toggle = form?.querySelector("[data-form-toggle]");
+        if (!toggle) return;
+
+        const isCollapsed = form.classList.contains("productivity-entry-form--collapsed");
+        const label = form.dataset.entryForm === "notes" ? "note" : "task";
+        toggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+        toggle.setAttribute("aria-label", isCollapsed ? `Expand ${label} form` : `Collapse ${label} form`);
+    }
+
     function readTodoFormDraft(container) {
         return normalizeTodoDraft({
             title: container.querySelector('[name="title"]')?.value,
             description: container.querySelector('[name="description"]')?.value,
-            priority: container.querySelector('[name="priority"]')?.value,
-            deadline: container.querySelector('[name="deadline"]')?.value,
+            priority: getPriorityValue(container),
+            deadline: getDeadlineValue(container),
             completed: container.querySelector('[name="isDone"]')?.checked
         });
     }
@@ -333,7 +379,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (draft.deadline) {
-            const deadline = new Date(draft.deadline);
+            const deadline = new Date(normalizeDeadlineForApi(draft.deadline));
             if (Number.isNaN(deadline.getTime())) {
                 markInvalid(deadlineInput, true);
                 deadlineInput?.focus();
@@ -355,9 +401,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return `productivity-item__badge--priority-${normalizedPriority}`;
     }
 
+    function getTodoPriorityActionClass(priority) {
+        const normalizedPriority = String(priority || "LOW").toLowerCase();
+        return `productivity-action--priority-${normalizedPriority}`;
+    }
+
     function renderTodoItem(item) {
         const isEditing = state.editingByType.todo === item.id;
         const completedClass = item.completed ? " productivity-item__content--completed" : "";
+        const priorityLabel = String(item.priority || "LOW").toLowerCase();
         const descriptionMarkup = item.description
             ? `<p class="productivity-item__description">${escapeHtml(item.description).replaceAll("\n", "<br>")}</p>`
             : "";
@@ -417,7 +469,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                         <label class="settings-label checkbox-label">
                             <input
-                                class="settings-checkbox"
+                                class="productivity-checkbox productivity-edit-checkbox"
                                 name="isDone"
                                 type="checkbox"
                                 ${item.completed ? "checked" : ""}
@@ -437,7 +489,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="productivity-item" data-item-id="${item.id}" data-item-type="todo">
                 <label class="productivity-check">
                     <input
-                        class="settings-checkbox productivity-check__input"
+                        class="productivity-checkbox productivity-check__input"
                         type="checkbox"
                         data-action="toggle-complete"
                         ${item.completed ? "checked" : ""}
@@ -446,14 +498,21 @@ document.addEventListener("DOMContentLoaded", () => {
                         <span class="productivity-item__content${completedClass}">${escapeHtml(item.title)}</span>
                         ${descriptionMarkup}
                         <div class="productivity-item__meta">
-                            <span class="productivity-item__badge ${getTodoPriorityClass(item.priority)}">${escapeHtml(item.priority)}</span>
                             ${deadlineLabel}
                         </div>
                     </div>
                 </label>
                 <div class="productivity-item__actions">
-                    <button class="productivity-action" type="button" data-action="edit">Edit</button>
-                    <button class="productivity-action productivity-action--danger" type="button" data-action="delete">Delete</button>
+                    <span class="productivity-action productivity-action--priority ${getTodoPriorityActionClass(item.priority)}">${escapeHtml(priorityLabel)}</span>
+                    <div class="productivity-action-menu">
+                        <button class="productivity-action productivity-action--menu" type="button" aria-label="Open task actions" aria-haspopup="true">
+                            <span aria-hidden="true">&#8942;</span>
+                        </button>
+                        <div class="productivity-action-menu__panel" role="menu">
+                            <button class="productivity-action-menu__item" type="button" data-action="edit" role="menuitem">Edit</button>
+                            <button class="productivity-action-menu__item productivity-action-menu__item--danger" type="button" data-action="delete" role="menuitem">Delete</button>
+                        </div>
+                    </div>
                 </div>
             </li>
         `;
@@ -489,8 +548,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     <p class="productivity-note__meta">Updated ${formatTimestamp(item.updatedAt)}</p>
                 </article>
                 <div class="productivity-item__actions">
-                    <button class="productivity-action" type="button" data-action="edit">Edit</button>
-                    <button class="productivity-action productivity-action--danger" type="button" data-action="delete">Delete</button>
+                    <div class="productivity-action-menu">
+                        <button class="productivity-action productivity-action--menu" type="button" aria-label="Open note actions" aria-haspopup="true">
+                            <span aria-hidden="true">&#8942;</span>
+                        </button>
+                        <div class="productivity-action-menu__panel" role="menu">
+                            <button class="productivity-action-menu__item" type="button" data-action="edit" role="menuitem">Edit</button>
+                            <button class="productivity-action-menu__item productivity-action-menu__item--danger" type="button" data-action="delete" role="menuitem">Delete</button>
+                        </div>
+                    </div>
                 </div>
             </li>
         `;
@@ -508,6 +574,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const shouldHide = state.loadingByType[type] || items.length > 0;
         emptyState.classList.toggle("hidden", shouldHide);
+
+        if (type === "todo" && activeCountElement) {
+            activeCountElement.textContent = String(items.filter(item => !item.completed).length);
+        }
 
         if (state.loadingByType[type]) {
             emptyState.textContent = `Loading ${itemLabels[type]}s...`;
@@ -542,8 +612,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const createdTodo = await createTodo(mapTodoToApiPayload(draft));
             state.items.todo = [createdTodo, ...state.items.todo];
             form.reset();
-            const priorityInput = form.querySelector('[name="priority"]');
-            if (priorityInput) priorityInput.value = "LOW";
+            resetTodoPriority(form);
             renderType("todo");
             focusPrimaryInput("todo");
             showFormMessage("todo", "Task was created successfully", false);
@@ -816,9 +885,69 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     const todoPriorityInput = forms.todo?.querySelector('[name="priority"]');
-    if (todoPriorityInput && !todoPriorityInput.value) {
-        todoPriorityInput.value = "LOW";
+    function resetTodoPriority(form) {
+        const defaultPriorityInput = form?.querySelector('[name="priority"][value="HIGH"]');
+        if (defaultPriorityInput && "checked" in defaultPriorityInput) {
+            defaultPriorityInput.checked = true;
+            return;
+        }
+
+        const priorityInput = form?.querySelector('[name="priority"]');
+        if (priorityInput) {
+            priorityInput.value = "HIGH";
+        }
     }
+
+    if (todoPriorityInput && !getPriorityValue(forms.todo)) {
+        resetTodoPriority(forms.todo);
+    }
+
+    forms.todo?.addEventListener("reset", () => {
+        window.setTimeout(() => {
+            resetTodoPriority(forms.todo);
+            syncDeadlineInputState(forms.todo);
+            clearFormMessage("todo");
+        }, 0);
+    });
+
+    forms.notes?.addEventListener("reset", () => {
+        window.setTimeout(() => clearFormMessage("notes"), 0);
+    });
+
+    forms.todo?.querySelector("[data-deadline-toggle]")?.addEventListener("change", () => {
+        syncDeadlineInputState(forms.todo);
+    });
+
+    forms.todo?.querySelector('[name="deadline"]')?.addEventListener("input", event => {
+        const deadlineToggle = forms.todo?.querySelector("[data-deadline-toggle]");
+        if (deadlineToggle && event.currentTarget.value) {
+            deadlineToggle.checked = true;
+            syncDeadlineInputState(forms.todo);
+        }
+    });
+
+    document.querySelectorAll("[data-form-toggle]").forEach(toggle => {
+        const form = toggle.closest(".productivity-entry-form");
+        syncFormToggleState(form);
+
+        const toggleForm = () => {
+            form?.classList.toggle("productivity-entry-form--collapsed");
+            syncFormToggleState(form);
+        };
+
+        toggle.addEventListener("click", () => {
+            toggleForm();
+        });
+
+        toggle.addEventListener("keydown", event => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+
+            event.preventDefault();
+            toggleForm();
+        });
+    });
+
+    syncDeadlineInputState(forms.todo);
 
     render();
     loadType("todo");

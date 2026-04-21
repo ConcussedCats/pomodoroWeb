@@ -2,10 +2,40 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Telos</title>
+
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
 </head>
-<body>
-    <h1 style="margin: 0 auto; width: max-content" th:text="${code}" />
-    <h2 style="margin: 0 auto; width: max-content" th:text="${message}" />
+
+<body class="error-page">
+
+<th:block th:replace="~{fragments/header :: header('')}"></th:block>
+
+<main class="main-content error-main">
+    <div class="container error-shell">
+        <div class="error-code">
+            <span class="error-digit" th:text="${status != null ? status : (code != null ? code : 'Error')}">Error</span>
+        </div>
+
+        <h2 class="error-title" th:text="${error != null ? error : (message != null ? message : 'Something went wrong')}">
+            Something went wrong
+        </h2>
+
+        <p class="error-description">
+            The request could not be completed. You can return to the timer and keep working.
+        </p>
+
+        <a th:href="@{/}" class="btn btn--primary error-btn">
+            Back to Timer
+        </a>
+    </div>
+</main>
+
+<th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+<th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+
 </body>
 </html>

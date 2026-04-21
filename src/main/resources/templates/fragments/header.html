@@ -19,32 +19,37 @@
             <a class="nav-btn nav-btn--accent" th:classappend="${activePage == 'helpus'} ? ' nav-btn--active' : ''" th:href="@{/helpus}">Help Us</a>
         </nav>
         <div class="header-side">
-            <a th:if="${activePage != 'home'}" th:href="@{/}" class="mini-timer mini-timer--pomodoro" id="miniTimer" aria-label="Open timer page">
+            <a th:if="${activePage != 'home'}" th:href="@{/}" class="mini-timer mini-timer--pomodoro mini-timer--hydrating" id="miniTimer" aria-label="Open timer page">
                 <span class="mini-timer__mode" id="miniTimerMode">Pomodoro</span>
                 <span class="mini-timer__time" id="miniTimerTime">25:00</span>
-                <span class="mini-timer__meta">
-                    <span class="mini-timer__dot"></span>
-                    <span class="mini-timer__status" id="miniTimerStatus">Ready</span>
-                </span>
+                <span class="mini-timer__dot" aria-hidden="true"></span>
+                <span class="mini-timer__status" id="miniTimerStatus">Ready</span>
             </a>
             <div class="auth-controls">
-                <a sec:authorize="isAnonymous()" class="profile-entry profile-entry--compact" th:classappend="${activePage == 'login'} ? ' profile-entry--active' : ''" th:href="@{/login}" id="profileEntry" aria-label="Open login page">
-                    <span class="profile-entry__avatar" aria-hidden="true">
-                        <svg class="profile-entry__icon" viewBox="0 0 24 24" focusable="false">
-                            <path d="M12 12c2.761 0 5-2.687 5-6s-2.239-6-5-6-5 2.687-5 6 2.239 6 5 6Z"></path>
-                            <path d="M21 24c0-4.971-4.029-9-9-9s-9 4.029-9 9"></path>
-                        </svg>
-                    </span>
-                </a>
-                <details sec:authorize="isAuthenticated()" class="account-menu">
-                    <summary class="profile-entry profile-entry--compact" th:classappend="${activePage == 'user'} ? ' profile-entry--active' : ''" aria-label="Open account menu">
+                <details sec:authorize="isAnonymous()" class="account-menu account-menu--profile">
+                    <summary class="profile-entry profile-entry--compact profile-entry--icon-only" th:classappend="${activePage == 'login' || activePage == 'register'} ? ' profile-entry--active' : ''" aria-label="Open authentication menu">
                         <span class="profile-entry__avatar" aria-hidden="true">
                             <svg class="profile-entry__icon" viewBox="0 0 24 24" focusable="false">
-                                <path d="M12 12c2.761 0 5-2.687 5-6s-2.239-6-5-6-5 2.687-5 6 2.239 6 5 6Z"></path>
-                                <path d="M21 24c0-4.971-4.029-9-9-9s-9 4.029-9 9"></path>
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <circle cx="12" cy="9.4" r="2.55"></circle>
+                                <path d="M7.8 17.2c.9-2 2.35-3 4.2-3s3.3 1 4.2 3"></path>
                             </svg>
                         </span>
-                        <span class="account-menu__caret" aria-hidden="true"></span>
+                    </summary>
+                    <div class="account-menu__panel">
+                        <a class="account-menu__link" th:href="@{/login}">Log In</a>
+                        <a class="account-menu__link account-menu__link--light" th:href="@{/register}">Sign Up</a>
+                    </div>
+                </details>
+                <details sec:authorize="isAuthenticated()" class="account-menu account-menu--profile">
+                    <summary class="profile-entry profile-entry--compact profile-entry--icon-only" th:classappend="${activePage == 'user'} ? ' profile-entry--active' : ''" aria-label="Open account menu">
+                        <span class="profile-entry__avatar" aria-hidden="true">
+                            <svg class="profile-entry__icon" viewBox="0 0 24 24" focusable="false">
+                                <circle cx="12" cy="12" r="9"></circle>
+                                <circle cx="12" cy="9.4" r="2.55"></circle>
+                                <path d="M7.8 17.2c.9-2 2.35-3 4.2-3s3.3 1 4.2 3"></path>
+                            </svg>
+                        </span>
                     </summary>
                     <div class="account-menu__panel">
                         <a class="account-menu__link" th:href="@{/user}">Account settings</a>

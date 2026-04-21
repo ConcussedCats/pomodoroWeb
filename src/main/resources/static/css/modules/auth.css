@@ -107,3 +107,486 @@
     font-weight: 700;
 }
 
+/* ===== LOGIN PAGE ===== */
+.auth-page--panel::before {
+    background:
+        radial-gradient(circle at 18% 50%, rgba(229, 226, 225, 0.08), transparent 24rem),
+        radial-gradient(circle at 68% 48%, rgba(255, 85, 69, 0.09), transparent 30rem),
+        radial-gradient(circle at 50% -16%, rgba(229, 226, 225, 0.08), transparent 34rem),
+        #131313;
+}
+
+.auth-page--panel .auth-main {
+    align-items: center;
+    padding: clamp(4rem, 10vh, 7rem) var(--spacing-md) clamp(4rem, 9vh, 6rem);
+}
+
+.auth-page--panel .auth-shell {
+    max-width: none;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    padding: 0;
+}
+
+.auth-page--panel .auth-panel-card {
+    max-width: 35rem;
+    gap: 2.5rem;
+    padding: clamp(2rem, 4vw, 3.55rem);
+    border-radius: 0.75rem;
+    background: rgba(24, 24, 24, 0.68);
+    border: 1px solid rgba(229, 226, 225, 0.045);
+    box-shadow: 0 28px 68px rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+}
+
+.auth-page--panel .auth-card__header {
+    text-align: center;
+}
+
+.auth-page--panel .auth-title {
+    margin: 0 0 0.55rem;
+    color: #f3f0ef;
+    font-size: clamp(2.15rem, 4vw, 2.65rem);
+    font-weight: 800;
+    letter-spacing: -0.045em;
+    line-height: 1;
+}
+
+.auth-page--panel .auth-description {
+    max-width: none;
+    margin: 0;
+    color: rgba(229, 226, 225, 0.52);
+    font-size: 1.02rem;
+    line-height: 1.6;
+}
+
+.auth-page--panel .auth-form {
+    gap: 1.45rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.auth-page--panel .auth-field {
+    gap: 0.75rem;
+}
+
+.auth-page--panel .auth-label {
+    color: rgba(229, 226, 225, 0.68);
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+}
+
+.auth-page--panel .auth-input {
+    width: 100%;
+    min-height: 4.25rem;
+    padding: 0 1.3rem;
+    border-radius: 0.5rem;
+    background: rgba(14, 14, 14, 0.64);
+    border: 1px solid rgba(229, 226, 225, 0.035);
+    color: #f3f0ef;
+    font-size: 1.08rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        color 0.25s ease;
+}
+
+.auth-page--panel .auth-input::placeholder {
+    color: rgba(229, 226, 225, 0.34);
+}
+
+.auth-page--panel .auth-input:focus {
+    background: rgba(14, 14, 14, 0.86);
+    border-color: rgba(255, 85, 69, 0.36);
+    box-shadow: 0 0 0 3px rgba(255, 85, 69, 0.12);
+    color: #ffffff;
+}
+
+.auth-page--panel .auth-input.settings-input--invalid,
+.auth-page--panel .auth-input[aria-invalid="true"] {
+    border-color: rgba(255, 85, 69, 0.68);
+    color: #ffffff;
+}
+
+.auth-page--panel .auth-submit {
+    width: 100%;
+    min-height: 4.05rem;
+    margin-top: 0.35rem;
+    border-radius: 0.5rem;
+    background: var(--color-primary);
+    color: #ffffff;
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    text-transform: none;
+    box-shadow: 0 12px 28px rgba(255, 85, 69, 0.24);
+    transition:
+        background-color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease;
+}
+
+.auth-page--panel .auth-submit:hover,
+.auth-page--panel .auth-submit:focus-visible {
+    background: #ff6a5c;
+    box-shadow: 0 15px 34px rgba(255, 85, 69, 0.34);
+}
+
+.auth-page--panel .auth-submit:disabled,
+.auth-page--panel .auth-submit[aria-disabled="true"] {
+    opacity: 0.48;
+    box-shadow: none;
+}
+
+.auth-page--panel .auth-switch {
+    margin-top: 0.8rem;
+    text-align: center;
+    color: rgba(229, 226, 225, 0.6);
+}
+
+.auth-page--panel .auth-switch a {
+    color: #ff5545;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-page--panel .auth-switch a:hover,
+.auth-page--panel .auth-switch a:focus {
+    color: #ff6a5c;
+}
+
+.auth-page--panel .form-message {
+    margin: 0;
+    border-radius: 0.5rem;
+}
+
+.auth-page--panel .form-field-error {
+    color: var(--color-primary-light);
+    font-size: 0.82rem;
+}
+
+.auth-page--register .auth-main {
+    padding-top: clamp(2.75rem, 6vh, 4.5rem);
+    padding-bottom: clamp(2.75rem, 6vh, 4.5rem);
+}
+
+.auth-page--register .auth-panel-card {
+    max-width: 38rem;
+    gap: 1.9rem;
+    padding: clamp(1.65rem, 3vw, 2.55rem);
+}
+
+.auth-page--register .auth-form {
+    gap: 1.05rem;
+}
+
+.auth-page--register .auth-input {
+    min-height: 3.85rem;
+}
+
+.auth-page--register .auth-submit {
+    min-height: 3.85rem;
+}
+
+.password-rules {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.45rem 0.8rem;
+    margin: -0.25rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.password-rules.hidden {
+    display: none;
+}
+
+.password-rules li {
+    color: #ff8d82;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.25;
+    transition: color 0.22s ease;
+}
+
+.password-rules li::before {
+    content: "";
+    width: 0.38rem;
+    height: 0.38rem;
+    display: inline-block;
+    margin-right: 0.45rem;
+    border-radius: 50%;
+    background: currentColor;
+    vertical-align: 0.08em;
+}
+
+.password-rule--valid {
+    color: #62d68e !important;
+}
+
+.password-rule--invalid {
+    color: #ff6a5c !important;
+}
+
+/* ===== USER SETTINGS PAGE ===== */
+.user-settings-page {
+    background: #131313;
+}
+
+.user-settings-page::before {
+    background: radial-gradient(circle at top center, #241414 0%, #131313 100%);
+}
+
+.user-settings-main {
+    align-items: flex-start;
+    padding: clamp(6.5rem, 12vh, 8rem) var(--spacing-md) clamp(4rem, 8vh, 5rem);
+}
+
+.user-settings-shell {
+    max-width: 64rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.user-settings-card {
+    width: 100%;
+    padding: clamp(2rem, 4.5vw, 3rem);
+    border-radius: 1.5rem;
+    background: rgba(27, 27, 28, 0.42);
+    border: 1px solid rgba(92, 64, 60, 0.14);
+    box-shadow: 0 32px 70px rgba(0, 0, 0, 0.48);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.user-settings-header {
+    margin-bottom: clamp(2.25rem, 5vw, 3rem);
+}
+
+.profile-eyebrow {
+    display: block;
+    margin-bottom: 1rem;
+    color: var(--color-primary);
+    font-family: "Space Grotesk", var(--font-family);
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+}
+
+.profile-title {
+    margin: 0 0 1rem;
+    color: var(--color-text);
+    font-size: clamp(2.7rem, 5vw, 3.25rem);
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    line-height: 1;
+}
+
+.profile-description {
+    max-width: 42rem;
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 1.02rem;
+    line-height: 1.65;
+}
+
+.user-settings-page .profile-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(2rem, 5vw, 3rem);
+}
+
+.user-settings-page .profile-panel {
+    display: flex;
+    min-width: 0;
+    height: auto;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.user-settings-page .profile-panel-title {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+.profile-label {
+    display: block;
+    margin-left: 0.05rem;
+    color: rgba(229, 226, 225, 0.42);
+    font-family: "Space Grotesk", var(--font-family);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.user-settings-page .profile-input {
+    width: 100%;
+    min-height: 3.25rem;
+    padding: 0.45rem 0;
+    border: 0;
+    border-bottom: 1px solid rgba(92, 64, 60, 0.35);
+    border-radius: 0;
+    background: transparent;
+    color: var(--color-text);
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    transition:
+        border-color 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.user-settings-page .profile-input--username {
+    min-height: 3.5rem;
+    font-size: 1.85rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.user-settings-page .profile-input::placeholder {
+    color: rgba(229, 226, 225, 0.18);
+}
+
+.user-settings-page .profile-input:focus {
+    color: #ffffff;
+    border-color: rgba(255, 85, 69, 0.65);
+    box-shadow: 0 1px 0 rgba(255, 85, 69, 0.35);
+    outline: none;
+}
+
+.user-settings-page .profile-input.settings-input--invalid,
+.user-settings-page .profile-input[aria-invalid="true"] {
+    color: #ffffff;
+    border-color: rgba(255, 85, 69, 0.78);
+    box-shadow: 0 1px 0 rgba(255, 85, 69, 0.35);
+}
+
+.user-settings-page .profile-action {
+    width: 100%;
+    min-height: 4.75rem;
+    margin-top: 0;
+    border-radius: 1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    box-shadow: none;
+    transition:
+        background-color 0.25s ease,
+        border-color 0.25s ease,
+        color 0.25s ease,
+        filter 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.user-settings-page .profile-action:hover,
+.user-settings-page .profile-action:focus-visible {
+    transform: translateY(-1px);
+}
+
+.profile-action--primary {
+    background: var(--color-primary);
+    color: #ffffff;
+    border: 1px solid transparent;
+    filter: drop-shadow(0 0 12px rgba(255, 85, 69, 0.4));
+}
+
+.profile-action--primary:hover,
+.profile-action--primary:focus-visible {
+    background: #ff6a5c;
+    color: #ffffff;
+    filter: drop-shadow(0 0 16px rgba(255, 85, 69, 0.48));
+}
+
+.profile-action--subtle {
+    background: rgba(255, 180, 169, 0.1);
+    color: var(--color-primary-light);
+    border: 1px solid rgba(255, 180, 169, 0.2);
+}
+
+.profile-action--subtle:hover,
+.profile-action--subtle:focus-visible {
+    background: rgba(255, 180, 169, 0.18);
+    color: #ffd5cf;
+    border-color: rgba(255, 180, 169, 0.28);
+}
+
+.user-settings-page .form-field-error {
+    color: var(--color-primary-light);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+.user-settings-page .form-message {
+    margin: 0;
+    border-radius: 0.75rem;
+}
+
+.profile-password-rules {
+    margin-top: -0.15rem;
+}
+
+@media (max-width: 768px) {
+    .user-settings-main {
+        padding-top: clamp(8rem, 18vh, 10rem);
+    }
+
+    .user-settings-page .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-settings-card {
+        padding: 1.45rem;
+        border-radius: 1.25rem;
+    }
+
+    .profile-title {
+        font-size: 2.45rem;
+    }
+
+    .profile-description {
+        font-size: 0.95rem;
+    }
+
+    .user-settings-page .profile-action {
+        min-height: 4.25rem;
+    }
+
+    .user-settings-page .profile-input--username {
+        font-size: 1.55rem;
+    }
+}
+

@@ -1,14 +1,14 @@
 (function () {
     const SETTINGS_KEY = "pomodoroSettings";
     const TIMER_STATE_KEY = "pomodoroTimerState";
-    const POMODOROS_PER_CYCLE = 4;
+    const POMODOROS_PER_CYCLE = 1;
 
     const DEFAULT_SETTINGS = {
         pomodoro: 25,
         shortBreak: 5,
         longBreak: 15,
         soundEnabled: true,
-        focusCycles: 1
+        focusCycles: 4
     };
 
     const VALID_MODES = ["pomodoro", "short-break", "long-break"];
@@ -138,14 +138,6 @@
 
         try {
             const hydratedState = hydrateTimerState(JSON.parse(saved), safeSettings, Date.now());
-            const isIdleBreakState = !hydratedState.isRunning
-                && hydratedState.currentMode !== "pomodoro"
-                && hydratedState.remainingSeconds === getModeDurationSeconds(safeSettings, hydratedState.currentMode);
-
-            if (isIdleBreakState) {
-                return getDefaultTimerState(safeSettings);
-            }
-
             return hydratedState;
         } catch (error) {
             console.warn("Failed to parse saved timer state.", error);
@@ -163,38 +155,23 @@
 
     function transitionAfterCompletion(state, settings, completedAt) {
         if (state.currentMode === "pomodoro") {
-            const completedPomodorosInCycle = Math.min(
-                state.completedPomodorosInCycle + 1,
-                POMODOROS_PER_CYCLE
-            );
-            const nextMode = completedPomodorosInCycle >= POMODOROS_PER_CYCLE
+            const currentFocusCycle = getCurrentFocusCycleNumber(state, settings);
+            const nextMode = currentFocusCycle >= settings.focusCycles
                 ? "long-break"
                 : "short-break";
-
             const remainingSeconds = getModeDurationSeconds(settings, nextMode);
+
             return {
                 currentMode: nextMode,
                 isRunning: true,
                 endTime: completedAt + (remainingSeconds * 1000),
                 remainingSeconds,
-                completedPomodorosInCycle,
+                completedPomodorosInCycle: 1,
                 completedFocusCycles: state.completedFocusCycles
             };
         }
 
         if (state.currentMode === "short-break") {
-            const remainingSeconds = getModeDurationSeconds(settings, "pomodoro");
-            return {
-                currentMode: "pomodoro",
-                isRunning: true,
-                endTime: completedAt + (remainingSeconds * 1000),
-                remainingSeconds,
-                completedPomodorosInCycle: state.completedPomodorosInCycle,
-                completedFocusCycles: state.completedFocusCycles
-            };
-        }
-
-        if (state.currentMode === "long-break") {
             const completedFocusCycles = state.completedFocusCycles + 1;
             if (completedFocusCycles >= settings.focusCycles) {
                 return {
@@ -215,6 +192,17 @@
                 remainingSeconds,
                 completedPomodorosInCycle: 0,
                 completedFocusCycles
+            };
+        }
+
+        if (state.currentMode === "long-break") {
+            return {
+                currentMode: "pomodoro",
+                isRunning: false,
+                endTime: null,
+                remainingSeconds: getModeDurationSeconds(settings, "pomodoro"),
+                completedPomodorosInCycle: 0,
+                completedFocusCycles: settings.focusCycles
             };
         }
 
@@ -306,6 +294,75 @@
                 : syncedState.completedPomodorosInCycle,
             completedFocusCycles: syncedState.completedFocusCycles
         };
+    }
+
+    function getPhaseStartState(settings, mode, completedFocusCycles, completedPomodorosInCycle = 0) {
+        const safeSettings = normalizeSettings(settings);
+        const safeMode = VALID_MODES.includes(mode) ? mode : "pomodoro";
+        return {
+            currentMode: safeMode,
+            isRunning: false,
+            endTime: null,
+            remainingSeconds: getModeDurationSeconds(safeSettings, safeMode),
+            completedPomodorosInCycle,
+            completedFocusCycles: Math.min(
+                Math.max(0, completedFocusCycles),
+                safeSettings.focusCycles
+            )
+        };
+    }
+
+    function skipToNextPhaseState(state, settings, now = Date.now()) {
+        const safeSettings = normalizeSettings(settings);
+        const syncedState = hydrateTimerState(state, safeSettings, now);
+
+        if (syncedState.currentMode === "pomodoro") {
+            const isLastCycle = getCurrentFocusCycleNumber(syncedState, safeSettings) >= safeSettings.focusCycles;
+            return getPhaseStartState(
+                safeSettings,
+                isLastCycle ? "long-break" : "short-break",
+                syncedState.completedFocusCycles,
+                1
+            );
+        }
+
+        if (syncedState.currentMode === "short-break") {
+            const completedFocusCycles = syncedState.completedFocusCycles + 1;
+            return completedFocusCycles >= safeSettings.focusCycles
+                ? getDefaultTimerState(safeSettings)
+                : getPhaseStartState(safeSettings, "pomodoro", completedFocusCycles, 0);
+        }
+
+        return getDefaultTimerState(safeSettings);
+    }
+
+    function skipToPreviousPhaseState(state, settings, now = Date.now()) {
+        const safeSettings = normalizeSettings(settings);
+        const syncedState = hydrateTimerState(state, safeSettings, now);
+
+        if (syncedState.currentMode === "pomodoro") {
+            if (syncedState.completedFocusCycles <= 0) {
+                return syncedState;
+            }
+
+            return getPhaseStartState(
+                safeSettings,
+                "short-break",
+                syncedState.completedFocusCycles - 1,
+                1
+            );
+        }
+
+        if (syncedState.currentMode === "short-break") {
+            return getPhaseStartState(safeSettings, "pomodoro", syncedState.completedFocusCycles, 0);
+        }
+
+        return getPhaseStartState(
+            safeSettings,
+            "pomodoro",
+            Math.max(0, safeSettings.focusCycles - 1),
+            0
+        );
     }
 
     function applySettingsToTimerState(state, settings) {
@@ -405,6 +462,8 @@
         pauseTimerState,
         resetTimerState,
         setModeState,
+        skipToNextPhaseState,
+        skipToPreviousPhaseState,
         applySettingsToTimerState,
         getRemainingSeconds,
         getCurrentPomodoroNumber,

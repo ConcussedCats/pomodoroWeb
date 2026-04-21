@@ -9,57 +9,66 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
 </head>
-<body>
+<body class="user-settings-page">
     <th:block th:replace="~{fragments/header :: header('user')}"></th:block>
 
-    <main class="main-content">
-        <div class="container profile-shell">
-            <section class="auth-card auth-card--wide">
-                <p class="eyebrow">Profile</p>
-                <h2 class="auth-title">User Settings</h2>
-                <p class="auth-description">
-                    Profile details and password changes are prepared here for the upcoming backend integration.
-                </p>
+    <main class="main-content user-settings-main">
+        <div class="container profile-shell user-settings-shell">
+            <section class="user-settings-card">
+                <header class="user-settings-header">
+                    <p class="profile-eyebrow">Profile</p>
+                    <h1 class="profile-title">User Settings</h1>
+                    <p class="profile-description">
+                        Profile details and password changes are prepared here for the upcoming backend integration.
+                    </p>
+                </header>
 
                 <div class="profile-grid">
-                    <form id="username-form" class="auth-form profile-panel" novalidate>
+                    <form id="username-form" class="profile-panel" novalidate>
                         <h3 class="profile-panel-title">Profile Data</h3>
 
-                        <div class="auth-field">
-                            <label class="settings-label" for="username">Username</label>
-                            <input type="text" id="username" class="settings-input auth-input" name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_-]{3,30}" autocomplete="username" th:value="${curUsername}">
+                        <div class="profile-field">
+                            <label class="profile-label" for="username">Username</label>
+                            <input type="text" id="username" class="settings-input profile-input profile-input--username" name="username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_-]{3,30}" autocomplete="username" th:value="${curUsername}">
                             <p class="form-field-error hidden" data-error-for="username"></p>
                         </div>
 
                         <p id="username-message" class="form-message hidden" aria-live="polite"></p>
 
-                        <button type="submit" class="btn btn--primary auth-submit">Save Name</button>
+                        <button type="submit" class="btn profile-action profile-action--primary">Save Name</button>
                     </form>
 
-                    <form id="password-form" class="auth-form profile-panel" novalidate>
+                    <form id="password-form" class="profile-panel" novalidate>
                         <h3 class="profile-panel-title">Change Password</h3>
 
-                        <div class="auth-field">
-                            <label class="settings-label" for="oldPassword">Current Password</label>
-                            <input type="password" id="oldPassword" class="settings-input auth-input" name="oldPassword" autocomplete="current-password">
+                        <div class="profile-field">
+                            <label class="profile-label" for="oldPassword">Current Password</label>
+                            <input type="password" id="oldPassword" class="settings-input profile-input" name="oldPassword" autocomplete="current-password" placeholder="••••••••••••">
                             <p class="form-field-error hidden" data-error-for="oldPassword"></p>
                         </div>
 
-                        <div class="auth-field">
-                            <label class="settings-label" for="newPassword">New Password</label>
-                            <input type="password" id="newPassword" class="settings-input auth-input" name="newPassword" minlength="8" autocomplete="new-password">
+                        <div class="profile-field">
+                            <label class="profile-label" for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" class="settings-input profile-input" name="newPassword" minlength="8" maxlength="64" autocomplete="new-password" placeholder="Enter new password">
+                            <ul class="password-rules profile-password-rules hidden" id="profilePasswordRules" aria-live="polite">
+                                <li data-profile-password-rule="length">8 characters</li>
+                                <li data-profile-password-rule="max">64 characters max</li>
+                                <li data-profile-password-rule="lowercase">Lowercase letter</li>
+                                <li data-profile-password-rule="uppercase">Uppercase letter</li>
+                                <li data-profile-password-rule="number">Number</li>
+                            </ul>
                             <p class="form-field-error hidden" data-error-for="newPassword"></p>
                         </div>
 
-                        <div class="auth-field">
-                            <label class="settings-label" for="confirmNewPassword">Confirm New Password</label>
-                            <input type="password" id="confirmNewPassword" class="settings-input auth-input" name="confirmNewPassword" autocomplete="new-password">
+                        <div class="profile-field">
+                            <label class="profile-label" for="confirmNewPassword">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" class="settings-input profile-input" name="confirmNewPassword" maxlength="64" autocomplete="new-password" placeholder="Repeat new password">
                             <p class="form-field-error hidden" data-error-for="confirmNewPassword"></p>
                         </div>
 
                         <p id="password-message" class="form-message hidden" aria-live="polite"></p>
 
-                        <button type="submit" class="btn btn--primary auth-submit">Change Password</button>
+                        <button type="submit" class="btn profile-action profile-action--subtle">Update Password</button>
                     </form>
                 </div>
             </section>
