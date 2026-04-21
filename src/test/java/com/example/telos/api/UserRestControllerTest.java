@@ -189,8 +189,8 @@ class UserRestControllerTest {
                         .content("""
                                 {
                                   "oldPassword": "current-password",
-                                  "newPassword": "new-password-123",
-                                  "confirmNewPassword": "new-password-123"
+                                  "newPassword": "Validpass1",
+                                  "confirmNewPassword": "Validpass1"
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -206,8 +206,8 @@ class UserRestControllerTest {
                         .content("""
                                 {
                                   "oldPassword": "",
-                                  "newPassword": "new-password-123",
-                                  "confirmNewPassword": "new-password-123"
+                                  "newPassword": "Validpass1",
+                                  "confirmNewPassword": "Validpass1"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
@@ -235,7 +235,7 @@ class UserRestControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("newPassword must be at least 8 characters"));
+                .andExpect(jsonPath("$.message").value("password must be 8-64 characters and include uppercase, lowercase, and a number"));
     }
 
     @Test
@@ -249,8 +249,8 @@ class UserRestControllerTest {
                         .content("""
                                 {
                                   "oldPassword": "current-password",
-                                  "newPassword": "new-password-123",
-                                  "confirmNewPassword": "different-password"
+                                  "newPassword": "Validpass1",
+                                  "confirmNewPassword": "Different1"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())

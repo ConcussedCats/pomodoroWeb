@@ -26,9 +26,9 @@
 
             <div id="timerSection" class="section-view timer-surface timer-surface--hydrating">
                 <div class="timer-modes">
-                    <button class="mode-label mode-label--active" data-mode="pomodoro" type="button">Pomodoro</button>
-                    <button class="mode-label" data-mode="short-break" type="button">Short Break</button>
-                    <button class="mode-label" data-mode="long-break" type="button">Long Break</button>
+                    <button class="mode-label mode-label--active" data-mode="pomodoro" type="button" tabindex="-1" aria-hidden="true">Pomodoro</button>
+                    <button class="mode-label" data-mode="short-break" type="button" tabindex="-1" aria-hidden="true">Short Break</button>
+                    <button class="mode-label" data-mode="long-break" type="button" tabindex="-1" aria-hidden="true">Long Break</button>
                 </div>
 
                 <div class="timer-display">
@@ -68,7 +68,7 @@
                             </svg>
                         </button>
                         <button class="btn btn--primary btn--start" id="startBtn" type="button">
-                            <span class="btn-text">START FLOW</span>
+                        <span class="btn-text">START FLOW</span>
                         </button>
                         <button class="btn btn--settings" id="settingsToggle" type="button" aria-label="Open timer settings">
                             <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -86,7 +86,7 @@
                         <span class="session-dot"></span>
                         <span class="session-dot"></span>
                     </div>
-                    <p class="session-text">Cycle <span id="sessionCount">1</span> of <span id="sessionTotal">4</span></p>
+                    <p class="session-text">Cycle <span id="sessionCount">1</span> out of <span id="sessionTotal">4</span></p>
                 </div>
             </div>
 
@@ -135,6 +135,16 @@
                                 <div class="settings-number-row">
                                     <input type="number" id="focusCycles" class="settings-input" value="4" min="1" max="12">
                                     <span class="settings-unit">rounds</span>
+                                </div>
+                            </div>
+
+                            <div class="settings-group">
+                                <label class="settings-label" for="patternType">Cycle Pattern</label>
+                                <div class="settings-select-shell">
+                                    <select id="patternType" class="settings-input settings-input--select">
+                                        <option value="classic">Classic</option>
+                                        <option value="compact">Compact</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>

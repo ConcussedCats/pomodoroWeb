@@ -657,6 +657,10 @@
     background: #1b1b1c;
 }
 
+.settings-group:has(#patternType) {
+    grid-column: span 2;
+}
+
 .settings-label {
     font-size: 0.7rem;
     color: var(--color-secondary);
@@ -707,6 +711,43 @@
     font-weight: 700;
     color: var(--color-text);
     transition: color var(--transition-fast);
+}
+
+.settings-select-shell {
+    position: relative;
+    width: 100%;
+}
+
+.settings-select-shell::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 0.2rem;
+    width: 0.85rem;
+    height: 0.85rem;
+    pointer-events: none;
+    transform: translateY(-50%);
+    border-right: 2px solid rgba(229, 226, 225, 0.82);
+    border-bottom: 2px solid rgba(229, 226, 225, 0.82);
+    rotate: 45deg;
+}
+
+.settings-input--select {
+    width: 100%;
+    min-height: 3rem;
+    padding-right: 2rem;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--color-text);
+    cursor: pointer;
+}
+
+.settings-input--select:focus {
+    color: var(--color-text);
 }
 
 .settings-input[type="number"] {
@@ -949,24 +990,26 @@
     max-width: 100%;
     margin: 0 auto;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.9rem;
-    padding: 0.72rem 1.35rem;
-    border-radius: var(--radius-lg);
-    background: rgba(14, 14, 14, 0.72);
-    border: 1px solid rgba(229, 189, 184, 0.06);
+    gap: 0.4rem;
+    padding: 0.85rem 1.35rem 0.7rem;
+    border-radius: 1.1rem;
+    background: rgba(14, 14, 14, 0.66);
+    border: 1px solid rgba(229, 189, 184, 0.05);
 }
 
 .session-dots {
     display: flex;
     align-items: center;
-    gap: 0.38rem;
+    justify-content: center;
+    gap: 0.42rem;
 }
 
 .session-dot {
-    width: 0.5rem;
-    height: 0.5rem;
+    width: 0.54rem;
+    height: 0.54rem;
     border-radius: 50%;
     background: var(--color-bg-lighter);
     transition:
@@ -980,12 +1023,14 @@
 }
 
 .session-text {
-    font-size: 0.72rem;
-    color: rgba(229, 226, 225, 0.68);
+    margin: 0;
+    font-size: 0.78rem;
+    color: rgba(229, 226, 225, 0.7);
     font-weight: 800;
-    line-height: 1;
-    letter-spacing: 0.12em;
+    line-height: 1.15;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
+    text-align: center;
 }
 
 .session-text #sessionCount,

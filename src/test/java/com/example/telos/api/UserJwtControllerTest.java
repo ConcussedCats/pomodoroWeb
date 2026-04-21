@@ -61,9 +61,9 @@ class UserJwtControllerTest {
         userService.nextUsernameResponse = new UserUsernameResponseDto("jwt-user", "Username updated");
         userService.nextPasswordResponse = new UserPasswordResponseDto("Password updated");
         userTimeSettingsService.nextFindSettingsResponse =
-                new UserTimeSettingsResponseDto(25, 5, 15, 4, true, "Settings loaded");
+                new UserTimeSettingsResponseDto(25, 5, 15, 4, true, "classic", "Settings loaded");
         userTimeSettingsService.nextUpdateSettingsResponse =
-                new UserTimeSettingsResponseDto(35, 10, 25, 2, false, "Settings updated");
+                new UserTimeSettingsResponseDto(35, 10, 25, 2, false, "compact", "Settings updated");
         bearerToken = "Bearer " + jwtService.generateToken("user@test.com");
     }
 
@@ -137,8 +137,8 @@ class UserJwtControllerTest {
                         .content("""
                                 {
                                   "oldPassword": "current-password",
-                                  "newPassword": "new-password-123",
-                                  "confirmNewPassword": "new-password-123"
+                                  "newPassword": "Validpass1",
+                                  "confirmNewPassword": "Validpass1"
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -155,8 +155,8 @@ class UserJwtControllerTest {
                         .content("""
                                 {
                                   "oldPassword": "current-password",
-                                  "newPassword": "new-password-123",
-                                  "confirmNewPassword": "different-password"
+                                  "newPassword": "Validpass1",
+                                  "confirmNewPassword": "Differentpass1"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
@@ -179,7 +179,7 @@ class UserJwtControllerTest {
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
-                .andExpect(jsonPath("$.message").value("newPassword must be at least 8 characters"));
+                .andExpect(jsonPath("$.message").value("password must be 8-64 characters and include uppercase, lowercase, and a number"));
     }
 
     @Test
@@ -188,6 +188,7 @@ class UserJwtControllerTest {
                         .header("Authorization", bearerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pomodoroMinutes").value(25))
+                .andExpect(jsonPath("$.patternType").value("classic"))
                 .andExpect(jsonPath("$.message").value("Settings loaded"));
     }
 
@@ -202,12 +203,14 @@ class UserJwtControllerTest {
                                   "shortBreakMinutes": 10,
                                   "longBreakMinutes": 25,
                                   "pomoCycles": 2,
-                                  "soundsEnabled": false
+                                  "soundsEnabled": false,
+                                  "patternType": "compact"
                                 }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pomodoroMinutes").value(35))
                 .andExpect(jsonPath("$.soundsEnabled").value(false))
+                .andExpect(jsonPath("$.patternType").value("compact"))
                 .andExpect(jsonPath("$.message").value("Settings updated"));
     }
 
@@ -222,12 +225,33 @@ class UserJwtControllerTest {
                                   "shortBreakMinutes": 10,
                                   "longBreakMinutes": 25,
                                   "pomoCycles": 2,
-                                  "soundsEnabled": false
+                                  "soundsEnabled": false,
+                                  "patternType": "classic"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"));
+    }
+
+    @Test
+    void shouldRejectInvalidJwtPatternType() throws Exception {
+        mockMvc.perform(patch("/api/jwt/user/time-settings")
+                        .header("Authorization", bearerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "pomodoroMinutes": 35,
+                                  "shortBreakMinutes": 10,
+                                  "longBreakMinutes": 25,
+                                  "pomoCycles": 2,
+                                  "soundsEnabled": false,
+                                  "patternType": "bad-value"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("Pattern type must be classic or compact"));
     }
 
     @Test

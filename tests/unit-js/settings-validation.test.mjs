@@ -18,7 +18,11 @@ function bootstrapSettingsPage() {
     const longBreakTime = createElement({ tagName: "input", id: "longBreakTime", value: "15" });
     const soundEnabled = createElement({ tagName: "input", id: "soundEnabled" });
     const focusCycles = createElement({ tagName: "input", id: "focusCycles", value: "1" });
+    const patternType = createElement({ tagName: "select", id: "patternType", value: "classic" });
     const settingsError = createElement({ tagName: "p", id: "settingsError", classNames: ["hidden"] });
+    const settingsClose = createElement({ tagName: "button", id: "settingsClose" });
+    const settingsSummaryFocus = createElement({ tagName: "span", id: "settingsSummaryFocus" });
+    const settingsSummaryTotal = createElement({ tagName: "span", id: "settingsSummaryTotal" });
     const authMeta = createElement({ tagName: "meta", attributes: { name: "is-authenticated", content: "false" } });
 
     settingsSection.appendChild(pomodoroTime);
@@ -26,7 +30,11 @@ function bootstrapSettingsPage() {
     settingsSection.appendChild(longBreakTime);
     settingsSection.appendChild(soundEnabled);
     settingsSection.appendChild(focusCycles);
+    settingsSection.appendChild(patternType);
     settingsSection.appendChild(settingsError);
+    settingsSection.appendChild(settingsClose);
+    settingsSection.appendChild(settingsSummaryFocus);
+    settingsSection.appendChild(settingsSummaryTotal);
     settingsSection.appendChild(saveSettings);
     settingsSection.appendChild(cancelSettings);
 
@@ -42,6 +50,7 @@ function bootstrapSettingsPage() {
         longBreakTime,
         soundEnabled,
         focusCycles,
+        patternType,
         settingsError
     ]);
 
@@ -50,7 +59,8 @@ function bootstrapSettingsPage() {
         shortBreak: 5,
         longBreak: 15,
         soundEnabled: true,
-        focusCycles: 1
+        focusCycles: 1,
+        patternType: "classic"
     };
     let saveCalls = [];
 
@@ -79,8 +89,15 @@ function bootstrapSettingsPage() {
                     shortBreak: Number(nextValue.shortBreak),
                     longBreak: Number(nextValue.longBreak),
                     soundEnabled: Boolean(nextValue.soundEnabled),
-                    focusCycles: Number(nextValue.focusCycles)
+                    focusCycles: Number(nextValue.focusCycles),
+                    patternType: nextValue.patternType || "classic"
                 };
+            },
+            normalizePatternType(value) {
+                return value === "compact" ? "compact" : "classic";
+            },
+            getWorkPhasesPerCycle(patternTypeValue) {
+                return patternTypeValue === "compact" ? 2 : 4;
             },
             saveSettings(nextValue) {
                 savedSettings = { ...nextValue };
@@ -116,6 +133,7 @@ function bootstrapSettingsPage() {
         shortBreakTime,
         longBreakTime,
         focusCycles,
+        patternType,
         settingsError,
         getSaveCalls() {
             return saveCalls;
@@ -161,7 +179,7 @@ test("[ui-negative] settings validation rejects empty and out-of-range values wi
     assert.equal(runtime.getSaveCalls().length, 0);
 });
 
-test("[ui-negative] corrected settings clear the error state and persist only after a valid save", () => {
+test("[ui-negative] corrected settings clear the error state and persist only after a valid save", async () => {
     const runtime = bootstrapSettingsPage();
 
     runtime.focusCycles.value = "0";
@@ -174,12 +192,14 @@ test("[ui-negative] corrected settings clear the error state and persist only af
     assert.equal(runtime.settingsError.classList.contains("hidden"), true);
 
     runtime.saveSettings.dispatchEvent({ type: "click", target: runtime.saveSettings });
+    await Promise.resolve();
     assert.equal(runtime.getSaveCalls().length, 1);
     assert.deepEqual(runtime.getSaveCalls()[0], {
         pomodoro: 25,
         shortBreak: 5,
         longBreak: 15,
         soundEnabled: true,
-        focusCycles: 3
+        focusCycles: 3,
+        patternType: "classic"
     });
 });

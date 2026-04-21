@@ -50,6 +50,7 @@ class UserTimeSettingsServiceImplTest {
         assertEquals(15, response.getLongBreakMinutes());
         assertEquals(4, response.getPomoCycles());
         assertEquals(true, response.isSoundsEnabled());
+        assertEquals("classic", response.getPatternType());
         assertEquals("UserTimeSettings found", response.getMessage());
     }
 
@@ -63,6 +64,7 @@ class UserTimeSettingsServiceImplTest {
         dto.setLongBreakMinutes(20);
         dto.setPomoCycles(2);
         dto.setSoundsEnabled(false);
+        dto.setPatternType("compact");
 
         when(userService.findByEmailOrUsername("user@test.com")).thenReturn(user);
         when(userService.findById(1L)).thenReturn(user);
@@ -76,6 +78,7 @@ class UserTimeSettingsServiceImplTest {
         assertEquals(20, settings.getLongBreakMinutes());
         assertEquals(2, settings.getPomoCycles());
         assertFalse(settings.getSoundsEnable());
+        assertEquals("compact", settings.getPatternType());
         assertEquals("UserTimeSettings updated", response.getMessage());
         verify(userTimeSettingsRepository).save(settings);
     }
@@ -99,6 +102,7 @@ class UserTimeSettingsServiceImplTest {
         dto.setLongBreakMinutes(15);
         dto.setPomoCycles(4);
         dto.setSoundsEnabled(true);
+        dto.setPatternType("classic");
 
         when(userService.findByEmailOrUsername("user@test.com")).thenReturn(user);
 
@@ -127,6 +131,7 @@ class UserTimeSettingsServiceImplTest {
         settings.setLongBreakMinutes(longBreak);
         settings.setPomoCycles(cycles);
         settings.setSoundsEnable(soundsEnabled);
+        settings.setPatternType("classic");
         return settings;
     }
 }

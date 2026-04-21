@@ -192,6 +192,7 @@ public class UserServiceImpl implements UserService {
         userTimeSettings.setLongBreakMinutes(15);
         userTimeSettings.setPomoCycles(4);
         userTimeSettings.setSoundsEnable(true);
+        userTimeSettings.setPatternType("classic");
         userTimeSettingsRepository.save(userTimeSettings);
     }
 }

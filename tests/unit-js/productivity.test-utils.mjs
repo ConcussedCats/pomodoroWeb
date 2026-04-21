@@ -86,7 +86,8 @@ function createElement({
     classNames = [],
     value = "",
     checked = false,
-    content = ""
+    content = "",
+    disabled = false
 } = {}) {
     const elementTarget = createEventTarget();
     const attributeMap = new Map(Object.entries(attributes));
@@ -103,6 +104,10 @@ function createElement({
         textContent: "",
         value,
         checked,
+        disabled,
+        defaultValue: value,
+        defaultChecked: checked,
+        defaultDisabled: disabled,
         content: content || attributes.content || "",
         tabIndex: 0,
         wasFocused: false,
@@ -123,6 +128,7 @@ function createElement({
             if (key === "name") this.name = safeValue;
             if (key === "content") this.content = safeValue;
             if (key === "value") this.value = safeValue;
+            if (key === "disabled") this.disabled = true;
             if (key.startsWith("data-")) {
                 this.dataset[toDatasetKey(key)] = safeValue;
             }
@@ -141,6 +147,9 @@ function createElement({
         },
         removeAttribute(key) {
             attributeMap.delete(key);
+            if (key === "disabled") {
+                this.disabled = false;
+            }
             if (key.startsWith("data-")) {
                 delete this.dataset[toDatasetKey(key)];
             }
@@ -148,14 +157,18 @@ function createElement({
         focus() {
             this.wasFocused = true;
         },
+        matches(selector) {
+            return matchesSelector(this, selector);
+        },
         reset() {
             getDescendants(this).forEach(descendant => {
                 if (descendant.tagName === "INPUT" || descendant.tagName === "TEXTAREA" || descendant.tagName === "SELECT") {
-                    descendant.value = "";
+                    descendant.value = descendant.defaultValue ?? "";
                 }
-                if (descendant.tagName === "INPUT" && descendant.getAttribute("type") === "checkbox") {
-                    descendant.checked = false;
+                if (descendant.tagName === "INPUT" && ["checkbox", "radio"].includes(descendant.getAttribute("type"))) {
+                    descendant.checked = descendant.defaultChecked ?? false;
                 }
+                descendant.disabled = descendant.defaultDisabled ?? false;
             });
         },
         closest(selector) {
@@ -223,7 +236,10 @@ function matchesSelector(element, selector) {
         return element.id === trimmed.slice(1);
     }
 
-    const tagAndAttributeMatch = trimmed.match(/^([a-zA-Z]+)?(\[.+\])?$/);
+    const requiresChecked = trimmed.endsWith(":checked");
+    const selectorBody = requiresChecked ? trimmed.slice(0, -8) : trimmed;
+
+    const tagAndAttributeMatch = selectorBody.match(/^([a-zA-Z]+)?((?:\[[^\]]+\])*)$/);
     if (!tagAndAttributeMatch) {
         return false;
     }
@@ -234,31 +250,38 @@ function matchesSelector(element, selector) {
         return false;
     }
 
+    if (requiresChecked && !element.checked) {
+        return false;
+    }
+
     if (!attributeSelector) {
         return true;
     }
 
-    const attributeMatch = attributeSelector.match(/^\[([^=\]]+)(?:="([^"]*)")?\]$/);
-    if (!attributeMatch) {
+    const attributeMatches = [...attributeSelector.matchAll(/\[([^=\]]+)(?:="([^"]*)")?\]/g)];
+    if (!attributeMatches.length) {
         return false;
     }
 
-    const [, rawAttribute, expectedValue] = attributeMatch;
-    let actualValue = null;
+    return attributeMatches.every(([, rawAttribute, expectedValue]) => {
+        let actualValue = null;
 
-    if (rawAttribute.startsWith("data-")) {
-        actualValue = element.dataset[toDatasetKey(rawAttribute)];
-    } else if (rawAttribute === "name") {
-        actualValue = element.name;
-    } else {
-        actualValue = element.getAttribute(rawAttribute);
-    }
+        if (rawAttribute.startsWith("data-")) {
+            actualValue = element.dataset[toDatasetKey(rawAttribute)];
+        } else if (rawAttribute === "name") {
+            actualValue = element.name;
+        } else if (rawAttribute === "disabled") {
+            actualValue = element.disabled ? "" : null;
+        } else {
+            actualValue = element.getAttribute(rawAttribute);
+        }
 
-    if (typeof expectedValue === "undefined") {
-        return actualValue !== null && typeof actualValue !== "undefined";
-    }
+        if (typeof expectedValue === "undefined") {
+            return actualValue !== null && typeof actualValue !== "undefined";
+        }
 
-    return actualValue === expectedValue;
+        return actualValue === expectedValue;
+    });
 }
 
 function queryWithin(root, selector, firstOnly) {
@@ -334,8 +357,11 @@ function parseProductivityListHTML(listElement, html) {
         if (body.includes('data-edit-field="todo"')) {
             const titleValue = body.match(/name="title"[\s\S]*?value="([^"]*)"/)?.[1] || "";
             const descriptionValue = body.match(/name="description"[\s\S]*?>([\s\S]*?)<\/textarea>/)?.[1] || "";
-            const priorityValue = body.match(/<option value="(LOW|MEDIUM|HIGH)" selected>/)?.[1] || "LOW";
+            const priorityValue = body.match(/name="priority" value="(LOW|MEDIUM|HIGH)" checked/)?.[1]
+                || body.match(/<option value="(LOW|MEDIUM|HIGH)" selected>/)?.[1]
+                || "LOW";
             const deadlineValue = body.match(/name="deadline"[\s\S]*?value="([^"]*)"/)?.[1] || "";
+            const deadlineEnabled = /data-deadline-toggle[\s\S]*?checked/.test(body);
             const completedChecked = /name="isDone"[\s\S]*?checked/.test(body);
 
             itemElement.appendChild(createElement({
@@ -349,22 +375,38 @@ function parseProductivityListHTML(listElement, html) {
                 name: "description",
                 value: decodeHtml(descriptionValue)
             }));
+            ["LOW", "MEDIUM", "HIGH"].forEach(priority => {
+                itemElement.appendChild(createElement({
+                    tagName: "input",
+                    name: "priority",
+                    attributes: { type: "radio" },
+                    value: priority,
+                    checked: priority === priorityValue
+                }));
+            });
             itemElement.appendChild(createElement({
-                tagName: "select",
-                name: "priority",
-                value: priorityValue
+                tagName: "input",
+                attributes: { type: "checkbox" },
+                dataset: { deadlineToggle: "" },
+                checked: deadlineEnabled
             }));
             itemElement.appendChild(createElement({
                 tagName: "input",
                 name: "deadline",
                 attributes: { type: "datetime-local" },
-                value: decodeHtml(deadlineValue)
+                value: decodeHtml(deadlineValue),
+                disabled: !deadlineEnabled
             }));
             itemElement.appendChild(createElement({
                 tagName: "input",
                 name: "isDone",
                 attributes: { type: "checkbox" },
                 checked: completedChecked
+            }));
+            itemElement.appendChild(createElement({
+                tagName: "p",
+                dataset: { editMessage: "" },
+                classNames: ["hidden"]
             }));
         }
 
@@ -375,6 +417,11 @@ function parseProductivityListHTML(listElement, html) {
                 name: "content",
                 dataset: { editField: "notes" },
                 value: decodeHtml(textareaValue)
+            }));
+            itemElement.appendChild(createElement({
+                tagName: "p",
+                dataset: { editMessage: "" },
+                classNames: ["hidden"]
             }));
         }
 
@@ -495,6 +542,23 @@ function createApiRuntimeState({ todos = [], notes = [], failures = {} } = {}) {
             return createFetchResponse(200, updatedTodo);
         }
 
+        const todoCompletionMatch = url.match(/^\/api\/productivity\/todos\/(\d+)\/completion$/);
+        if (todoCompletionMatch && method === "PATCH") {
+            const todoId = Number(todoCompletionMatch[1]);
+            const payload = JSON.parse(options.body);
+            let updatedTodo = null;
+            serverState.todos = serverState.todos.map(todo => {
+                if (Number(todo.todoId) !== todoId) return todo;
+                updatedTodo = {
+                    ...todo,
+                    isDone: Boolean(payload.isDone),
+                    message: "Task was updated successfully"
+                };
+                return updatedTodo;
+            });
+            return createFetchResponse(200, updatedTodo);
+        }
+
         if (todoIdMatch && method === "DELETE") {
             const todoId = Number(todoIdMatch[1]);
             serverState.todos = serverState.todos.filter(todo => Number(todo.todoId) !== todoId);
@@ -561,26 +625,66 @@ export async function bootstrapProductivityRuntime(options = {}) {
 
     const todoTitleInput = createElement({ tagName: "input", id: "todoInput", name: "title" });
     const todoDescriptionInput = createElement({ tagName: "textarea", id: "todoDescriptionInput", name: "description" });
-    const todoPriorityInput = createElement({ tagName: "select", id: "todoPriorityInput", name: "priority", value: "LOW" });
+    const todoPriorityLowInput = createElement({
+        tagName: "input",
+        name: "priority",
+        attributes: { type: "radio", value: "LOW" },
+        value: "LOW"
+    });
+    const todoPriorityMediumInput = createElement({
+        tagName: "input",
+        name: "priority",
+        attributes: { type: "radio", value: "MEDIUM" },
+        value: "MEDIUM"
+    });
+    const todoPriorityHighInput = createElement({
+        tagName: "input",
+        name: "priority",
+        attributes: { type: "radio", value: "HIGH" },
+        value: "HIGH",
+        checked: true
+    });
+    const todoDeadlineToggle = createElement({
+        tagName: "input",
+        attributes: { type: "checkbox" },
+        dataset: { deadlineToggle: "" }
+    });
     const todoDeadlineInput = createElement({
         tagName: "input",
         id: "todoDeadlineInput",
         name: "deadline",
-        attributes: { type: "datetime-local" }
+        attributes: { type: "datetime-local" },
+        disabled: true
     });
     const noteInput = createElement({ tagName: "textarea", id: "noteInput", name: "content" });
+    const activeCount = createElement({ tagName: "span", dataset: { activeCount: "" } });
 
     const todoMessage = createElement({ dataset: { formMessage: "todo" }, classNames: ["hidden"] });
     const noteMessage = createElement({ dataset: { formMessage: "notes" }, classNames: ["hidden"] });
 
-    const todoForm = createElement({ tagName: "form", dataset: { entryForm: "todo" } });
+    const todoFormToggle = createElement({ tagName: "div", dataset: { formToggle: "" } });
+    const noteFormToggle = createElement({ tagName: "div", dataset: { formToggle: "" } });
+    const todoForm = createElement({
+        tagName: "form",
+        dataset: { entryForm: "todo" },
+        classNames: ["productivity-entry-form", "productivity-entry-form--collapsed"]
+    });
+    todoForm.appendChild(todoFormToggle);
     todoForm.appendChild(todoTitleInput);
     todoForm.appendChild(todoDescriptionInput);
-    todoForm.appendChild(todoPriorityInput);
+    todoForm.appendChild(todoPriorityLowInput);
+    todoForm.appendChild(todoPriorityMediumInput);
+    todoForm.appendChild(todoPriorityHighInput);
+    todoForm.appendChild(todoDeadlineToggle);
     todoForm.appendChild(todoDeadlineInput);
     todoForm.appendChild(todoMessage);
 
-    const notesForm = createElement({ tagName: "form", dataset: { entryForm: "notes" } });
+    const notesForm = createElement({
+        tagName: "form",
+        dataset: { entryForm: "notes" },
+        classNames: ["productivity-entry-form", "productivity-entry-form--collapsed"]
+    });
+    notesForm.appendChild(noteFormToggle);
     notesForm.appendChild(noteInput);
     notesForm.appendChild(noteMessage);
 
@@ -596,6 +700,7 @@ export async function bootstrapProductivityRuntime(options = {}) {
         attributes: { "aria-hidden": "false" }
     });
     todoPanel.appendChild(todoForm);
+    todoPanel.appendChild(activeCount);
     todoPanel.appendChild(todoList);
     todoPanel.appendChild(todoEmpty);
 
@@ -704,7 +809,13 @@ export async function bootstrapProductivityRuntime(options = {}) {
             todo: {
                 title: todoTitleInput,
                 description: todoDescriptionInput,
-                priority: todoPriorityInput,
+                priority: todoPriorityHighInput,
+                priorityOptions: {
+                    LOW: todoPriorityLowInput,
+                    MEDIUM: todoPriorityMediumInput,
+                    HIGH: todoPriorityHighInput
+                },
+                deadlineToggle: todoDeadlineToggle,
                 deadline: todoDeadlineInput
             },
             notes: noteInput
@@ -720,7 +831,8 @@ export async function bootstrapProductivityRuntime(options = {}) {
         messages: {
             todo: todoMessage,
             notes: noteMessage
-        }
+        },
+        activeCount
     };
 }
 
@@ -734,6 +846,22 @@ export async function submitForm(runtime, type) {
 
 export function inputValue(runtime, type, field, value) {
     const input = type === "notes" ? runtime.inputs.notes : runtime.inputs.todo[field];
+    if (type === "todo" && field === "priority") {
+        Object.entries(runtime.inputs.todo.priorityOptions).forEach(([priority, option]) => {
+            option.checked = priority === value;
+        });
+        runtime.forms.todo.dispatchEvent({
+            type: "input",
+            target: runtime.inputs.todo.priorityOptions[value]
+        });
+        return;
+    }
+
+    if (type === "todo" && field === "deadline") {
+        runtime.inputs.todo.deadlineToggle.checked = Boolean(value);
+        runtime.inputs.todo.deadline.disabled = !value;
+    }
+
     input.value = value;
     const ownerForm = type === "notes" ? runtime.forms.notes : runtime.forms.todo;
     ownerForm.dispatchEvent({

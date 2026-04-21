@@ -10,7 +10,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             shortBreak: settings.shortBreakMinutes,
             longBreak: settings.longBreakMinutes,
             soundEnabled: settings.soundsEnabled,
-            focusCycles: settings.pomoCycles
+            focusCycles: settings.pomoCycles,
+            patternType: settings.patternType
         });
     }
 
@@ -22,7 +23,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             && first.shortBreak === second.shortBreak
             && first.longBreak === second.longBreak
             && first.soundEnabled === second.soundEnabled
-            && first.focusCycles === second.focusCycles;
+            && first.focusCycles === second.focusCycles
+            && first.patternType === second.patternType;
     }
 
     try {

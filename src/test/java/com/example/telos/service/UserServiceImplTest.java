@@ -103,20 +103,20 @@ class UserServiceImplTest {
         User currentUser = buildUser(1L, "user@test.com", "user", "encoded-old-password");
         UserPasswordDto dto = new UserPasswordDto();
         dto.setOldPassword("old-password");
-        dto.setNewPassword("new-password");
-        dto.setConfirmNewPassword("new-password");
+        dto.setNewPassword("Validpass1");
+        dto.setConfirmNewPassword("Validpass1");
 
         when(userRepository.findByEmailOrUsername("user@test.com")).thenReturn(Optional.of(currentUser));
         when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
         when(passwordEncoder.matches("old-password", "encoded-old-password")).thenReturn(true);
-        when(passwordEncoder.encode("new-password")).thenReturn("encoded-new-password");
+        when(passwordEncoder.encode("Validpass1")).thenReturn("encoded-new-password");
         when(userRepository.save(currentUser)).thenReturn(currentUser);
 
         UserPasswordResponseDto response = userService.updatePassword("user@test.com", dto);
 
         assertEquals("encoded-new-password", currentUser.getPassword());
         assertEquals("New password was successfully updated", response.getMessage());
-        verify(passwordEncoder).encode("new-password");
+        verify(passwordEncoder).encode("Validpass1");
         verify(userRepository).save(currentUser);
     }
 
@@ -124,8 +124,8 @@ class UserServiceImplTest {
     void shouldRejectPasswordUpdateWhenConfirmationDoesNotMatch() {
         UserPasswordDto dto = new UserPasswordDto();
         dto.setOldPassword("old-password");
-        dto.setNewPassword("new-password");
-        dto.setConfirmNewPassword("different-password");
+        dto.setNewPassword("Validpass1");
+        dto.setConfirmNewPassword("Different1");
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
@@ -149,7 +149,7 @@ class UserServiceImplTest {
                 () -> userService.updatePassword("user@test.com", dto)
         );
 
-        assertEquals("New password must be at least 8 characters", exception.getMessage());
+        assertEquals("password must be 8-64 characters and include uppercase, lowercase, and a number", exception.getMessage());
         verify(userRepository, never()).findByEmailOrUsername(any());
     }
 
@@ -158,8 +158,8 @@ class UserServiceImplTest {
         User currentUser = buildUser(1L, "user@test.com", "user", "encoded-old-password");
         UserPasswordDto dto = new UserPasswordDto();
         dto.setOldPassword("wrong-old-password");
-        dto.setNewPassword("new-password");
-        dto.setConfirmNewPassword("new-password");
+        dto.setNewPassword("Validpass1");
+        dto.setConfirmNewPassword("Validpass1");
 
         when(userRepository.findByEmailOrUsername("user@test.com")).thenReturn(Optional.of(currentUser));
         when(passwordEncoder.matches("wrong-old-password", "encoded-old-password")).thenReturn(false);
