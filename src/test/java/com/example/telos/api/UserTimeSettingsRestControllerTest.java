@@ -65,6 +65,7 @@ class UserTimeSettingsRestControllerTest {
                 .andExpect(jsonPath("$.longBreakMinutes").value(15))
                 .andExpect(jsonPath("$.pomoCycles").value(4))
                 .andExpect(jsonPath("$.soundsEnabled").value(true))
+                .andExpect(jsonPath("$.patternType").value("classic"))
                 .andExpect(jsonPath("$.message").value("Settings loaded"));
     }
 
@@ -80,7 +81,8 @@ class UserTimeSettingsRestControllerTest {
                                   "shortBreakMinutes": 7,
                                   "longBreakMinutes": 20,
                                   "pomoCycles": 3,
-                                  "soundsEnabled": false
+                                  "soundsEnabled": false,
+                                  "patternType": "compact"
                                 }
                                 """))
                 .andExpect(status().isOk())
@@ -89,6 +91,7 @@ class UserTimeSettingsRestControllerTest {
                 .andExpect(jsonPath("$.longBreakMinutes").value(20))
                 .andExpect(jsonPath("$.pomoCycles").value(3))
                 .andExpect(jsonPath("$.soundsEnabled").value(false))
+                .andExpect(jsonPath("$.patternType").value("compact"))
                 .andExpect(jsonPath("$.message").value("Settings updated"));
     }
 
@@ -103,7 +106,8 @@ class UserTimeSettingsRestControllerTest {
                                   "shortBreakMinutes": 7,
                                   "longBreakMinutes": 20,
                                   "pomoCycles": 3,
-                                  "soundsEnabled": false
+                                  "soundsEnabled": false,
+                                  "patternType": "compact"
                                 }
                                 """))
                 .andExpect(status().isForbidden())
@@ -127,7 +131,8 @@ class UserTimeSettingsRestControllerTest {
                                   "shortBreakMinutes": 7,
                                   "longBreakMinutes": 20,
                                   "pomoCycles": 3,
-                                  "soundsEnabled": false
+                                  "soundsEnabled": false,
+                                  "patternType": "classic"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
@@ -172,7 +177,8 @@ class UserTimeSettingsRestControllerTest {
                                   "shortBreakMinutes": 7,
                                   "longBreakMinutes": 20,
                                   "pomoCycles": 3,
-                                  "soundsEnabled": false
+                                  "soundsEnabled": false,
+                                  "patternType": "classic"
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
@@ -192,11 +198,33 @@ class UserTimeSettingsRestControllerTest {
                                   "shortBreakMinutes": 7,
                                   "longBreakMinutes": 20,
                                   "pomoCycles": 3,
-                                  "soundsEnabled": false
+                                  "soundsEnabled": false,
+                                  "patternType": "classic"
                                 }
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Settings updated"));
+    }
+
+    @Test
+    @WithMockUser(username = "user@test.com")
+    void shouldRejectUnknownPatternType() throws Exception {
+        mockMvc.perform(patch("/api/user/time-settings")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "pomodoroMinutes": 25,
+                                  "shortBreakMinutes": 7,
+                                  "longBreakMinutes": 20,
+                                  "pomoCycles": 3,
+                                  "soundsEnabled": false,
+                                  "patternType": "invalid"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("Pattern type must be classic or compact"));
     }
 
     @Test
@@ -214,7 +242,8 @@ class UserTimeSettingsRestControllerTest {
                                   "shortBreakMinutes": 7,
                                   "longBreakMinutes": 20,
                                   "pomoCycles": 3,
-                                  "soundsEnabled": false
+                                  "soundsEnabled": false,
+                                  "patternType": "classic"
                                 }
                                 """))
                 .andExpect(status().isBadRequest());

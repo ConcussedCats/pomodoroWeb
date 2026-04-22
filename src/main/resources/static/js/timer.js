@@ -3,15 +3,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const timeDisplay = document.getElementById("timeDisplay");
     const startBtn = document.getElementById("startBtn");
     const resetBtn = document.getElementById("resetBtn");
+    const prevCycleBtn = document.getElementById("prevCycleBtn");
+    const nextCycleBtn = document.getElementById("nextCycleBtn");
     const sessionCountEl = document.getElementById("sessionCount");
     const sessionTotalEl = document.getElementById("sessionTotal");
-    const focusCycleCountEl = document.getElementById("focusCycleCount");
-    const focusCycleTotalEl = document.getElementById("focusCycleTotal");
     const sessionProjectionTextEl = document.getElementById("sessionProjectionText");
     const timerLabel = document.querySelector(".timer-label");
     const progressBar = document.querySelector(".timer-progress-bar");
     const modeLabels = document.querySelectorAll(".mode-label");
+    const sessionDotsEl = document.getElementById("sessionDots");
+    const timerSurface = document.getElementById("timerSection");
     const settingsToggle = document.getElementById("settingsToggle");
+    const longBreakHint = document.getElementById("longBreakHint");
+    const switchToLongBreakBtn = document.getElementById("switchToLongBreakBtn");
+    const continueShortBreakBtn = document.getElementById("continueShortBreakBtn");
 
     if (!timerStateStore || !timeDisplay || !startBtn || !resetBtn || !timerLabel || !progressBar) return;
 
@@ -34,9 +39,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let settings = timerStateStore.loadSettings();
     let timerState = timerStateStore.loadTimerState(settings);
+    let initialTransitionsReleased = false;
+    let pendingManualMode = null;
 
-    if (!timerState.isRunning && timerState.currentMode !== "pomodoro") {
-        timerState = timerStateStore.resetTimerState(timerState, settings);
+    function releaseInitialTransitions() {
+        if (!timerSurface || initialTransitionsReleased) return;
+        initialTransitionsReleased = true;
+
+        const scheduleFrame = window.requestAnimationFrame || ((callback) => window.setTimeout(callback, 0));
+        scheduleFrame(() => {
+            scheduleFrame(() => {
+                timerSurface.classList.remove("timer-surface--hydrating");
+            });
+        });
     }
 
     function persistTimerState() {
@@ -80,6 +95,39 @@ document.addEventListener("DOMContentLoaded", () => {
         settingsToggle.setAttribute("aria-disabled", running ? "true" : "false");
     }
 
+    function setModeButtonsState() {
+        modeLabels.forEach((label) => {
+            const isActive = label.dataset.mode === timerState.currentMode;
+            label.disabled = timerState.sessionCompleted;
+            label.setAttribute("aria-disabled", timerState.sessionCompleted ? "true" : "false");
+            label.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+    }
+
+    function canResetTimer() {
+        const defaultState = timerStateStore.getDefaultTimerState(settings);
+        return !timerStateStore.areStatesEqual(timerState, defaultState);
+    }
+
+    function setResetButtonState(canReset) {
+        resetBtn.disabled = !canReset;
+        resetBtn.setAttribute("aria-disabled", canReset ? "false" : "true");
+    }
+
+    function setPhaseButtonStates() {
+        if (prevCycleBtn) {
+            const canMoveBack = timerStateStore.canSkipToPreviousPhase(timerState, settings);
+            prevCycleBtn.disabled = !canMoveBack;
+            prevCycleBtn.setAttribute("aria-disabled", canMoveBack ? "false" : "true");
+        }
+
+        if (nextCycleBtn) {
+            const canMoveForward = timerStateStore.canSkipToNextPhase(timerState, settings);
+            nextCycleBtn.disabled = !canMoveForward;
+            nextCycleBtn.setAttribute("aria-disabled", canMoveForward ? "false" : "true");
+        }
+    }
+
     function updateProgress() {
         const totalSeconds = timerStateStore.getModeDurationSeconds(settings, timerState.currentMode);
         const remainingSeconds = timerStateStore.getRemainingSeconds(timerState);
@@ -92,26 +140,47 @@ document.addEventListener("DOMContentLoaded", () => {
         progressBar.style.strokeDashoffset = `${offset}`;
     }
 
+    function renderSessionDots(filledDots, totalDots) {
+        if (!sessionDotsEl) return;
+
+        const safeTotal = Math.max(1, totalDots);
+        while (sessionDotsEl.children.length < safeTotal) {
+            const dot = document.createElement("span");
+            dot.className = "session-dot";
+            sessionDotsEl.appendChild(dot);
+        }
+
+        while (sessionDotsEl.children.length > safeTotal) {
+            sessionDotsEl.lastElementChild.remove();
+        }
+
+        Array.from(sessionDotsEl.children).forEach((dot, index) => {
+            dot.classList.toggle("session-dot--active", index < filledDots);
+        });
+    }
+
     function render() {
         const remainingSeconds = timerStateStore.getRemainingSeconds(timerState);
         const minutes = Math.floor(remainingSeconds / 60);
         const seconds = remainingSeconds % 60;
-        const currentFocusCycle = timerStateStore.getCurrentFocusCycleNumber(timerState, settings);
+        const currentFocusCycle = timerStateStore.getCurrentCycleNumber(timerState, settings);
         const projectedSessionEndTime = timerStateStore.getProjectedSessionEndTime(timerState, settings);
         const focusSessionFinished = timerStateStore.isFocusSessionFinished(timerState, settings);
+        const filledDots = timerStateStore.getFilledDotsCount(timerState, settings);
+        const totalDots = timerStateStore.getWorkPhasesPerCycle(settings);
 
         timeDisplay.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-        timerLabel.textContent = labelText[timerState.currentMode] || "Timer";
-        startBtn.querySelector(".btn-text").textContent = timerState.isRunning ? "Pause" : "Start";
-        sessionCountEl.textContent = String(timerStateStore.getCurrentPomodoroNumber(timerState));
+        timerLabel.textContent = focusSessionFinished
+            ? "Session Complete"
+            : (labelText[timerState.currentMode] || "Timer");
+        startBtn.querySelector(".btn-text").textContent = timerState.isRunning
+            ? "PAUSE FLOW"
+            : (focusSessionFinished ? "START AGAIN" : "START FLOW");
+        if (sessionCountEl) {
+            sessionCountEl.textContent = String(currentFocusCycle);
+        }
         if (sessionTotalEl) {
-            sessionTotalEl.textContent = String(timerStateStore.getPomodorosPerCycle());
-        }
-        if (focusCycleCountEl) {
-            focusCycleCountEl.textContent = String(currentFocusCycle);
-        }
-        if (focusCycleTotalEl) {
-            focusCycleTotalEl.textContent = String(settings.focusCycles);
+            sessionTotalEl.textContent = String(settings.focusCycles);
         }
         if (sessionProjectionTextEl) {
             if (focusSessionFinished) {
@@ -126,10 +195,44 @@ document.addEventListener("DOMContentLoaded", () => {
         modeLabels.forEach(label => {
             label.classList.toggle("mode-label--active", label.dataset.mode === timerState.currentMode);
         });
+        renderSessionDots(filledDots, totalDots);
+        if (timerSurface) {
+            timerSurface.dataset.mode = timerState.currentMode;
+        }
 
         setSettingsButtonState(timerState.isRunning);
+        setModeButtonsState();
+        setResetButtonState(canResetTimer());
+        setPhaseButtonStates();
         updateProgress();
         setWorkerState(timerState.isRunning);
+        releaseInitialTransitions();
+    }
+
+    function closeLongBreakHint() {
+        if (!longBreakHint) return;
+        longBreakHint.classList.add("hidden");
+        pendingManualMode = null;
+    }
+
+    function openLongBreakHint() {
+        if (!longBreakHint) return;
+        longBreakHint.classList.remove("hidden");
+    }
+
+    function applyManualMode(targetMode, shouldPause = false) {
+        if (!targetMode) return;
+
+        let nextState = timerStateStore.manualSwitchToModeState(timerState, settings, targetMode, Date.now());
+        if (shouldPause) {
+            nextState = timerStateStore.pauseTimerState(nextState, settings, Date.now());
+        }
+
+        if (timerStateStore.areStatesEqual(timerState, nextState)) return;
+
+        timerState = nextState;
+        persistTimerState();
+        render();
     }
 
     function syncTimerState(now = Date.now(), shouldPlaySounds = true) {
@@ -172,16 +275,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (timerState.isRunning) {
             timerState = timerStateStore.pauseTimerState(timerState, settings, now);
+            playSound("timer_sound_down.wav");
         } else {
-            const isFreshWorkStart = timerState.currentMode === "pomodoro"
-                && timerStateStore.getRemainingSeconds(timerState, now)
-                === timerStateStore.getModeDurationSeconds(settings, "pomodoro");
-
             timerState = timerStateStore.startTimerState(timerState, settings, now);
-
-            if (isFreshWorkStart) {
-                playSound("timer_sound_up.wav");
-            }
+            playSound("timer_sound_up.wav");
         }
 
         persistTimerState();
@@ -189,10 +286,66 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     resetBtn.addEventListener("click", () => {
+        if (!canResetTimer()) return;
+
         playSound("timer_sound_down.wav");
         timerState = timerStateStore.resetTimerState(timerState, settings);
         persistTimerState();
         render();
+    });
+
+    prevCycleBtn?.addEventListener("click", () => {
+        if (!timerStateStore.canSkipToPreviousPhase(timerState, settings)) return;
+
+        playSound("timer_sound_up.wav");
+        timerState = timerStateStore.skipToPreviousPhaseState(timerState, settings, Date.now());
+        persistTimerState();
+        render();
+    });
+
+    nextCycleBtn?.addEventListener("click", () => {
+        if (!timerStateStore.canSkipToNextPhase(timerState, settings)) return;
+        playSound("timer_sound_down.wav");
+        timerState = timerStateStore.skipToNextPhaseState(timerState, settings, Date.now());
+        persistTimerState();
+        render();
+    });
+
+    modeLabels.forEach((label) => {
+        label.addEventListener("click", () => {
+            if (timerState.sessionCompleted) return;
+
+            const targetMode = label.dataset.mode;
+            if (!targetMode || targetMode === timerState.currentMode) return;
+
+            if (timerStateStore.shouldWarnBeforeShortBreakOverride(timerState, settings, targetMode)) {
+                pendingManualMode = targetMode;
+                openLongBreakHint();
+                return;
+            }
+
+            playSound(targetMode === "pomodoro" ? "timer_sound_up.wav" : "timer_sound_down.wav");
+            applyManualMode(targetMode, true);
+        });
+    });
+
+    switchToLongBreakBtn?.addEventListener("click", () => {
+        closeLongBreakHint();
+        playSound("timer_sound_down.wav");
+        applyManualMode("long-break", true);
+    });
+
+    continueShortBreakBtn?.addEventListener("click", () => {
+        const targetMode = pendingManualMode || "short-break";
+        closeLongBreakHint();
+        playSound("timer_sound_down.wav");
+        applyManualMode(targetMode, true);
+    });
+
+    longBreakHint?.addEventListener("click", (event) => {
+        if (event.target === longBreakHint) {
+            closeLongBreakHint();
+        }
     });
 
     document.addEventListener("settings:updated", (event) => {

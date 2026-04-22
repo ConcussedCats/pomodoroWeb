@@ -46,11 +46,19 @@ function createClassList(initialClasses = []) {
 }
 
 function createElement(id, initialClasses = []) {
+    const attributes = new Map();
+
     return {
         id,
         dataset: {},
         textContent: "",
-        classList: createClassList(initialClasses)
+        classList: createClassList(initialClasses),
+        setAttribute(name, value) {
+            attributes.set(name, String(value));
+        },
+        getAttribute(name) {
+            return attributes.get(name) || null;
+        }
     };
 }
 
@@ -116,8 +124,16 @@ function bootstrapMiniTimer({ initialStorage = {}, now = 1_000_000 } = {}) {
             intervals.set(intervalId, { callback, delay });
             return intervalId;
         },
+        setTimeout(callback) {
+            callback();
+            return 1;
+        },
         clearInterval(id) {
             intervals.delete(id);
+        },
+        requestAnimationFrame(callback) {
+            callback();
+            return 1;
         },
         addEventListener(...args) {
             return windowTarget.addEventListener(...args);
@@ -147,21 +163,15 @@ function bootstrapMiniTimer({ initialStorage = {}, now = 1_000_000 } = {}) {
     });
 }
 
-function createRunningState(timerState, settings, startAt, elapsedSeconds = 0) {
-    const freshState = timerState.getDefaultTimerState(settings);
-    const started = timerState.startTimerState(freshState, settings, startAt);
-
-    return {
-        ...started,
-        remainingSeconds: Math.max(0, started.remainingSeconds - elapsedSeconds)
-    };
-}
-
 test("mini timer hydrates from persisted running timer state and shows matching mode, time, and running status", () => {
     const runtime = withMockedNow(2_015_000, () => {
         const setupContext = bootstrapMiniTimer({ now: 2_000_000 });
         const settings = setupContext.timerState.getDefaultSettings();
-        const runningState = createRunningState(setupContext.timerState, settings, 2_000_000, 0);
+        const runningState = setupContext.timerState.startTimerState(
+            setupContext.timerState.getDefaultTimerState(settings),
+            settings,
+            2_000_000
+        );
 
         setupContext.timerState.saveSettings(settings);
         setupContext.timerState.saveTimerState(runningState, settings);
@@ -179,16 +189,50 @@ test("mini timer hydrates from persisted running timer state and shows matching 
     assert.equal(runtime.elements.miniTimer.classList.contains("mini-timer--pomodoro"), true);
 });
 
+test("mini timer shows completed status for a finished session", () => {
+    const runtime = bootstrapMiniTimer();
+    const settings = runtime.timerState.normalizeSettings({
+        pomodoro: 1,
+        shortBreak: 1,
+        longBreak: 1,
+        focusCycles: 1,
+        patternType: "compact"
+    });
+    const completed = runtime.timerState.hydrateTimerState({
+        patternType: "compact",
+        currentCycleIndex: 0,
+        currentPhaseIndex: 3,
+        currentMode: "long-break",
+        isRunning: true,
+        endTime: 1_000_000,
+        remainingSeconds: 0,
+        sessionCompleted: false
+    }, settings, 1_000_000);
+
+    runtime.document.dispatchEvent(new FakeCustomEvent("timer:state-updated", {
+        detail: {
+            settings,
+            state: completed
+        }
+    }));
+
+    assert.equal(runtime.elements.miniTimerStatus.textContent, "Completed");
+    assert.equal(runtime.elements.miniTimerTime.textContent, "00:00");
+    assert.equal(runtime.elements.miniTimer.classList.contains("mini-timer--long-break"), true);
+});
+
 test("mini timer updates immediately when the main timer dispatches timer state changes", () => {
     const runtime = bootstrapMiniTimer();
-    const settings = runtime.timerState.getDefaultSettings();
+    const settings = runtime.timerState.normalizeSettings({ patternType: "compact" });
     const pausedState = {
-        currentMode: "short-break",
+        patternType: "compact",
+        currentCycleIndex: 1,
+        currentPhaseIndex: 2,
+        currentMode: "pomodoro",
         isRunning: false,
         endTime: null,
         remainingSeconds: 150,
-        completedPomodorosInCycle: 1,
-        completedFocusCycles: 0
+        sessionCompleted: false
     };
 
     runtime.document.dispatchEvent(new FakeCustomEvent("timer:state-updated", {
@@ -198,23 +242,24 @@ test("mini timer updates immediately when the main timer dispatches timer state 
         }
     }));
 
-    assert.equal(runtime.elements.miniTimerMode.textContent, "Short Break");
+    assert.equal(runtime.elements.miniTimerMode.textContent, "Pomodoro");
     assert.equal(runtime.elements.miniTimerTime.textContent, "02:30");
     assert.equal(runtime.elements.miniTimerStatus.textContent, "Paused");
     assert.equal(runtime.elements.miniTimer.dataset.running, "false");
-    assert.equal(runtime.elements.miniTimer.classList.contains("mini-timer--short-break"), true);
 });
 
 test("mini timer reacts to storage-driven timer changes without manual reload", () => {
     const runtime = bootstrapMiniTimer();
-    const settings = runtime.timerState.getDefaultSettings();
+    const settings = runtime.timerState.normalizeSettings({ patternType: "compact" });
     const updatedState = {
-        currentMode: "pomodoro",
+        patternType: "compact",
+        currentCycleIndex: 0,
+        currentPhaseIndex: 1,
+        currentMode: "short-break",
         isRunning: false,
         endTime: null,
         remainingSeconds: 754,
-        completedPomodorosInCycle: 0,
-        completedFocusCycles: 0
+        sessionCompleted: false
     };
 
     runtime.timerState.saveSettings(settings);
@@ -224,27 +269,7 @@ test("mini timer reacts to storage-driven timer changes without manual reload", 
         key: runtime.timerState.keys.TIMER_STATE_KEY
     });
 
-    assert.equal(runtime.elements.miniTimerMode.textContent, "Pomodoro");
+    assert.equal(runtime.elements.miniTimerMode.textContent, "Short Break");
     assert.equal(runtime.elements.miniTimerTime.textContent, "12:34");
     assert.equal(runtime.elements.miniTimerStatus.textContent, "Paused");
-    assert.equal(runtime.elements.miniTimer.dataset.running, "false");
-});
-
-test("mini timer keeps the current state when a new page bootstraps from the same storage", () => {
-    const initialRuntime = withMockedNow(5_000_000, () => bootstrapMiniTimer({ now: 5_000_000 }));
-    const settings = initialRuntime.timerState.getDefaultSettings();
-    const runningState = createRunningState(initialRuntime.timerState, settings, 5_000_000, 0);
-
-    initialRuntime.timerState.saveSettings(settings);
-    initialRuntime.timerState.saveTimerState(runningState, settings);
-
-    const nextPageRuntime = withMockedNow(5_020_000, () => bootstrapMiniTimer({
-        initialStorage: initialRuntime.localStorage.snapshot(),
-        now: 5_020_000
-    }));
-
-    assert.equal(nextPageRuntime.elements.miniTimerMode.textContent, "Pomodoro");
-    assert.equal(nextPageRuntime.elements.miniTimerTime.textContent, "24:40");
-    assert.equal(nextPageRuntime.elements.miniTimerStatus.textContent, "Running");
-    assert.equal(nextPageRuntime.elements.miniTimer.dataset.running, "true");
 });

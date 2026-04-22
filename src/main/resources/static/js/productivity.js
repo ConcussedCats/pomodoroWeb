@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const formMessages = Object.fromEntries(
         ITEM_TYPES.map(type => [type, document.querySelector(`[data-form-message="${type}"]`)])
     );
+    const activeCountElement = document.querySelector("[data-active-count]");
 
     if (!tabButtons.length || !panels.length) return;
 
@@ -56,6 +57,14 @@ document.addEventListener("DOMContentLoaded", () => {
             notes: false
         }
     };
+
+    const menuIconMarkup = `
+        <svg class="productivity-action__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="5" r="1.8"></circle>
+            <circle cx="12" cy="12" r="1.8"></circle>
+            <circle cx="12" cy="19" r="1.8"></circle>
+        </svg>
+    `;
 
     function getRequestHeaders() {
         return {
@@ -108,7 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
             description: todo.description || null,
             isDone: Boolean(todo.completed),
             priority: todo.priority,
-            deadline: todo.deadline || null
+            deadline: normalizeDeadlineForApi(todo.deadline) || null
         };
     }
 
@@ -181,6 +190,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return submitJson(`/api/productivity/todos/${itemId}`, "PATCH", payload, mapTodoFromApi, "Failed to update task");
     }
 
+    async function updateTodoCompletion(itemId, completed) {
+        return submitJson(`/api/productivity/todos/${itemId}/completion`, "PATCH", {
+            isDone: Boolean(completed)
+        }, mapTodoFromApi, "Failed to update task");
+    }
+
     async function deleteTodo(itemId) {
         return deleteItem(`/api/productivity/todos/${itemId}`, "Failed to delete task");
     }
@@ -215,6 +230,16 @@ document.addEventListener("DOMContentLoaded", () => {
         return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
     }
 
+    function normalizeDeadlineForApi(value) {
+        if (!value) return "";
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return `${value}T23:59`;
+        }
+
+        return value;
+    }
+
     function containsForbiddenValue(value) {
         const normalized = String(value)
             .trim()
@@ -235,6 +260,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function showFormMessage(type, message, isError = true) {
         const messageElement = formMessages[type];
+        if (!messageElement) return;
+
+        messageElement.textContent = message;
+        messageElement.classList.remove("hidden");
+        messageElement.classList.toggle("form-message--error", isError);
+        messageElement.classList.toggle("form-message--success", !isError);
+    }
+
+    function clearInlineEditMessage(itemElement) {
+        const messageElement = itemElement?.querySelector("[data-edit-message]");
+        if (!messageElement) return;
+
+        messageElement.textContent = "";
+        messageElement.classList.add("hidden");
+        messageElement.classList.remove("form-message--error", "form-message--success");
+    }
+
+    function showInlineEditMessage(itemElement, message, isError = true) {
+        const messageElement = itemElement?.querySelector("[data-edit-message]");
         if (!messageElement) return;
 
         messageElement.textContent = message;
@@ -295,12 +339,47 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
+    function getPriorityValue(container) {
+        return container.querySelector('[name="priority"]:checked')?.value
+            || container.querySelector('select[name="priority"]')?.value
+            || container.querySelector('[name="priority"]')?.value;
+    }
+
+    function getDeadlineValue(container) {
+        const deadlineInput = container.querySelector('[name="deadline"]');
+        const deadlineToggle = container.querySelector("[data-deadline-toggle]");
+
+        if (deadlineToggle && !deadlineToggle.checked) {
+            return "";
+        }
+
+        return deadlineInput?.value || "";
+    }
+
+    function syncDeadlineInputState(form) {
+        const deadlineToggle = form?.querySelector("[data-deadline-toggle]");
+        const deadlineInput = form?.querySelector('[name="deadline"]');
+        if (!deadlineToggle || !deadlineInput) return;
+
+        deadlineInput.disabled = !deadlineToggle.checked;
+    }
+
+    function syncFormToggleState(form) {
+        const toggle = form?.querySelector("[data-form-toggle]");
+        if (!toggle) return;
+
+        const isCollapsed = form.classList.contains("productivity-entry-form--collapsed");
+        const label = form.dataset.entryForm === "notes" ? "note" : "task";
+        toggle.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+        toggle.setAttribute("aria-label", isCollapsed ? `Expand ${label} form` : `Collapse ${label} form`);
+    }
+
     function readTodoFormDraft(container) {
         return normalizeTodoDraft({
             title: container.querySelector('[name="title"]')?.value,
             description: container.querySelector('[name="description"]')?.value,
-            priority: container.querySelector('[name="priority"]')?.value,
-            deadline: container.querySelector('[name="deadline"]')?.value,
+            priority: getPriorityValue(container),
+            deadline: getDeadlineValue(container),
             completed: container.querySelector('[name="isDone"]')?.checked
         });
     }
@@ -333,7 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (draft.deadline) {
-            const deadline = new Date(draft.deadline);
+            const deadline = new Date(normalizeDeadlineForApi(draft.deadline));
             if (Number.isNaN(deadline.getTime())) {
                 markInvalid(deadlineInput, true);
                 deadlineInput?.focus();
@@ -358,6 +437,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderTodoItem(item) {
         const isEditing = state.editingByType.todo === item.id;
         const completedClass = item.completed ? " productivity-item__content--completed" : "";
+        const priorityLabel = String(item.priority || "LOW").toLowerCase();
+        const priorityMarkup = `<span class="productivity-item__badge ${getTodoPriorityClass(item.priority)}">${escapeHtml(priorityLabel)}</span>`;
         const descriptionMarkup = item.description
             ? `<p class="productivity-item__description">${escapeHtml(item.description).replaceAll("\n", "<br>")}</p>`
             : "";
@@ -370,7 +451,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <li class="productivity-item productivity-item--editing" data-item-id="${item.id}" data-item-type="todo">
                     <div class="productivity-item__editor productivity-item__editor-grid">
                         <div class="productivity-field">
-                            <label class="settings-label" for="todo-edit-title-${item.id}">Task</label>
+                            <label class="productivity-label" for="todo-edit-title-${item.id}">Task</label>
                             <input
                                 id="todo-edit-title-${item.id}"
                                 class="settings-input productivity-input productivity-item__editor-input"
@@ -382,7 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             >
                         </div>
                         <div class="productivity-field">
-                            <label class="settings-label" for="todo-edit-description-${item.id}">Description</label>
+                            <label class="productivity-label" for="todo-edit-description-${item.id}">Description</label>
                             <textarea
                                 id="todo-edit-description-${item.id}"
                                 class="settings-input productivity-input productivity-textarea productivity-textarea--compact"
@@ -392,38 +473,47 @@ document.addEventListener("DOMContentLoaded", () => {
                             >${escapeHtml(item.description)}</textarea>
                         </div>
                         <div class="productivity-field-row">
-                            <div class="productivity-field">
-                                <label class="settings-label" for="todo-edit-priority-${item.id}">Priority</label>
-                                <select
-                                    id="todo-edit-priority-${item.id}"
-                                    class="settings-input productivity-input"
-                                    name="priority"
-                                >
+                            <fieldset class="productivity-field productivity-field--priority">
+                                <legend class="productivity-label">Priority</legend>
+                                <div class="productivity-priority-options">
                                     ${TODO_PRIORITY_VALUES.map(priority => `
-                                        <option value="${priority}"${priority === item.priority ? " selected" : ""}>${priority.charAt(0)}${priority.slice(1).toLowerCase()}</option>
+                                        <label class="productivity-priority-option">
+                                            <input type="radio" name="priority" value="${priority}"${priority === item.priority ? " checked" : ""}>
+                                            <span>${priority.charAt(0)}${priority.slice(1).toLowerCase()}</span>
+                                        </label>
                                     `).join("")}
-                                </select>
-                            </div>
-                            <div class="productivity-field">
-                                <label class="settings-label" for="todo-edit-deadline-${item.id}">Deadline</label>
-                                <input
-                                    id="todo-edit-deadline-${item.id}"
-                                    class="settings-input productivity-input"
-                                    name="deadline"
-                                    type="datetime-local"
-                                    value="${formatDeadlineForInput(item.deadline)}"
-                                >
+                                </div>
+                            </fieldset>
+                            <div class="productivity-field productivity-field--deadline">
+                                <label class="productivity-deadline-toggle productivity-deadline-toggle--editor">
+                                    <input
+                                        class="productivity-checkbox"
+                                        type="checkbox"
+                                        data-deadline-toggle
+                                        ${item.deadline ? "checked" : ""}
+                                    >
+                                    <span>Set Deadline</span>
+                                    <input
+                                        id="todo-edit-deadline-${item.id}"
+                                        class="settings-input productivity-input"
+                                        name="deadline"
+                                        type="datetime-local"
+                                        value="${formatDeadlineForInput(item.deadline)}"
+                                        ${item.deadline ? "" : "disabled"}
+                                    >
+                                </label>
                             </div>
                         </div>
-                        <label class="settings-label checkbox-label">
+                        <label class="productivity-deadline-toggle productivity-deadline-toggle--editor">
                             <input
-                                class="settings-checkbox"
+                                class="productivity-checkbox productivity-edit-checkbox"
                                 name="isDone"
                                 type="checkbox"
                                 ${item.completed ? "checked" : ""}
                             >
                             <span>Completed</span>
                         </label>
+                        <p class="form-message productivity-panel-message hidden productivity-edit-message" data-edit-message aria-live="polite"></p>
                     </div>
                     <div class="productivity-item__actions">
                         <button class="productivity-action productivity-action--primary" type="button" data-action="save-edit">Save</button>
@@ -437,7 +527,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="productivity-item" data-item-id="${item.id}" data-item-type="todo">
                 <label class="productivity-check">
                     <input
-                        class="settings-checkbox productivity-check__input"
+                        class="productivity-checkbox productivity-check__input"
                         type="checkbox"
                         data-action="toggle-complete"
                         ${item.completed ? "checked" : ""}
@@ -446,14 +536,21 @@ document.addEventListener("DOMContentLoaded", () => {
                         <span class="productivity-item__content${completedClass}">${escapeHtml(item.title)}</span>
                         ${descriptionMarkup}
                         <div class="productivity-item__meta">
-                            <span class="productivity-item__badge ${getTodoPriorityClass(item.priority)}">${escapeHtml(item.priority)}</span>
+                            ${priorityMarkup}
                             ${deadlineLabel}
                         </div>
                     </div>
                 </label>
                 <div class="productivity-item__actions">
-                    <button class="productivity-action" type="button" data-action="edit">Edit</button>
-                    <button class="productivity-action productivity-action--danger" type="button" data-action="delete">Delete</button>
+                    <div class="productivity-action-menu">
+                        <button class="productivity-action productivity-action--menu" type="button" aria-label="Open task actions" aria-haspopup="true">
+                            ${menuIconMarkup}
+                        </button>
+                        <div class="productivity-action-menu__panel" role="menu">
+                            <button class="productivity-action-menu__item" type="button" data-action="edit" role="menuitem">Edit</button>
+                            <button class="productivity-action-menu__item productivity-action-menu__item--danger" type="button" data-action="delete" role="menuitem">Delete</button>
+                        </div>
+                    </div>
                 </div>
             </li>
         `;
@@ -473,6 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             rows="5"
                             maxlength="1200"
                         >${escapeHtml(item.content)}</textarea>
+                        <p class="form-message productivity-panel-message hidden productivity-edit-message" data-edit-message aria-live="polite"></p>
                     </div>
                     <div class="productivity-item__actions">
                         <button class="productivity-action productivity-action--primary" type="button" data-action="save-edit">Save</button>
@@ -489,8 +587,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     <p class="productivity-note__meta">Updated ${formatTimestamp(item.updatedAt)}</p>
                 </article>
                 <div class="productivity-item__actions">
-                    <button class="productivity-action" type="button" data-action="edit">Edit</button>
-                    <button class="productivity-action productivity-action--danger" type="button" data-action="delete">Delete</button>
+                    <div class="productivity-action-menu">
+                        <button class="productivity-action productivity-action--menu" type="button" aria-label="Open note actions" aria-haspopup="true">
+                            ${menuIconMarkup}
+                        </button>
+                        <div class="productivity-action-menu__panel" role="menu">
+                            <button class="productivity-action-menu__item" type="button" data-action="edit" role="menuitem">Edit</button>
+                            <button class="productivity-action-menu__item productivity-action-menu__item--danger" type="button" data-action="delete" role="menuitem">Delete</button>
+                        </div>
+                    </div>
                 </div>
             </li>
         `;
@@ -508,6 +613,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const shouldHide = state.loadingByType[type] || items.length > 0;
         emptyState.classList.toggle("hidden", shouldHide);
+
+        if (type === "todo" && activeCountElement) {
+            activeCountElement.textContent = String(items.filter(item => !item.completed).length);
+        }
 
         if (state.loadingByType[type]) {
             emptyState.textContent = `Loading ${itemLabels[type]}s...`;
@@ -542,8 +651,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const createdTodo = await createTodo(mapTodoToApiPayload(draft));
             state.items.todo = [createdTodo, ...state.items.todo];
             form.reset();
-            const priorityInput = form.querySelector('[name="priority"]');
-            if (priorityInput) priorityInput.value = "LOW";
+            resetTodoPriority(form);
             renderType("todo");
             focusPrimaryInput("todo");
             showFormMessage("todo", "Task was created successfully", false);
@@ -606,9 +714,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const itemId = itemElement.dataset.itemId;
         const draft = readTodoFormDraft(itemElement);
         const validationMessage = validateTodoDraft(itemElement, draft);
+        clearInlineEditMessage(itemElement);
 
         if (validationMessage) {
-            showFormMessage("todo", validationMessage);
+            showInlineEditMessage(itemElement, validationMessage);
             return;
         }
 
@@ -619,7 +728,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderType("todo");
             showFormMessage("todo", "Task was updated successfully", false);
         } catch (error) {
-            showFormMessage("todo", error.message || "Failed to update task");
+            showInlineEditMessage(itemElement, error.message || "Failed to update task");
         }
     }
 
@@ -627,19 +736,20 @@ document.addEventListener("DOMContentLoaded", () => {
         const itemId = itemElement.dataset.itemId;
         const editor = itemElement.querySelector('[name="content"]');
         const nextValue = editor?.value.trim() || "";
+        clearInlineEditMessage(itemElement);
 
         markInvalid(editor, false);
 
         if (!nextValue) {
             markInvalid(editor, true);
-            showFormMessage("notes", "Please enter a note before saving it.");
+            showInlineEditMessage(itemElement, "Please enter a note before saving it.");
             editor?.focus();
             return;
         }
 
         if (containsForbiddenValue(nextValue)) {
             markInvalid(editor, true);
-            showFormMessage("notes", "67 and six seven are not allowed here.");
+            showInlineEditMessage(itemElement, "67 and six seven are not allowed here.");
             editor?.focus();
             return;
         }
@@ -651,7 +761,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderType("notes");
             showFormMessage("notes", "Note was updated successfully", false);
         } catch (error) {
-            showFormMessage("notes", error.message || "Failed to update note");
+            showInlineEditMessage(itemElement, error.message || "Failed to update note");
         }
     }
 
@@ -687,13 +797,8 @@ document.addEventListener("DOMContentLoaded", () => {
         const currentTodo = state.items.todo.find(todo => todo.id === itemId);
         if (!currentTodo) return;
 
-        const nextDraft = {
-            ...currentTodo,
-            completed
-        };
-
         try {
-            const updatedTodo = await updateTodo(itemId, mapTodoToApiPayload(nextDraft));
+            const updatedTodo = await updateTodoCompletion(itemId, completed);
             state.items.todo = state.items.todo.map(todo => todo.id === itemId ? updatedTodo : todo);
             renderType("todo");
         } catch (error) {
@@ -780,6 +885,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         lists[type]?.addEventListener("change", event => {
+            const editedItem = event.target.closest("[data-item-id]");
+            if (editedItem) {
+                clearInlineEditMessage(editedItem);
+                if (event.target.matches("[data-deadline-toggle]")) {
+                    syncDeadlineInputState(editedItem);
+                }
+            }
+
             const checkbox = event.target.closest('[data-action="toggle-complete"]');
             const itemElement = checkbox?.closest("[data-item-id]");
             const itemId = itemElement?.dataset.itemId;
@@ -813,12 +926,91 @@ document.addEventListener("DOMContentLoaded", () => {
                 saveNoteEdit(itemElement);
             }
         });
+
+        lists[type]?.addEventListener("input", event => {
+            const input = event.target.closest("input, textarea, select");
+            if (!input) return;
+
+            const itemElement = input.closest("[data-item-id]");
+            if (!itemElement) return;
+
+            if (input.name === "deadline") {
+                const deadlineToggle = itemElement.querySelector("[data-deadline-toggle]");
+                if (deadlineToggle && input.value) {
+                    deadlineToggle.checked = true;
+                    syncDeadlineInputState(itemElement);
+                }
+            }
+
+            markInvalid(input, false);
+            clearInlineEditMessage(itemElement);
+        });
     });
 
     const todoPriorityInput = forms.todo?.querySelector('[name="priority"]');
-    if (todoPriorityInput && !todoPriorityInput.value) {
-        todoPriorityInput.value = "LOW";
+    function resetTodoPriority(form) {
+        const defaultPriorityInput = form?.querySelector('[name="priority"][value="HIGH"]');
+        if (defaultPriorityInput && "checked" in defaultPriorityInput) {
+            defaultPriorityInput.checked = true;
+            return;
+        }
+
+        const priorityInput = form?.querySelector('[name="priority"]');
+        if (priorityInput) {
+            priorityInput.value = "HIGH";
+        }
     }
+
+    if (todoPriorityInput && !getPriorityValue(forms.todo)) {
+        resetTodoPriority(forms.todo);
+    }
+
+    forms.todo?.addEventListener("reset", () => {
+        window.setTimeout(() => {
+            resetTodoPriority(forms.todo);
+            syncDeadlineInputState(forms.todo);
+            clearFormMessage("todo");
+        }, 0);
+    });
+
+    forms.notes?.addEventListener("reset", () => {
+        window.setTimeout(() => clearFormMessage("notes"), 0);
+    });
+
+    forms.todo?.querySelector("[data-deadline-toggle]")?.addEventListener("change", () => {
+        syncDeadlineInputState(forms.todo);
+    });
+
+    forms.todo?.querySelector('[name="deadline"]')?.addEventListener("input", event => {
+        const deadlineToggle = forms.todo?.querySelector("[data-deadline-toggle]");
+        if (deadlineToggle && event.currentTarget.value) {
+            deadlineToggle.checked = true;
+            syncDeadlineInputState(forms.todo);
+        }
+    });
+
+    document.querySelectorAll("[data-form-toggle]").forEach(toggle => {
+        const form = toggle.closest(".productivity-entry-form");
+        syncFormToggleState(form);
+
+        const toggleForm = () => {
+            form?.classList.toggle("productivity-entry-form--collapsed");
+            syncFormToggleState(form);
+        };
+
+        toggle.addEventListener("click", () => {
+            toggleForm();
+        });
+
+        toggle.addEventListener("keydown", event => {
+            if (event.key !== "Enter" && event.key !== " ") return;
+
+            event.preventDefault();
+            toggleForm();
+        });
+    });
+
+    syncDeadlineInputState(forms.todo);
 
     render();
     loadType("todo");

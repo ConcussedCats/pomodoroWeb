@@ -37,8 +37,9 @@ test("adding a valid todo item sends it through the API, renders deadline metada
     assert.equal(runtime.emptyStates.todo.classList.contains("hidden"), true);
     assert.equal(runtime.inputs.todo.title.value, "");
     assert.equal(runtime.inputs.todo.description.value, "");
-    assert.equal(runtime.inputs.todo.priority.value, "LOW");
+    assert.equal(runtime.inputs.todo.priorityOptions.HIGH.checked, true);
     assert.equal(runtime.inputs.todo.deadline.value, "");
+    assert.equal(runtime.inputs.todo.deadlineToggle.checked, false);
     assert.ok(runtime.lists.todo.innerHTML.includes("Ship release checklist"));
     assert.ok(runtime.lists.todo.innerHTML.includes("Due"));
 });
@@ -119,8 +120,13 @@ test("todo item supports complete, edit, save, cancel, delete, and keyboard save
     todoEditor.value = "Review final pull request";
     const descriptionEditor = runtime.lists.todo.querySelector('[data-item-id="11"] [name="description"]');
     descriptionEditor.value = "Expanded verification";
-    const priorityEditor = runtime.lists.todo.querySelector('[data-item-id="11"] [name="priority"]');
-    priorityEditor.value = "MEDIUM";
+    runtime.lists.todo.querySelectorAll('[data-item-id="11"] [name="priority"]').forEach(option => {
+        option.checked = false;
+    });
+    const priorityEditor = runtime.lists.todo.querySelector('[data-item-id="11"] [name="priority"][value="MEDIUM"]');
+    priorityEditor.checked = true;
+    const deadlineToggle = runtime.lists.todo.querySelector('[data-item-id="11"] [data-deadline-toggle]');
+    deadlineToggle.checked = true;
     const deadlineEditor = runtime.lists.todo.querySelector('[data-item-id="11"] [name="deadline"]');
     deadlineEditor.value = "2099-04-13T11:00";
     await triggerEditorKey(runtime, "todo", "11", { key: "Enter" });
@@ -236,27 +242,41 @@ test("[ui-negative] invalid edit-save keeps the previous productivity item uncha
     await clickListAction(runtime, "todo", "21", "save-edit");
     let todos = getTodoItems(runtime);
     assert.equal(todos[0].title, "Ship docs");
-    assert.equal(runtime.messages.todo.textContent, "Please enter a task before adding it.");
+    assert.equal(
+        runtime.lists.todo.querySelector('[data-item-id="21"] [data-edit-message]').textContent,
+        "Please enter a task before adding it."
+    );
 
     todoEditor.value = "six seven";
     await clickListAction(runtime, "todo", "21", "save-edit");
     todos = getTodoItems(runtime);
     assert.equal(todos[0].title, "Ship docs");
-    assert.equal(runtime.messages.todo.textContent, "67 and six seven are not allowed here.");
+    assert.equal(
+        runtime.lists.todo.querySelector('[data-item-id="21"] [data-edit-message]').textContent,
+        "67 and six seven are not allowed here."
+    );
 
     const deadlineEditor = runtime.lists.todo.querySelector('[data-item-id="21"] [name="deadline"]');
+    const deadlineToggle = runtime.lists.todo.querySelector('[data-item-id="21"] [data-deadline-toggle]');
     todoEditor.value = "Valid title";
+    deadlineToggle.checked = true;
     deadlineEditor.value = "2000-01-01T10:00";
     await clickListAction(runtime, "todo", "21", "save-edit");
     todos = getTodoItems(runtime);
     assert.equal(todos[0].deadline, null);
-    assert.equal(runtime.messages.todo.textContent, "Deadline cannot be in the past.");
+    assert.equal(
+        runtime.lists.todo.querySelector('[data-item-id="21"] [data-edit-message]').textContent,
+        "Deadline cannot be in the past."
+    );
 
     deadlineEditor.value = "not-a-date";
     await clickListAction(runtime, "todo", "21", "save-edit");
     todos = getTodoItems(runtime);
     assert.equal(todos[0].deadline, null);
-    assert.equal(runtime.messages.todo.textContent, "Please enter a valid deadline.");
+    assert.equal(
+        runtime.lists.todo.querySelector('[data-item-id="21"] [data-edit-message]').textContent,
+        "Please enter a valid deadline."
+    );
 
     await clickListAction(runtime, "notes", "31", "edit");
     const noteEditor = runtime.lists.notes.querySelector('[data-item-id="31"] [data-edit-field="notes"]');
@@ -264,13 +284,19 @@ test("[ui-negative] invalid edit-save keeps the previous productivity item uncha
     await clickListAction(runtime, "notes", "31", "save-edit");
     let notes = getNoteItems(runtime);
     assert.equal(notes[0].noteText, "Original note");
-    assert.equal(runtime.messages.notes.textContent, "Please enter a note before saving it.");
+    assert.equal(
+        runtime.lists.notes.querySelector('[data-item-id="31"] [data-edit-message]').textContent,
+        "Please enter a note before saving it."
+    );
 
     noteEditor.value = "six seven";
     await clickListAction(runtime, "notes", "31", "save-edit");
     notes = getNoteItems(runtime);
     assert.equal(notes[0].noteText, "Original note");
-    assert.equal(runtime.messages.notes.textContent, "67 and six seven are not allowed here.");
+    assert.equal(
+        runtime.lists.notes.querySelector('[data-item-id="31"] [data-edit-message]').textContent,
+        "67 and six seven are not allowed here."
+    );
 });
 
 test("[ui-negative] backend deadline validation error is surfaced for create and edit flows", async () => {

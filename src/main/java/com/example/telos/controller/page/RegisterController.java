@@ -3,10 +3,11 @@ package com.example.telos.controller.page;
 import com.example.telos.dto.RegisterRequest;
 import com.example.telos.exception.UsernameAlreadyTakenException;
 import com.example.telos.model.User;
+import com.example.telos.security.PostLoginRedirects;
 import com.example.telos.service.UserService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -30,6 +32,7 @@ public class RegisterController {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
+    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
     @GetMapping
     public String register(Authentication authentication) {
@@ -45,6 +48,7 @@ public class RegisterController {
     public String registerUser(@Valid @ModelAttribute RegisterRequest registerRequest,
                                BindingResult bindingResult,
                                HttpServletRequest request,
+                               HttpServletResponse response,
                                Model model) {
         if (bindingResult.hasErrors()) {
             fillFormModel(model, registerRequest, bindingResult.getFieldError() != null
@@ -55,15 +59,15 @@ public class RegisterController {
 
         try {
             User user = userService.register(registerRequest);
-            authenticateUser(user.getEmail(), registerRequest.getPassword(), request);
-            return "redirect:/user";
+            authenticateUser(user.getEmail(), registerRequest.getPassword(), request, response);
+            return "redirect:" + PostLoginRedirects.consumeTarget(request);
         } catch (UsernameAlreadyTakenException | IllegalArgumentException exception) {
             fillFormModel(model, registerRequest, exception.getMessage());
             return "register";
         }
     }
 
-    private void authenticateUser(String login, String password, HttpServletRequest request) {
+    private void authenticateUser(String login, String password, HttpServletRequest request, HttpServletResponse response) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(login, password)
         );
@@ -71,9 +75,7 @@ public class RegisterController {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
-
-        HttpSession session = request.getSession(true);
-        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+        securityContextRepository.saveContext(context, request, response);
     }
 
     private void fillFormModel(Model model, RegisterRequest registerRequest, String errorMessage) {

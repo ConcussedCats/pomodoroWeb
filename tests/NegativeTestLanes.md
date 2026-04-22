@@ -64,4 +64,6 @@ npx playwright test tests/e2e/negative-browser-flows.spec.js --reporter=line
 
 - form-login redirect-back behavior is still documented as a desired gap, but not kept as a runnable Java suite because the dedicated MockMvc form-login slice currently fails during security filter initialization on the current stack
 - session timer settings still accept decimal JSON values through coercion; a strict-integer known-gap test exists behind `runKnownGaps=true`
-- remote [teclos.space](https://teclos.space) may lag behind local branch assets, so some browser-negative specs intentionally skip there
+- remote [teclos.space](https://teclos.space) now runs most browser-negative specs directly; the remaining skips are limited to:
+  - login-success and authenticated productivity checks only when `E2E_LOGIN_USERNAME` / `E2E_LOGIN_PASSWORD` are not provided
+  - home timer reload-recovery while the live countdown-reload behavior remains unstable

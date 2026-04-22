@@ -7,21 +7,22 @@
 
 :root {
     /* Colors */
-    --color-primary: #e74c3c;
-    --color-primary-dark: #c0392b;
-    --color-primary-light: #ff6b5a;
-    --color-secondary: #3498db;
-    --color-secondary-dark: #2980b9;
-    --color-success: #2ecc71;
-    --color-warning: #f39c12;
+    --color-primary: #ff5545;
+    --color-primary-dark: #bb1614;
+    --color-primary-light: #fff;
+    --color-btn-primary: #ffb4a9;
+    --color-secondary: #c8c6c5;
+    --color-secondary-dark: #8f8d8c;
+    --color-success: #7fd8a0;
+    --color-warning: #ffd08a;
     
     /* Neutral Colors */
-    --color-bg: #1a1a1a;
-    --color-bg-light: #2a2a2a;
-    --color-bg-lighter: #3a3a3a;
-    --color-text: #ffffff;
-    --color-text-muted: #b0b0b0;
-    --color-border: #4a4a4a;
+    --color-bg: #131313;
+    --color-bg-light: #202020;
+    --color-bg-lighter: #353535;
+    --color-text: #e5e2e1;
+    --color-text-muted: rgba(229, 226, 225, 0.62);
+    --color-border: #5c403c;
     
     /* Spacing */
     --spacing-xs: 0.5rem;
@@ -43,7 +44,7 @@
     /* Border Radius */
     --radius-sm: 0.25rem;
     --radius-md: 0.5rem;
-    --radius-lg: 1rem;
+    --radius-lg: 0.5rem;
     --radius-full: 50%;
     
     /* Shadows */
@@ -58,12 +59,13 @@
 }
 
 /* ===== BASE STYLES ===== */
+html {
+    scrollbar-gutter: stable;
+}
+
 body {
     font-family: var(--font-family);
-    background:
-        radial-gradient(circle at top left, rgba(231, 76, 60, 0.18), transparent 24rem),
-        radial-gradient(circle at top right, rgba(52, 152, 219, 0.14), transparent 22rem),
-        linear-gradient(150deg, #111111 0%, #181818 38%, #232323 100%);
+    background: #131313;
     color: var(--color-text);
     min-height: 100vh;
     display: flex;
@@ -73,30 +75,26 @@ body {
     overflow-x: hidden;
 }
 
-body::before,
-body::after {
+body::before {
     content: "";
     position: fixed;
-    inset: auto;
-    width: 20rem;
-    height: 20rem;
-    border-radius: 50%;
-    filter: blur(110px);
-    opacity: 0.22;
+    inset: 0;
+    background: radial-gradient(circle at 50% -20%, rgba(255, 85, 69, 0.15), transparent 70%);
     pointer-events: none;
     z-index: 0;
 }
 
-body::before {
-    top: -4rem;
-    right: -5rem;
-    background: rgba(231, 76, 60, 0.5);
+body > * {
+    position: relative;
+    z-index: 1;
 }
 
-body::after {
-    bottom: -6rem;
-    left: -5rem;
-    background: rgba(52, 152, 219, 0.35);
+body.settings-modal-open {
+    overflow: hidden;
+}
+
+body.settings-modal-open .main-content {
+    z-index: 8;
 }
 
 a {

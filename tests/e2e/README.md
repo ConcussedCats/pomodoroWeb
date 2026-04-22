@@ -40,6 +40,7 @@ This folder captures browser-level user journeys that should later become execut
   - successful login is optional and enabled with:
     - `E2E_LOGIN_USERNAME`
     - `E2E_LOGIN_PASSWORD`
+  - the same credentials also unlock authenticated `productivity` negative-browser coverage
 
 ## Plans
 
@@ -59,10 +60,15 @@ This folder captures browser-level user journeys that should later become execut
 - [login-remote.spec.js](login-remote.spec.js): live login smoke against `teclos.space`
 - [dev-deployment-smoke.spec.js](dev-deployment-smoke.spec.js): remote dev-deployment smoke for `/`, `/productivity`, `/login`
 - [home-timer.spec.js](home-timer.spec.js): remote browser flow for timer start/pause/resume/reset and reload recovery on `/`
+  - covers default `classic` timer state, work-progress dots, `Cycle N out of M`, compact pattern switching, and skip-button autostart semantics
 - [negative-browser-flows.spec.js](negative-browser-flows.spec.js): browser-visible negative validation for home settings, login identifier blocking, and productivity forbidden-input handling
 
 ## Negative-Test Notes
 
 - Browser negative tests use inline tags like `@ui-negative`.
-- The current negative browser spec intentionally skips on [teclos.space](https://teclos.space) when the deployed assets are known to lag behind the current branch.
+- Most negative browser checks now run directly on [teclos.space](https://teclos.space).
+- The remaining live skips are intentional:
+  - successful-login smoke and authenticated `productivity` negative checks require `E2E_LOGIN_USERNAME` and `E2E_LOGIN_PASSWORD`
+  - with valid live credentials provided, those authenticated checks are runnable and pass on `teclos.space`
+  - home timer reload-recovery remains skipped on `teclos.space` until the live countdown-reload behavior becomes stable
 - See [NegativeTestLanes.md](../NegativeTestLanes.md) for lane separation and commands.

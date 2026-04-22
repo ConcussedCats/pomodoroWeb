@@ -71,7 +71,8 @@ public class UserTimeSettingsServiceImpl implements UserTimeSettingsService {
         userTimeSettings.setShortBreakMinutes(userTimeSettingsDto.getShortBreakMinutes());
         userTimeSettings.setLongBreakMinutes(userTimeSettingsDto.getLongBreakMinutes());
         userTimeSettings.setPomoCycles(userTimeSettingsDto.getPomoCycles());
-        userTimeSettings.setSoundsEnable(userTimeSettingsDto.isSoundsEnabled());
+        userTimeSettings.setSoundsEnable(userTimeSettingsDto.getSoundsEnabled());
+        userTimeSettings.setPatternType(userTimeSettingsDto.getPatternType());
         userTimeSettingsRepository.save(userTimeSettings);
         return new UserTimeSettingsResponseDto(
                 userTimeSettings.getPomodoroMinutes(),
@@ -79,6 +80,7 @@ public class UserTimeSettingsServiceImpl implements UserTimeSettingsService {
                 userTimeSettings.getLongBreakMinutes(),
                 userTimeSettings.getPomoCycles(),
                 userTimeSettings.getSoundsEnable(),
+                userTimeSettings.getPatternType(),
                 "UserTimeSettings updated"
         );
     }
@@ -94,6 +96,7 @@ public class UserTimeSettingsServiceImpl implements UserTimeSettingsService {
                 userTimeSettings.getLongBreakMinutes(),
                 userTimeSettings.getPomoCycles(),
                 userTimeSettings.getSoundsEnable(),
+                userTimeSettings.getPatternType(),
                 "UserTimeSettings found"
         );
     }

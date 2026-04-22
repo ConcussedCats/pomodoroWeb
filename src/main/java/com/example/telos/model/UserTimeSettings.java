@@ -43,4 +43,8 @@ public class UserTimeSettings {
     @Setter
     @Column(name = "sounds_enable", nullable = false)
     private Boolean soundsEnable;
+
+    @Setter
+    @Column(name = "pattern_type", nullable = false)
+    private String patternType;
 }

@@ -1,7 +1,8 @@
 document.addEventListener("DOMContentLoaded", async () => {
     const timerStateStore = window.PomodoroTimerState;
+    const isAuthenticated = window.TelosAuth?.authenticated === true;
 
-    if (!timerStateStore) return;
+    if (!timerStateStore || !isAuthenticated) return;
 
     function mapApiSettingsToLocal(settings) {
         return timerStateStore.normalizeSettings({
@@ -9,8 +10,21 @@ document.addEventListener("DOMContentLoaded", async () => {
             shortBreak: settings.shortBreakMinutes,
             longBreak: settings.longBreakMinutes,
             soundEnabled: settings.soundsEnabled,
-            focusCycles: settings.pomoCycles
+            focusCycles: settings.pomoCycles,
+            patternType: settings.patternType
         });
+    }
+
+    function areSettingsEqual(firstSettings, secondSettings) {
+        const first = timerStateStore.normalizeSettings(firstSettings);
+        const second = timerStateStore.normalizeSettings(secondSettings);
+
+        return first.pomodoro === second.pomodoro
+            && first.shortBreak === second.shortBreak
+            && first.longBreak === second.longBreak
+            && first.soundEnabled === second.soundEnabled
+            && first.focusCycles === second.focusCycles
+            && first.patternType === second.patternType;
     }
 
     try {
@@ -22,16 +36,21 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (!response.ok) return;
 
         const data = await response.json();
-        const syncedSettings = timerStateStore.saveSettings(mapApiSettingsToLocal(data));
+        const previousSettings = timerStateStore.loadSettings();
+        const nextSettings = mapApiSettingsToLocal(data);
+        const settingsChanged = !areSettingsEqual(previousSettings, nextSettings);
+        const syncedSettings = timerStateStore.saveSettings(nextSettings);
+        const loadedState = timerStateStore.loadTimerState(syncedSettings);
         const syncedState = timerStateStore.saveTimerState(
-            timerStateStore.applySettingsToTimerState(
-                timerStateStore.loadTimerState(syncedSettings),
-                syncedSettings
-            ),
+            settingsChanged
+                ? timerStateStore.applySettingsToTimerState(loadedState, syncedSettings)
+                : loadedState,
             syncedSettings
         );
 
-        document.dispatchEvent(new CustomEvent("settings:updated", { detail: syncedSettings }));
+        if (settingsChanged) {
+            document.dispatchEvent(new CustomEvent("settings:updated", { detail: syncedSettings }));
+        }
         document.dispatchEvent(new CustomEvent("timer:state-updated", {
             detail: {
                 settings: syncedSettings,

@@ -12,34 +12,28 @@
     <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
 </head>
 <body>
-    <!-- Header Section -->
     <th:block th:replace="~{fragments/header :: header('home')}"></th:block>
 
-    <!-- Main Content -->
     <main class="main-content">
         <div class="container container--timer">
-            <div class="page-intro page-intro--center">
-                <p class="eyebrow">Focus Rhythm</p>
-                <h2 class="page-title">Deep work with a visible finish line.</h2>
+            <section class="page-intro page-intro--center home-hero">
+                <h2 class="page-title">Deep work with a <span class="title-accent">visible</span> finish line.</h2>
                 <p class="page-lead">
-                    Telos keeps the session structure clear, shows when your focus block ends,
-                    and stays in sync across the whole app.
+                    Telos keeps the session structure clear, shows when your focus block ends, and stays
+                    in sync across the whole app.
                 </p>
-            </div>
+            </section>
 
-            <!-- Timer Section -->
-            <div id="timerSection" class="section-view timer-surface">
-                <!-- Timer Mode Tabs -->
-                <div class="timer-modes">
-                    <span class="mode-label mode-label--active" data-mode="pomodoro">Pomodoro</span>
-                    <span class="mode-label" data-mode="short-break">Short Break</span>
-                    <span class="mode-label" data-mode="long-break">Long Break</span>
+            <div id="timerSection" class="section-view timer-surface timer-surface--hydrating">
+                <div class="timer-modes" aria-label="Timer mode selection">
+                    <button class="mode-label mode-label--active" data-mode="pomodoro" type="button" aria-pressed="true">Pomodoro</button>
+                    <button class="mode-label" data-mode="short-break" type="button" aria-pressed="false">Short Break</button>
+                    <button class="mode-label" data-mode="long-break" type="button" aria-pressed="false">Long Break</button>
                 </div>
 
-                <!-- Timer Display -->
                 <div class="timer-display">
                     <div class="timer-circle">
-                        <svg class="timer-progress" viewBox="0 0 200 200">
+                        <svg class="timer-progress" viewBox="0 0 200 200" aria-hidden="true">
                             <circle class="timer-progress-bg" cx="100" cy="100" r="90"></circle>
                             <circle class="timer-progress-bar" cx="100" cy="100" r="90"></circle>
                         </svg>
@@ -50,82 +44,182 @@
                     </div>
                 </div>
 
-                <!-- Control Buttons -->
-                <div class="controls">
-                    <button class="btn btn--primary btn--start" id="startBtn">
-                        <span class="btn-text">Start</span>
-                    </button>
-                    <button class="btn btn--secondary btn--reset" id="resetBtn">
-                        <span class="btn-text">Reset</span>
-                    </button>
+                <div class="timer-actions">
+                    <div class="cycle-controls" aria-label="Timer phase navigation">
+                        <button class="btn btn--cycle btn--cycle-prev" id="prevCycleBtn" type="button" aria-label="Previous timer phase">
+                            <svg class="cycle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M5 5h2v14H5z"></path>
+                                <path d="M18 5v14L8 12z"></path>
+                            </svg>
+                        </button>
+                        <button class="btn btn--cycle btn--cycle-next" id="nextCycleBtn" type="button" aria-label="Next timer phase">
+                            <svg class="cycle-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M17 5h2v14h-2z"></path>
+                                <path d="M6 5v14l10-7z"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="controls">
+                        <button class="btn btn--secondary btn--reset" id="resetBtn" type="button" aria-label="Reset timer">
+                            <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M6.2 7.2A7.5 7.5 0 1 1 4.5 12"></path>
+                                <path d="M6.2 7.2H3.7V4.7"></path>
+                            </svg>
+                        </button>
+                        <button class="btn btn--primary btn--start" id="startBtn" type="button">
+                        <span class="btn-text">START FLOW</span>
+                        </button>
+                        <button class="btn btn--settings" id="settingsToggle" type="button" aria-label="Open timer settings">
+                            <svg class="control-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M12 15.2A3.2 3.2 0 1 0 12 8.8a3.2 3.2 0 0 0 0 6.4Z"></path>
+                                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2.05 2.05 0 0 1-2.9 2.9l-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.03 1.56V21a2.05 2.05 0 0 1-4.1 0v-.09A1.7 1.7 0 0 0 8.9 19.35a1.7 1.7 0 0 0-1.88.34l-.06.06a2.05 2.05 0 0 1-2.9-2.9l.06-.06A1.7 1.7 0 0 0 4.46 15a1.7 1.7 0 0 0-1.56-1.03H2.8a2.05 2.05 0 0 1 0-4.1h.09A1.7 1.7 0 0 0 4.45 8.9a1.7 1.7 0 0 0-.34-1.88l-.06-.06a2.05 2.05 0 0 1 2.9-2.9l.06.06A1.7 1.7 0 0 0 8.9 4.46a1.7 1.7 0 0 0 1.03-1.56V2.8a2.05 2.05 0 0 1 4.1 0v.09A1.7 1.7 0 0 0 15 4.45a1.7 1.7 0 0 0 1.88-.34l.06-.06a2.05 2.05 0 0 1 2.9 2.9l-.06.06A1.7 1.7 0 0 0 19.35 8.9a1.7 1.7 0 0 0 1.56 1.03H21a2.05 2.05 0 0 1 0 4.1h-.09A1.7 1.7 0 0 0 19.4 15Z"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Settings Button -->
-                <div class="settings-button-wrapper">
-                    <button class="btn btn--settings" id="settingsToggle">
-                        <span class="icon-settings">⚙️</span>
-                        <span class="btn-text">Settings</span>
-                    </button>
-                </div>
-
-                <!-- Session Counter -->
                 <div class="session-info">
-                    <p class="session-text">Pomodoro <span id="sessionCount">1</span> of <span id="sessionTotal">4</span></p>
-                    <p class="session-subtext">Focus cycle <span id="focusCycleCount">1</span> of <span id="focusCycleTotal">1</span></p>
-                    <p class="session-subtext" id="sessionProjectionText">Session ends at --:--</p>
+                    <div class="session-dots" id="sessionDots" aria-hidden="true">
+                        <span class="session-dot session-dot--active"></span>
+                        <span class="session-dot"></span>
+                        <span class="session-dot"></span>
+                        <span class="session-dot"></span>
+                    </div>
+                    <p class="session-text">Cycle <span id="sessionCount">1</span> out of <span id="sessionTotal">4</span></p>
                 </div>
             </div>
 
-            <!-- Settings Section -->
             <div id="settingsSection" class="section-view hidden settings-surface">
                 <div class="settings-content">
-                    <h3 class="settings-title">Timer Settings</h3>
-                    <p class="settings-copy">
-                        Shape the length of your work, breaks, and overall focus session.
-                    </p>
-                    
-                    <div class="settings-group">
-                        <label class="settings-label" for="pomodoroTime">Pomodoro Duration (minutes)</label>
-                        <input type="number" id="pomodoroTime" class="settings-input" value="25" min="1" max="120">
+                    <div class="settings-modal-header">
+                        <div>
+                            <h3 class="settings-title">Timer Settings</h3>
+                        </div>
+                        <button class="settings-close" id="settingsClose" type="button" aria-label="Close timer settings">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path d="M6 6l12 12"></path>
+                                <path d="M18 6L6 18"></path>
+                            </svg>
+                        </button>
                     </div>
 
-                    <div class="settings-group">
-                        <label class="settings-label" for="shortBreakTime">Short Break (minutes)</label>
-                        <input type="number" id="shortBreakTime" class="settings-input" value="5" min="1" max="30">
-                    </div>
+                    <div class="settings-modal-body">
+                        <div class="settings-grid">
+                            <div class="settings-group">
+                                <label class="settings-label settings-label--primary" for="pomodoroTime">Focus Duration</label>
+                                <div class="settings-number-row">
+                                    <input type="number" id="pomodoroTime" class="settings-input" value="25" min="1" max="120">
+                                    <span class="settings-unit">min</span>
+                                </div>
+                            </div>
 
-                    <div class="settings-group">
-                        <label class="settings-label" for="longBreakTime">Long Break (minutes)</label>
-                        <input type="number" id="longBreakTime" class="settings-input" value="15" min="1" max="80">
-                    </div>
+                            <div class="settings-group">
+                                <label class="settings-label settings-label--short-break" for="shortBreakTime">Short Break</label>
+                                <div class="settings-number-row">
+                                    <input type="number" id="shortBreakTime" class="settings-input" value="5" min="1" max="30">
+                                    <span class="settings-unit">min</span>
+                                </div>
+                            </div>
 
-                    <div class="settings-group">
-                        <label class="settings-label" for="focusCycles">Focus Session Cycles</label>
-                        <input type="number" id="focusCycles" class="settings-input" value="1" min="1" max="12">
-                    </div>
+                            <div class="settings-group">
+                                <label class="settings-label settings-label--long-break" for="longBreakTime">Long Break</label>
+                                <div class="settings-number-row">
+                                    <input type="number" id="longBreakTime" class="settings-input" value="15" min="1" max="80">
+                                    <span class="settings-unit">min</span>
+                                </div>
+                            </div>
 
-                    <div class="settings-group">
-                        <label class="settings-label checkbox-label">
-                            <input type="checkbox" id="soundEnabled" class="settings-checkbox" checked>
-                            <span>Sound Notifications</span>
-                        </label>
-                    </div>
+                            <div class="settings-group">
+                                <label class="settings-label" for="focusCycles">Session Cycles</label>
+                                <div class="settings-number-row">
+                                    <input type="number" id="focusCycles" class="settings-input" value="4" min="1" max="12">
+                                    <span class="settings-unit">rounds</span>
+                                </div>
+                            </div>
 
-                    <p id="settingsError" class="settings-error hidden" aria-live="polite"></p>
+                            <div class="settings-group settings-group--pattern">
+                                <fieldset class="settings-pattern-field">
+                                    <legend class="settings-label">Cycle Pattern</legend>
+                                    <div class="settings-pattern-options">
+                                        <label class="settings-pattern-option">
+                                            <input type="radio" id="patternTypeClassic" name="patternType" value="classic" checked>
+                                            <span>Classic</span>
+                                        </label>
+                                        <label class="settings-pattern-option">
+                                            <input type="radio" id="patternTypeCompact" name="patternType" value="compact">
+                                            <span>Compact</span>
+                                        </label>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+
+                        <div class="settings-sound-row">
+                            <label class="settings-label checkbox-label">
+                                <span class="settings-sound-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" focusable="false">
+                                        <path d="M4 9v6h4l5 4V5L8 9H4Z"></path>
+                                        <path d="M16 8.5a5 5 0 0 1 0 7"></path>
+                                        <path d="M18.5 6a8.5 8.5 0 0 1 0 12"></path>
+                                    </svg>
+                                </span>
+                                <span>Sound Notifications</span>
+                                <input type="checkbox" id="soundEnabled" class="settings-checkbox" checked>
+                            </label>
+                        </div>
+
+                        <div class="settings-summary">
+                            <span class="settings-summary-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false">
+                                    <path d="M12 3l1.45 4.05L17.5 8.5l-4.05 1.45L12 14l-1.45-4.05L6.5 8.5l4.05-1.45L12 3Z"></path>
+                                    <path d="M18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14Z"></path>
+                                    <path d="M6 14l.65 1.75L8.4 16.4l-1.75.65L6 18.8l-.65-1.75L3.6 16.4l1.75-.65L6 14Z"></path>
+                                </svg>
+                            </span>
+                            <p>Setting focus to <strong><span id="settingsSummaryFocus">25 minutes</span></strong> will result in a total session of <strong><span id="settingsSummaryTotal">2 hours</span></strong> including breaks.</p>
+                        </div>
+
+                        <p id="settingsError" class="settings-error hidden" aria-live="polite"></p>
+                    </div>
 
                     <div class="settings-actions">
-                        <button class="btn btn--small btn--primary" id="saveSettings">Save & Close</button>
-                        <button class="btn btn--small btn--secondary" id="cancelSettings">Cancel</button>
+                        <button class="btn btn--small btn--secondary" id="cancelSettings" type="button">Cancel</button>
+                        <button class="btn btn--small btn--primary" id="saveSettings" type="button">
+                            <span>Save & Close</span>
+                        </button>
                     </div>
                 </div>
             </div>
+
+            <div id="longBreakHint" class="timer-hint hidden" role="dialog" aria-modal="true" aria-labelledby="longBreakHintTitle" aria-describedby="longBreakHintMessage">
+                <div class="timer-hint__card">
+                    <div class="timer-hint__icon" aria-hidden="true">
+                        <svg viewBox="0 -8 72 72" focusable="false">
+                            <path d="M15.8,49.7H56.22a3.78,3.78,0,0,0,3.36-5.5L39.38,8.39a3.8,3.8,0,0,0-6.78,0L12.4,44.2A3.81,3.81,0,0,0,15.8,49.7Zm23.38-8.33a3.29,3.29,0,1,1-6.58,0V41.3a3.29,3.29,0,0,1,6.58,0ZM34.11,17.18h3.8a1.63,1.63,0,0,1,1.54,2L37.79,33.75a1.78,1.78,0,0,1-3.56,0L32.56,19.19A1.64,1.64,0,0,1,34.11,17.18Z"></path>
+                        </svg>
+                    </div>
+                    <h3 id="longBreakHintTitle" class="timer-hint__title">Warning</h3>
+                    <p id="longBreakHintMessage" class="timer-hint__message">
+                        You are currently due for a long break. If you choose <strong>Short Break</strong>, the upcoming
+                        <strong>Long Break</strong> will be skipped. Would you like to switch to <strong>Long Break</strong> now?
+                    </p>
+                    <button class="timer-hint__primary" id="switchToLongBreakBtn" type="button">
+                        <span>Switch to Long Break</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M5 12h14"></path>
+                            <path d="m13 6 6 6-6 6"></path>
+                        </svg>
+                    </button>
+                    <button class="timer-hint__secondary" id="continueShortBreakBtn" type="button">Continue with Short Break</button>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <!-- Footer -->
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
 
-    <!-- Scripts -->
     <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
     <script th:src="@{/js/settings.js}"></script>
     <script th:src="@{/js/timer.js}"></script>

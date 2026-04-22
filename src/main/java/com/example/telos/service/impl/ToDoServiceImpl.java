@@ -1,6 +1,7 @@
 package com.example.telos.service.impl;
 
 import com.example.telos.dto.ToDoDto;
+import com.example.telos.dto.ToDoCompletionDto;
 import com.example.telos.dto.ToDoResponseDto;
 import com.example.telos.model.ToDo;
 import com.example.telos.model.User;
@@ -11,6 +12,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -77,6 +79,21 @@ public class ToDoServiceImpl implements ToDoService {
     }
 
     @Override
+    public ToDoResponseDto updateCompletion(String login, long todoId, ToDoCompletionDto toDoCompletionDto) {
+        User user = userService.findByEmailOrUsername(login);
+        ToDo toDo = findById(todoId);
+
+        if (!toDo.getUser().getUserId().equals(user.getUserId())) {
+            throw new EntityNotFoundException("ToDo not found with id: " + todoId);
+        }
+
+        toDo.setIsDone(toDoCompletionDto.getIsDone());
+
+        ToDo updatedToDo = update(toDo);
+        return mapToResponse(updatedToDo, "Task completion was updated successfully");
+    }
+
+    @Override
     public void deleteToDo(String login, long id) {
         User user = userService.findByEmailOrUsername(login);
         ToDo toDo = findById(id);
@@ -94,8 +111,15 @@ public class ToDoServiceImpl implements ToDoService {
     }
 
     private void applyDto(ToDo toDo, ToDoDto toDoDto) {
-        toDo.setTitle(toDoDto.getTitle());
-        toDo.setDescription(toDoDto.getDescription());
+        if (toDoDto.getDeadline() != null && toDoDto.getDeadline().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Deadline cannot be in the past");
+        }
+
+        String title = toDoDto.getTitle().trim();
+        String description = toDoDto.getDescription() == null ? null : toDoDto.getDescription().trim();
+
+        toDo.setTitle(title);
+        toDo.setDescription(description == null || description.isBlank() ? null : description);
         toDo.setIsDone(toDoDto.getIsDone());
         toDo.setPriority(toDoDto.getPriority());
         toDo.setDeadline(toDoDto.getDeadline());

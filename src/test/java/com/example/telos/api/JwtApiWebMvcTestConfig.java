@@ -1,5 +1,6 @@
 package com.example.telos.api;
 
+import com.example.telos.config.AppVersionConfig;
 import com.example.telos.security.JwtFilter;
 import com.example.telos.security.JwtService;
 import com.example.telos.security.RestAccessDeniedHandler;
@@ -24,6 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.util.Base64;
 import java.util.List;
+import java.util.Collections;
 
 @TestConfiguration
 class JwtApiWebMvcTestConfig {
@@ -53,6 +55,11 @@ class JwtApiWebMvcTestConfig {
     @Bean
     LogErrorService logErrorService() {
         return new NoOpLogErrorService();
+    }
+
+    @Bean
+    AppVersionConfig appVersionConfig() {
+        return new AppVersionConfig(new com.fasterxml.jackson.databind.ObjectMapper());
     }
 
     @Bean
@@ -117,6 +124,11 @@ class JwtApiWebMvcTestConfig {
 
         @Override
         public void logError(HttpServletRequest request, HttpStatus httpStatus, Exception exception) {
+        }
+
+        @Override
+        public List<com.example.telos.model.ErrorLog> findAllByNewestFirst() {
+            return Collections.emptyList();
         }
     }
 }

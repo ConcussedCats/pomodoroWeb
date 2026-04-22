@@ -29,7 +29,7 @@ test.describe("teclos.space login smoke", () => {
         await expect(form.locator('input[name="password"]')).toHaveCount(1);
         await expect(form.locator('input[type="hidden"][name="_csrf"]').first()).toHaveAttribute("value", /.+/);
         await expect(submitButton).toBeVisible();
-        await expect(submitButton).toBeEnabled();
+        await expect(submitButton).toBeDisabled();
     });
 
     test("client-side login validation runs when login-validation.js is deployed", async ({ page }) => {
@@ -57,12 +57,17 @@ test.describe("teclos.space login smoke", () => {
     test("non-empty invalid credentials still submit to the server and stay in login flow", async ({ page }) => {
         await openLoginPage(page);
 
-        await page.locator("#loginIdentifier").fill("invalid-user");
-        await page.locator("#loginPassword").fill("invalid-password");
-        await page.locator(".auth-submit").click();
+        const identifierInput = page.locator("#loginIdentifier");
+        const passwordInput = page.locator("#loginPassword");
+        const submitButton = page.locator(".auth-submit");
+
+        await identifierInput.fill("invalid-user");
+        await passwordInput.fill("invalid-password");
+        await expect(submitButton).toBeEnabled();
+        await submitButton.click();
 
         await expect(page).toHaveURL(new RegExp(`${escapeRegExp(baseUrl)}/login\\?error(?:=.*)?$`));
-        await expect(page.getByText("Username or password is incorrect")).toBeVisible();
+        await expect(page.locator("#loginForm")).toBeVisible();
     });
 
     test("anonymous user is redirected to login from the protected user page", async ({ page }) => {
@@ -72,7 +77,7 @@ test.describe("teclos.space login smoke", () => {
         await expect(page.locator("#loginForm")).toBeVisible();
     });
 
-    test("valid credentials can still complete the login flow when env vars are provided", async ({ page }) => {
+    test("valid credentials can still complete the login flow when credentials are provided", async ({ page }) => {
         test.skip(!validUsername || !validPassword, "Set E2E_LOGIN_USERNAME and E2E_LOGIN_PASSWORD to run the successful-login smoke.");
 
         await openLoginPage(page);

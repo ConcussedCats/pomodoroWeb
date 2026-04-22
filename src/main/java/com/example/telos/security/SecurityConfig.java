@@ -67,7 +67,7 @@ public class SecurityConfig {
                                 "/register"
                         ).permitAll()
                         .requestMatchers("/user/**", "/api/**").authenticated()
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 .exceptionHandling(ex -> ex
                         .defaultAuthenticationEntryPointFor(
@@ -81,7 +81,10 @@ public class SecurityConfig {
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
-                        .defaultSuccessUrl("/user", true)
+                        .successHandler((request, response, authentication) -> {
+                            String redirectTarget = PostLoginRedirects.consumeTarget(request);
+                            response.sendRedirect(request.getContextPath() + redirectTarget);
+                        })
                         .permitAll()
                 )
                 .logout(logout -> logout
