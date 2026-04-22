@@ -220,10 +220,14 @@ document.addEventListener("DOMContentLoaded", () => {
         longBreakHint.classList.remove("hidden");
     }
 
-    function applyManualMode(targetMode) {
+    function applyManualMode(targetMode, shouldPause = false) {
         if (!targetMode) return;
 
-        const nextState = timerStateStore.manualSwitchToModeState(timerState, settings, targetMode, Date.now());
+        let nextState = timerStateStore.manualSwitchToModeState(timerState, settings, targetMode, Date.now());
+        if (shouldPause) {
+            nextState = timerStateStore.pauseTimerState(nextState, settings, Date.now());
+        }
+
         if (timerStateStore.areStatesEqual(timerState, nextState)) return;
 
         timerState = nextState;
@@ -321,21 +325,21 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             playSound(targetMode === "pomodoro" ? "timer_sound_up.wav" : "timer_sound_down.wav");
-            applyManualMode(targetMode);
+            applyManualMode(targetMode, true);
         });
     });
 
     switchToLongBreakBtn?.addEventListener("click", () => {
         closeLongBreakHint();
         playSound("timer_sound_down.wav");
-        applyManualMode("long-break");
+        applyManualMode("long-break", true);
     });
 
     continueShortBreakBtn?.addEventListener("click", () => {
         const targetMode = pendingManualMode || "short-break";
         closeLongBreakHint();
         playSound("timer_sound_down.wav");
-        applyManualMode(targetMode);
+        applyManualMode(targetMode, true);
     });
 
     longBreakHint?.addEventListener("click", (event) => {
