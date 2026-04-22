@@ -14,6 +14,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const sessionDotsEl = document.getElementById("sessionDots");
     const timerSurface = document.getElementById("timerSection");
     const settingsToggle = document.getElementById("settingsToggle");
+    const longBreakHint = document.getElementById("longBreakHint");
+    const switchToLongBreakBtn = document.getElementById("switchToLongBreakBtn");
+    const continueShortBreakBtn = document.getElementById("continueShortBreakBtn");
 
     if (!timerStateStore || !timeDisplay || !startBtn || !resetBtn || !timerLabel || !progressBar) return;
 
@@ -37,6 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let settings = timerStateStore.loadSettings();
     let timerState = timerStateStore.loadTimerState(settings);
     let initialTransitionsReleased = false;
+    let pendingManualMode = null;
 
     function releaseInitialTransitions() {
         if (!timerSurface || initialTransitionsReleased) return;
@@ -89,6 +93,15 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!settingsToggle) return;
         settingsToggle.disabled = running;
         settingsToggle.setAttribute("aria-disabled", running ? "true" : "false");
+    }
+
+    function setModeButtonsState() {
+        modeLabels.forEach((label) => {
+            const isActive = label.dataset.mode === timerState.currentMode;
+            label.disabled = timerState.sessionCompleted;
+            label.setAttribute("aria-disabled", timerState.sessionCompleted ? "true" : "false");
+            label.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
     }
 
     function canResetTimer() {
@@ -181,7 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         modeLabels.forEach(label => {
             label.classList.toggle("mode-label--active", label.dataset.mode === timerState.currentMode);
-            label.setAttribute("aria-pressed", label.dataset.mode === timerState.currentMode ? "true" : "false");
         });
         renderSessionDots(filledDots, totalDots);
         if (timerSurface) {
@@ -189,11 +201,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         setSettingsButtonState(timerState.isRunning);
+        setModeButtonsState();
         setResetButtonState(canResetTimer());
         setPhaseButtonStates();
         updateProgress();
         setWorkerState(timerState.isRunning);
         releaseInitialTransitions();
+    }
+
+    function closeLongBreakHint() {
+        if (!longBreakHint) return;
+        longBreakHint.classList.add("hidden");
+        pendingManualMode = null;
+    }
+
+    function openLongBreakHint() {
+        if (!longBreakHint) return;
+        longBreakHint.classList.remove("hidden");
+    }
+
+    function applyManualMode(targetMode, shouldPause = false) {
+        if (!targetMode) return;
+
+        let nextState = timerStateStore.manualSwitchToModeState(timerState, settings, targetMode, Date.now());
+        if (shouldPause) {
+            nextState = timerStateStore.pauseTimerState(nextState, settings, Date.now());
+        }
+
+        if (timerStateStore.areStatesEqual(timerState, nextState)) return;
+
+        timerState = nextState;
+        persistTimerState();
+        render();
     }
 
     function syncTimerState(now = Date.now(), shouldPlaySounds = true) {
@@ -270,6 +309,43 @@ document.addEventListener("DOMContentLoaded", () => {
         timerState = timerStateStore.skipToNextPhaseState(timerState, settings, Date.now());
         persistTimerState();
         render();
+    });
+
+    modeLabels.forEach((label) => {
+        label.addEventListener("click", () => {
+            if (timerState.sessionCompleted) return;
+
+            const targetMode = label.dataset.mode;
+            if (!targetMode || targetMode === timerState.currentMode) return;
+
+            if (timerStateStore.shouldWarnBeforeShortBreakOverride(timerState, settings, targetMode)) {
+                pendingManualMode = targetMode;
+                openLongBreakHint();
+                return;
+            }
+
+            playSound(targetMode === "pomodoro" ? "timer_sound_up.wav" : "timer_sound_down.wav");
+            applyManualMode(targetMode, true);
+        });
+    });
+
+    switchToLongBreakBtn?.addEventListener("click", () => {
+        closeLongBreakHint();
+        playSound("timer_sound_down.wav");
+        applyManualMode("long-break", true);
+    });
+
+    continueShortBreakBtn?.addEventListener("click", () => {
+        const targetMode = pendingManualMode || "short-break";
+        closeLongBreakHint();
+        playSound("timer_sound_down.wav");
+        applyManualMode(targetMode, true);
+    });
+
+    longBreakHint?.addEventListener("click", (event) => {
+        if (event.target === longBreakHint) {
+            closeLongBreakHint();
+        }
     });
 
     document.addEventListener("settings:updated", (event) => {

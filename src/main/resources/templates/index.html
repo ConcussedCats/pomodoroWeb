@@ -25,10 +25,10 @@
             </section>
 
             <div id="timerSection" class="section-view timer-surface timer-surface--hydrating">
-                <div class="timer-modes">
-                    <button class="mode-label mode-label--active" data-mode="pomodoro" type="button" tabindex="-1" aria-hidden="true">Pomodoro</button>
-                    <button class="mode-label" data-mode="short-break" type="button" tabindex="-1" aria-hidden="true">Short Break</button>
-                    <button class="mode-label" data-mode="long-break" type="button" tabindex="-1" aria-hidden="true">Long Break</button>
+                <div class="timer-modes" aria-label="Timer mode selection">
+                    <button class="mode-label mode-label--active" data-mode="pomodoro" type="button" aria-pressed="true">Pomodoro</button>
+                    <button class="mode-label" data-mode="short-break" type="button" aria-pressed="false">Short Break</button>
+                    <button class="mode-label" data-mode="long-break" type="button" aria-pressed="false">Long Break</button>
                 </div>
 
                 <div class="timer-display">
@@ -189,6 +189,29 @@
                             <span>Save & Close</span>
                         </button>
                     </div>
+                </div>
+            </div>
+
+            <div id="longBreakHint" class="timer-hint hidden" role="dialog" aria-modal="true" aria-labelledby="longBreakHintTitle" aria-describedby="longBreakHintMessage">
+                <div class="timer-hint__card">
+                    <div class="timer-hint__icon" aria-hidden="true">
+                        <svg viewBox="0 -8 72 72" focusable="false">
+                            <path d="M15.8,49.7H56.22a3.78,3.78,0,0,0,3.36-5.5L39.38,8.39a3.8,3.8,0,0,0-6.78,0L12.4,44.2A3.81,3.81,0,0,0,15.8,49.7Zm23.38-8.33a3.29,3.29,0,1,1-6.58,0V41.3a3.29,3.29,0,0,1,6.58,0ZM34.11,17.18h3.8a1.63,1.63,0,0,1,1.54,2L37.79,33.75a1.78,1.78,0,0,1-3.56,0L32.56,19.19A1.64,1.64,0,0,1,34.11,17.18Z"></path>
+                        </svg>
+                    </div>
+                    <h3 id="longBreakHintTitle" class="timer-hint__title">Warning</h3>
+                    <p id="longBreakHintMessage" class="timer-hint__message">
+                        You are currently due for a long break. If you choose <strong>Short Break</strong>, the upcoming
+                        <strong>Long Break</strong> will be skipped. Would you like to switch to <strong>Long Break</strong> now?
+                    </p>
+                    <button class="timer-hint__primary" id="switchToLongBreakBtn" type="button">
+                        <span>Switch to Long Break</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M5 12h14"></path>
+                            <path d="m13 6 6 6-6 6"></path>
+                        </svg>
+                    </button>
+                    <button class="timer-hint__secondary" id="continueShortBreakBtn" type="button">Continue with Short Break</button>
                 </div>
             </div>
 
