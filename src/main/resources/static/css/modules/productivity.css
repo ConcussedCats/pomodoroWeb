@@ -475,6 +475,7 @@
     padding: 0.68rem 1rem;
     border: 2px solid transparent;
     border-radius: 0.75rem;
+    box-sizing: border-box;
     background: rgba(42, 42, 42, 0.9);
     color: #f3f0ef;
     font-size: 1rem;

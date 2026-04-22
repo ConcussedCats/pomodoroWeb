@@ -795,8 +795,17 @@
     background: #1b1b1c;
 }
 
-.settings-group:has(#patternType) {
+.settings-group--pattern {
     grid-column: span 2;
+}
+
+.settings-pattern-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    border: none;
 }
 
 .settings-label {
@@ -818,6 +827,12 @@
 
 .settings-label--long-break {
     color: #2ecc71;
+}
+
+.settings-pattern-field .settings-label {
+    display: block;
+    padding: 0;
+    margin-bottom: 0.5rem;
 }
 
 .settings-number-row {
@@ -854,6 +869,55 @@
 .settings-select-shell {
     position: relative;
     width: 100%;
+}
+
+.settings-pattern-options {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.settings-pattern-option {
+    flex: 1 1 0;
+    position: relative;
+}
+
+.settings-pattern-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.settings-pattern-option span {
+    width: 100%;
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.75rem;
+    border-radius: 0.75rem;
+    border: 1px solid transparent;
+    background: rgba(42, 42, 42, 0.9);
+    color: rgba(229, 189, 184, 0.8);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    transition:
+        background var(--transition-fast),
+        border-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.settings-pattern-option span:hover,
+.settings-pattern-option input:focus-visible + span {
+    background: rgba(53, 53, 53, 0.96);
+    color: #f3f0ef;
+}
+
+.settings-pattern-option input:checked + span {
+    background: rgba(255, 85, 69, 0.16);
+    border-color: var(--color-primary);
+    color: var(--color-primary-light);
 }
 
 .settings-select-shell::after {
