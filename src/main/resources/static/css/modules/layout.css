@@ -29,7 +29,7 @@
 }
 
 .main-content .container h3 {
-    margin-top: var(--spacing-lg);
+    margin-top: 0;
     margin-bottom: var(--spacing-sm);
     color: #fff1ea;
 }

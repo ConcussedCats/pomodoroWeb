@@ -80,6 +80,10 @@
         return safeSettings[getSettingsKey(mode)] * 60;
     }
 
+    function isBreakMode(mode) {
+        return mode === "short-break" || mode === "long-break";
+    }
+
     function getPhaseForPosition(settings, cycleIndex, phaseIndex) {
         const safeSettings = normalizeSettings(settings);
         const phases = getPatternPhases(safeSettings);
@@ -215,7 +219,9 @@
             patternType: safeSettings.patternType,
             currentCycleIndex,
             currentPhaseIndex,
-            currentMode: phase?.mode || fallback.currentMode,
+            currentMode: VALID_MODES.includes(migratedState.currentMode)
+                ? migratedState.currentMode
+                : (phase?.mode || fallback.currentMode),
             isRunning,
             endTime,
             remainingSeconds,
@@ -269,6 +275,35 @@
         });
     }
 
+    function getNextPhasePosition(settings, cycleIndex, phaseIndex) {
+        const safeSettings = normalizeSettings(settings);
+        const phases = getPatternPhases(safeSettings);
+
+        if (phaseIndex < phases.length - 1) {
+            return {
+                cycleIndex,
+                phaseIndex: phaseIndex + 1
+            };
+        }
+
+        if (cycleIndex < safeSettings.focusCycles - 1) {
+            return {
+                cycleIndex: cycleIndex + 1,
+                phaseIndex: 0
+            };
+        }
+
+        return null;
+    }
+
+    function getModeForPosition(settings, position) {
+        if (!position) {
+            return null;
+        }
+
+        return getPhaseForPosition(settings, position.cycleIndex, position.phaseIndex).mode;
+    }
+
     function transitionAfterCompletion(state, settings, completedAt) {
         const safeSettings = normalizeSettings(settings);
         const safeState = normalizeTimerState(state, safeSettings);
@@ -277,28 +312,31 @@
             return safeState;
         }
 
-        const phases = getPatternPhases(safeSettings);
-        const isLastPhaseInCycle = safeState.currentPhaseIndex >= phases.length - 1;
+        const basePhase = getCurrentPhase(safeState, safeSettings);
+        let nextPosition = getNextPhasePosition(
+            safeSettings,
+            safeState.currentCycleIndex,
+            safeState.currentPhaseIndex
+        );
 
-        if (!isLastPhaseInCycle) {
-            return moveToPhase(
-                safeSettings,
-                safeState.currentCycleIndex,
-                safeState.currentPhaseIndex + 1,
-                completedAt,
-                true
-            );
+        if (safeState.currentMode !== basePhase.mode && nextPosition) {
+            const nextMode = getModeForPosition(safeSettings, nextPosition);
+            const shouldSkipBreak = isBreakMode(safeState.currentMode) && isBreakMode(nextMode);
+            const shouldSkipWork = safeState.currentMode === "pomodoro" && nextMode === "pomodoro";
+
+            if (shouldSkipBreak || shouldSkipWork) {
+                nextPosition = getNextPhasePosition(safeSettings, nextPosition.cycleIndex, nextPosition.phaseIndex);
+            }
         }
 
-        const isLastCycle = safeState.currentCycleIndex >= safeSettings.focusCycles - 1;
-        if (isLastCycle) {
+        if (!nextPosition) {
             return getCompletedSessionState(safeSettings);
         }
 
         return moveToPhase(
             safeSettings,
-            safeState.currentCycleIndex + 1,
-            0,
+            nextPosition.cycleIndex,
+            nextPosition.phaseIndex,
             completedAt,
             true
         );
@@ -423,6 +461,46 @@
             now,
             true
         );
+    }
+
+    function manualSwitchToModeState(state, settings, targetMode, now = Date.now()) {
+        const safeSettings = normalizeSettings(settings);
+        const syncedState = hydrateTimerState(state, safeSettings, now);
+
+        if (syncedState.sessionCompleted || !VALID_MODES.includes(targetMode)) {
+            return syncedState;
+        }
+
+        const remainingSeconds = getModeDurationSeconds(safeSettings, targetMode);
+
+        return {
+            ...cloneState(syncedState),
+            currentMode: targetMode,
+            remainingSeconds,
+            endTime: syncedState.isRunning ? now + (remainingSeconds * 1000) : null
+        };
+    }
+
+    function shouldWarnBeforeShortBreakOverride(state, settings, targetMode) {
+        if (targetMode !== "short-break") {
+            return false;
+        }
+
+        const safeSettings = normalizeSettings(settings);
+        const syncedState = hydrateTimerState(state, safeSettings, Date.now());
+        const basePhase = getCurrentPhase(syncedState, safeSettings);
+
+        if (basePhase.mode !== "pomodoro") {
+            return false;
+        }
+
+        const nextPosition = getNextPhasePosition(
+            safeSettings,
+            syncedState.currentCycleIndex,
+            syncedState.currentPhaseIndex
+        );
+
+        return getModeForPosition(safeSettings, nextPosition) === "long-break";
     }
 
     function applySettingsToTimerState(state, settings) {
@@ -591,6 +669,7 @@
         resetTimerState,
         skipToNextPhaseState,
         skipToPreviousPhaseState,
+        manualSwitchToModeState,
         canSkipToNextPhase,
         canSkipToPreviousPhase,
         applySettingsToTimerState,
@@ -601,6 +680,7 @@
         getFilledDotsCount,
         getProjectedSessionEndTime,
         isFocusSessionFinished,
-        areStatesEqual
+        areStatesEqual,
+        shouldWarnBeforeShortBreakOverride
     };
 })();

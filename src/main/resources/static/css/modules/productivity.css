@@ -469,10 +469,11 @@
 }
 
 .productivity-input {
+    box-sizing: border-box;
     width: 100%;
     min-height: 3rem;
     padding: 0.68rem 1rem;
-    border: none;
+    border: 2px solid transparent;
     border-radius: 0.75rem;
     background: rgba(42, 42, 42, 0.9);
     color: #f3f0ef;
@@ -481,7 +482,7 @@
     letter-spacing: 0;
     transition:
         background-color 0.25s ease,
-        box-shadow 0.25s ease,
+        border-color 0.25s ease,
         color 0.25s ease;
 }
 
@@ -492,7 +493,7 @@
 .productivity-input:focus {
     background: rgba(53, 53, 53, 0.96);
     color: #ffffff;
-    box-shadow: 0 0 0 2px rgba(255, 85, 69, 0.38);
+    border-color: rgba(255, 85, 69, 0.38);
     outline: none;
 }
 
@@ -504,7 +505,7 @@
 .productivity-input[aria-invalid="true"],
 .productivity-input.settings-input--invalid {
     color: #ffffff;
-    box-shadow: 0 0 0 2px rgba(255, 85, 69, 0.62);
+    border-color: rgba(255, 85, 69, 0.62);
 }
 
 .productivity-textarea {
