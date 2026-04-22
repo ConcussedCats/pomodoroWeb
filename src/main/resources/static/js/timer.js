@@ -41,6 +41,19 @@ document.addEventListener("DOMContentLoaded", () => {
     let timerState = timerStateStore.loadTimerState(settings);
     let initialTransitionsReleased = false;
     let pendingManualMode = null;
+    const soundCache = new Map();
+
+    function preloadSound(fileName) {
+        if (soundCache.has(fileName)) {
+            return soundCache.get(fileName);
+        }
+
+        const audio = new Audio(`assets/sounds/${fileName}`);
+        audio.preload = "auto";
+        audio.load();
+        soundCache.set(fileName, audio);
+        return audio;
+    }
 
     function releaseInitialTransitions() {
         if (!timerSurface || initialTransitionsReleased) return;
@@ -66,7 +79,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function playSound(fileName) {
         if (!settings.soundEnabled) return;
-        const audio = new Audio(`assets/sounds/${fileName}`);
+        const audio = preloadSound(fileName);
+        audio.currentTime = 0;
         audio.play().catch(() => {});
     }
 
@@ -366,6 +380,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    preloadSound("timer_sound_down.wav");
+    preloadSound("timer_sound_up.wav");
     persistTimerState();
     syncTimerState(Date.now(), false);
 });
