@@ -20,7 +20,7 @@ It helps users manage tasks, track focus sessions, and improve productivity.
 * Frontend: Thymeleaf, JavaScript, CSS
 * Database: H2 / PostgreSQL (depending on environment)
 
-## ▶️ Running the Project Localy
+## ▶️ Running the Project Locally
 
 ### 1. Clone repository
 
