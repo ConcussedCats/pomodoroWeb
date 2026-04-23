@@ -374,6 +374,17 @@ document.addEventListener("DOMContentLoaded", () => {
         toggle.setAttribute("aria-label", isCollapsed ? `Expand ${label} form` : `Collapse ${label} form`);
     }
 
+    function collapseEntryForm(form) {
+        if (!form) return;
+
+        form.classList.add("productivity-entry-form--collapsed");
+        form.querySelectorAll("input, textarea, select").forEach(input => {
+            markInvalid(input, false);
+        });
+        syncFormToggleState(form);
+        form.querySelector("[data-form-toggle]")?.focus();
+    }
+
     function readTodoFormDraft(container) {
         return normalizeTodoDraft({
             title: container.querySelector('[name="title"]')?.value,
@@ -970,11 +981,15 @@ document.addEventListener("DOMContentLoaded", () => {
             resetTodoPriority(forms.todo);
             syncDeadlineInputState(forms.todo);
             clearFormMessage("todo");
+            collapseEntryForm(forms.todo);
         }, 0);
     });
 
     forms.notes?.addEventListener("reset", () => {
-        window.setTimeout(() => clearFormMessage("notes"), 0);
+        window.setTimeout(() => {
+            clearFormMessage("notes");
+            collapseEntryForm(forms.notes);
+        }, 0);
     });
 
     forms.todo?.querySelector("[data-deadline-toggle]")?.addEventListener("change", () => {
