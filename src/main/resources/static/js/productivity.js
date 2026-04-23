@@ -93,10 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return {
             id: String(note.noteId),
             content: note.noteText,
-            createdAt: typeof note.createdAt === "string" ? note.createdAt : new Date().toISOString(),
-            updatedAt: typeof note.updatedAt === "string"
-                ? note.updatedAt
-                : (typeof note.createdAt === "string" ? note.createdAt : new Date().toISOString())
+            createdAt: typeof note.createdAt === "string" ? note.createdAt : new Date().toISOString()
         };
     }
 
@@ -357,6 +354,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return deadlineInput?.value || "";
     }
 
+    function isDeadlineEnabled(container) {
+        return Boolean(container?.querySelector("[data-deadline-toggle]")?.checked);
+    }
+
     function syncDeadlineInputState(form) {
         const deadlineToggle = form?.querySelector("[data-deadline-toggle]");
         const deadlineInput = form?.querySelector('[name="deadline"]');
@@ -400,6 +401,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const titleInput = container.querySelector('[name="title"]');
         const priorityInput = container.querySelector('[name="priority"]');
         const deadlineInput = container.querySelector('[name="deadline"]');
+        const deadlineEnabled = isDeadlineEnabled(container);
 
         markInvalid(titleInput, false);
         markInvalid(priorityInput, false);
@@ -421,6 +423,12 @@ document.addEventListener("DOMContentLoaded", () => {
             markInvalid(priorityInput, true);
             priorityInput?.focus();
             return "Please choose a priority.";
+        }
+
+        if (deadlineEnabled && !draft.deadline) {
+            markInvalid(deadlineInput, true);
+            deadlineInput?.focus();
+            return "Please enter the deadline date and time completely, or turn off Set Deadline.";
         }
 
         if (draft.deadline) {
@@ -596,7 +604,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <li class="productivity-item productivity-item--note" data-item-id="${item.id}" data-item-type="notes">
                 <article class="productivity-note">
                     <p class="productivity-note__content">${escapeHtml(item.content).replaceAll("\n", "<br>")}</p>
-                    <p class="productivity-note__meta">Updated ${formatTimestamp(item.updatedAt)}</p>
+                    <p class="productivity-note__meta">Created at: ${formatTimestamp(item.createdAt)}</p>
                 </article>
                 <div class="productivity-item__actions">
                     <div class="productivity-action-menu">

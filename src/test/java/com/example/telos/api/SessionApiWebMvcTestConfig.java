@@ -385,22 +385,26 @@ class SessionApiWebMvcTestConfig {
     }
 
     static final class StubNoteService implements NoteService {
-        List<NoteResponseDto> nextNotes = List.of(new NoteResponseDto(1L, "Default note", null));
-        NoteResponseDto nextCreateResponse = new NoteResponseDto(2L, "Created note", "Note was created successfully");
-        NoteResponseDto nextUpdateResponse = new NoteResponseDto(2L, "Updated note", "Note was updated successfully");
+        List<NoteResponseDto> nextNotes = List.of(defaultNoteResponse(1L, "Default note", null));
+        NoteResponseDto nextCreateResponse = defaultNoteResponse(2L, "Created note", "Note was created successfully");
+        NoteResponseDto nextUpdateResponse = defaultNoteResponse(2L, "Updated note", "Note was updated successfully");
         RuntimeException listException;
         RuntimeException createException;
         RuntimeException updateException;
         RuntimeException deleteException;
 
         void reset() {
-            nextNotes = List.of(new NoteResponseDto(1L, "Default note", null));
-            nextCreateResponse = new NoteResponseDto(2L, "Created note", "Note was created successfully");
-            nextUpdateResponse = new NoteResponseDto(2L, "Updated note", "Note was updated successfully");
+            nextNotes = List.of(defaultNoteResponse(1L, "Default note", null));
+            nextCreateResponse = defaultNoteResponse(2L, "Created note", "Note was created successfully");
+            nextUpdateResponse = defaultNoteResponse(2L, "Updated note", "Note was updated successfully");
             listException = null;
             createException = null;
             updateException = null;
             deleteException = null;
+        }
+
+        private static NoteResponseDto defaultNoteResponse(Long id, String text, String message) {
+            return new NoteResponseDto(id, text, LocalDateTime.of(2026, 4, 23, 12, 58), message);
         }
 
         @Override
