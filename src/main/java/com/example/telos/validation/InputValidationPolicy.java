@@ -8,7 +8,7 @@ public class InputValidationPolicy {
     private static final Pattern USERNAME_REGEX = Pattern.compile(USERNAME_PATTERN);
 
     public static final String EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@(?:(?![Xx][Nn]--)[A-Za-z0-9-]+\\.)+(?:(?![Xx][Nn]--)[A-Za-z0-9-]+)$";
-    public static final String EMAIL_MESSAGE = "Use English letters only in the domain after @, for example: gmail.com";
+    public static final String EMAIL_MESSAGE = "email must be valid";
     private static final Pattern EMAIL_REGEX = Pattern.compile(EMAIL_PATTERN);
 
     public static final int PASSWORD_MIN_LENGTH = 8;
