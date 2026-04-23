@@ -14,8 +14,8 @@
         <div class="logo-container">
             <a th:href="@{/}" class="logo-link">
                 <img th:src="@{/assets/icon/icon.ico}" alt="Telos Logo" class="logo-img">
+                <h1 class="logo">Telos</h1>
             </a>
-            <h1 class="logo">Telos</h1>
         </div>
         <nav class="nav" id="primaryNavigation">
             <a class="nav-btn" th:classappend="${activePage == 'home'} ? ' nav-btn--active' : ''" th:href="@{/}">Timer</a>
