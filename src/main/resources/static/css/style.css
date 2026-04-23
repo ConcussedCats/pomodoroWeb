@@ -1,0 +1,11 @@
+/* Aggregates the modular stylesheets in the original cascade order. */
+@import url("modules/base.css");
+@import url("modules/header.css");
+@import url("modules/layout.css");
+@import url("modules/timer.css");
+@import url("modules/auth.css");
+@import url("modules/admin.css");
+@import url("modules/productivity.css");
+@import url("modules/footer.css");
+@import url("modules/responsive.css");
+@import url("modules/utilities.css");

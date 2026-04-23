@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Telos</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
+</head>
+<body class="auth-page auth-page--panel auth-page--register">
+    <th:block th:replace="~{fragments/header :: header('login')}"></th:block>
+
+    <main class="main-content auth-main">
+        <div class="container auth-shell register-shell">
+            <section class="auth-card auth-card--compact auth-panel-card register-card">
+                <div class="auth-card__header">
+                    <h2 class="auth-title">Create Account</h2>
+                    <p class="auth-description">Start your deep work sanctuary.</p>
+                </div>
+
+                <form id="registerForm" class="auth-form" novalidate th:action="@{/register}" method="post">
+                    <p class="form-message form-message--error" th:if="${error}" th:text="${error}"></p>
+                    <input type="hidden" th:name="${_csrf.getParameterName()}" th:value="${_csrf.getToken()}">
+
+                    <div class="auth-field">
+                        <label class="settings-label auth-label" for="registerUsername">Username</label>
+                        <input
+                                type="text"
+                                id="registerUsername"
+                                class="settings-input auth-input"
+                                name="username"
+                                minlength="3"
+                                maxlength="30"
+                                pattern="[A-Za-z0-9_-]{3,30}"
+                                autocomplete="username"
+                                placeholder="yourname"
+                                th:value="${username}">
+                        <p class="form-field-error hidden" data-error-for="registerUsername"></p>
+                    </div>
+
+                    <div class="auth-field">
+                        <label class="settings-label auth-label" for="registerEmail">Email Address</label>
+                        <input
+                                type="email"
+                                id="registerEmail"
+                                class="settings-input auth-input"
+                                name="email"
+                                pattern="[A-Za-z0-9._%+-]+@(?:(?![Xx][Nn]--)[A-Za-z0-9-]+\.)+(?:(?![Xx][Nn]--)[A-Za-z0-9-]+)"
+                                autocomplete="email"
+                                placeholder="name@example.com"
+                                th:value="${email}">
+                        <p class="form-field-error hidden" data-error-for="registerEmail"></p>
+                    </div>
+
+                    <div class="auth-field">
+                        <label class="settings-label auth-label" for="registerPassword">Password</label>
+                        <input
+                                type="password"
+                                id="registerPassword"
+                                class="settings-input auth-input"
+                                minlength="8"
+                                maxlength="64"
+                                name="password"
+                                autocomplete="new-password"
+                                placeholder="8+ characters">
+                        <ul class="password-rules hidden" id="passwordRules" aria-live="polite">
+                            <li data-password-rule="length">8 characters</li>
+                            <li data-password-rule="max">64 characters max</li>
+                            <li data-password-rule="lowercase">Lowercase letter</li>
+                            <li data-password-rule="uppercase">Uppercase letter</li>
+                            <li data-password-rule="number">Number</li>
+                        </ul>
+                        <p class="form-field-error hidden" data-error-for="registerPassword"></p>
+                    </div>
+
+                    <div class="auth-field">
+                        <label class="settings-label auth-label" for="registerConfirmPassword">Confirm Password</label>
+                        <input
+                                type="password"
+                                id="registerConfirmPassword"
+                                class="settings-input auth-input"
+                                name="confirmPassword"
+                                maxlength="64"
+                                autocomplete="new-password"
+                                placeholder="Repeat password">
+                        <p class="form-field-error hidden" data-error-for="registerConfirmPassword"></p>
+                    </div>
+
+                    <button type="submit" class="btn btn--primary auth-submit">Sign Up</button>
+
+                    <p class="auth-description auth-switch">
+                        Already have an account?
+                        <a th:href="@{/login}">Log In</a>
+                    </p>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+    <script th:src="@{/js/register-validation.js}"></script>
+</body>
+</html>

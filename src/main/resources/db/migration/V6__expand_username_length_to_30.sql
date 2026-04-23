@@ -1,0 +1,2 @@
+ALTER TABLE users
+ALTER COLUMN username TYPE VARCHAR(30);

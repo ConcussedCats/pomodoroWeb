@@ -23,5 +23,22 @@ Gemfile.lock
 # Ignore node_modules directory which may be used for frontend dependencies
 node_modules/
 
-# Ignore mac OS specific files
+# IntelliJ
+.idea
+*.iml
+
+# Maven
+target/
+
+# Logs
+*.log
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Build
+out/
+
+# VS Code
+.vscode/

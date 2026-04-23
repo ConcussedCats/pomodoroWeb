@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productivity - Telos</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
+</head>
+<body class="productivity-page">
+    <th:block th:replace="~{fragments/header :: header('productivity')}"></th:block>
+
+    <main class="main-content productivity-main">
+        <div class="container productivity-shell">
+            <div sec:authorize="isAuthenticated()" class="productivity-dashboard-hero">
+                <div>
+                    <p class="productivity-dashboard-eyebrow">Workspace Dashboard</p>
+                    <h1 class="productivity-dashboard-title">Productivity</h1>
+                </div>
+            </div>
+
+            <section sec:authorize="isAnonymous()" class="productivity-guest-card">
+                <span class="productivity-guest-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <rect x="6.5" y="10.2" width="11" height="9" rx="1.8"></rect>
+                        <path d="M8.8 10.2V7.8a3.2 3.2 0 0 1 6.4 0v2.4"></path>
+                        <path d="M12 14.1v2"></path>
+                    </svg>
+                </span>
+                <h2 class="productivity-guest-title">Login required</h2>
+                <p class="productivity-guest-text">
+                    Access your personal workspace, synchronized tasks, and deep work insights.
+                    Sign in to continue your journey with Telos.
+                </p>
+                <div class="productivity-guest-actions">
+                    <a class="btn btn--primary productivity-guest-button productivity-guest-button--primary" th:href="@{/login}">Log in</a>
+                    <a class="btn btn--secondary productivity-guest-button productivity-guest-button--secondary" th:href="@{/register}">Create free account</a>
+                </div>
+            </section>
+
+            <section sec:authorize="isAuthenticated()" class="productivity-surface productivity-dashboard" aria-label="Productivity tools">
+                <div class="productivity-tabs" role="tablist" aria-label="Productivity tabs">
+                    <button
+                        id="productivity-tab-todo"
+                        class="productivity-tab productivity-tab--active"
+                        type="button"
+                        role="tab"
+                        aria-selected="true"
+                        tabindex="0"
+                        aria-controls="productivity-panel-todo"
+                        data-tab-trigger="todo"
+                    >
+                        To-do
+                    </button>
+                    <button
+                        id="productivity-tab-notes"
+                        class="productivity-tab"
+                        type="button"
+                        role="tab"
+                        aria-selected="false"
+                        tabindex="-1"
+                        aria-controls="productivity-panel-notes"
+                        data-tab-trigger="notes"
+                    >
+                        Notes
+                    </button>
+                </div>
+
+                <div class="productivity-panels">
+                    <section
+                        id="productivity-panel-todo"
+                        class="productivity-panel"
+                        role="tabpanel"
+                        aria-labelledby="productivity-tab-todo"
+                        aria-hidden="false"
+                        data-tab-panel="todo"
+                    >
+                        <form class="productivity-entry-form productivity-entry-form--task productivity-entry-form--collapsed" data-entry-form="todo" novalidate>
+                            <div class="productivity-form-header" role="button" tabindex="0" aria-expanded="false" data-form-toggle>
+                                <span class="productivity-form-icon" aria-hidden="true">
+                                    <span class="productivity-form-icon__glyph">+</span>
+                                </span>
+                                <div class="productivity-form-heading">
+                                    <h2 class="productivity-form-title" style="margin-bottom: 0">New Task</h2>
+                                    <p class="productivity-form-subtitle">Capture your next objective</p>
+                                </div>
+                                <span class="productivity-form-toggle" aria-hidden="true">
+                                    <span aria-hidden="true"></span>
+                                </span>
+                            </div>
+
+                            <div class="productivity-form-body">
+                                <div class="productivity-form-body__inner">
+                                    <div class="productivity-task-grid">
+                                        <div class="productivity-field productivity-field--title">
+                                            <label class="settings-label productivity-label" for="todoInput">Title</label>
+                                            <input
+                                                id="todoInput"
+                                                class="settings-input productivity-input"
+                                                name="title"
+                                                type="text"
+                                                maxlength="25"
+                                                placeholder="Task title..."
+                                                autocomplete="off"
+                                            >
+                                        </div>
+
+                                        <fieldset class="productivity-field productivity-field--priority">
+                                            <legend class="settings-label productivity-label">Priority</legend>
+                                            <div class="productivity-priority-options">
+                                                <label class="productivity-priority-option">
+                                                    <input type="radio" name="priority" value="LOW">
+                                                    <span>Low</span>
+                                                </label>
+                                                <label class="productivity-priority-option">
+                                                    <input type="radio" name="priority" value="MEDIUM">
+                                                    <span>Medium</span>
+                                                </label>
+                                                <label class="productivity-priority-option">
+                                                    <input type="radio" name="priority" value="HIGH" checked>
+                                                    <span>High</span>
+                                                </label>
+                                            </div>
+                                        </fieldset>
+                                    </div>
+
+                                    <div class="productivity-field">
+                                        <label class="settings-label productivity-label" for="todoDescriptionInput">Description</label>
+                                        <textarea
+                                            id="todoDescriptionInput"
+                                            class="settings-input productivity-input productivity-textarea productivity-textarea--compact"
+                                            name="description"
+                                            rows="3"
+                                            maxlength="1000"
+                                            placeholder="Add some details..."
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="productivity-form-footer">
+                                        <label class="productivity-deadline-toggle">
+                                            <input class="productivity-checkbox" type="checkbox" data-deadline-toggle>
+                                            <span>Set Deadline</span>
+                                            <input
+                                                id="todoDeadlineInput"
+                                                class="settings-input productivity-input"
+                                                name="deadline"
+                                                type="datetime-local"
+                                                disabled
+                                            >
+                                        </label>
+                                        <div class="productivity-form-actions">
+                                            <button class="productivity-cancel" type="reset">Cancel</button>
+                                            <button class="btn btn--primary productivity-submit" type="submit">Create Task</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <p class="form-message productivity-panel-message hidden" data-form-message="todo" aria-live="polite"></p>
+
+                        <div class="productivity-list-header">
+                            <p>Active Tasks <span aria-hidden="true">&bull;</span> <span data-active-count>0</span></p>
+                        </div>
+                        <ul class="productivity-list" data-item-list="todo" aria-live="polite"></ul>
+                        <p class="productivity-empty-state" data-empty-state="todo">
+                            No tasks yet. Add the first one to build your list.
+                        </p>
+                    </section>
+
+                    <section
+                        id="productivity-panel-notes"
+                        class="productivity-panel hidden"
+                        role="tabpanel"
+                        aria-labelledby="productivity-tab-notes"
+                        aria-hidden="true"
+                        data-tab-panel="notes"
+                    >
+                        <form class="productivity-entry-form productivity-entry-form--note productivity-entry-form--collapsed" data-entry-form="notes" novalidate>
+                            <div class="productivity-form-header" role="button" tabindex="0" aria-expanded="false" data-form-toggle>
+                                <span class="productivity-form-icon" aria-hidden="true">
+                                    <span class="productivity-form-icon__glyph">+</span>
+                                </span>
+                                <div class="productivity-form-heading">
+                                    <h2 class="productivity-form-title" style="margin-bottom: 0">New Note</h2>
+                                    <p class="productivity-form-subtitle">Keep context close to your work</p>
+                                </div>
+                                <span class="productivity-form-toggle" aria-hidden="true">
+                                    <span aria-hidden="true"></span>
+                                </span>
+                            </div>
+
+                            <div class="productivity-form-body">
+                                <div class="productivity-form-body__inner">
+                                    <div class="productivity-field">
+                                        <label class="settings-label productivity-label" for="noteInput">Note</label>
+                                        <textarea
+                                            id="noteInput"
+                                            class="settings-input productivity-input productivity-textarea"
+                                            name="content"
+                                            rows="5"
+                                            maxlength="1200"
+                                            placeholder="Write a note, idea, or follow-up for later..."
+                                        ></textarea>
+                                    </div>
+                                    <div class="productivity-form-actions">
+                                        <button class="productivity-cancel" type="reset">Cancel</button>
+                                        <button class="btn btn--primary productivity-submit" type="submit">Create Note</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                        <p class="form-message productivity-panel-message hidden" data-form-message="notes" aria-live="polite"></p>
+
+                        <div class="productivity-list-header">
+                            <p>Saved Notes</p>
+                        </div>
+                        <ul class="productivity-list productivity-list--notes" data-item-list="notes" aria-live="polite"></ul>
+                        <p class="productivity-empty-state" data-empty-state="notes">
+                            No notes yet. Add one to keep context close to your work.
+                        </p>
+                    </section>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+    <script th:src="@{/js/productivity.js}"></script>
+</body>
+</html>

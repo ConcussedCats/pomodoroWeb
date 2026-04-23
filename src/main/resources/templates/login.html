@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Telos</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
+</head>
+<body class="auth-page auth-page--panel auth-page--login">
+    <th:block th:replace="~{fragments/header :: header('login')}"></th:block>
+
+    <main class="main-content auth-main">
+        <div class="container auth-shell login-shell">
+            <section class="auth-card auth-card--compact auth-panel-card login-card">
+                <div class="auth-card__header">
+                    <h2 class="auth-title">Welcome Back</h2>
+                    <p class="auth-description">Return to your deep work sanctuary.</p>
+                </div>
+
+                <form id="loginForm" class="auth-form" data-auth-form="login" novalidate th:action="@{/login}" method="post">
+                    <p class="form-message form-message--error" th:if="${param.error}">Username or password is incorrect</p>
+                    <input type="hidden" th:name="${_csrf.getParameterName()}" th:value="${_csrf.getToken()}">
+
+                    <div class="auth-field">
+                        <label class="settings-label auth-label" for="loginIdentifier">Email or Username</label>
+                        <input type="text" id="loginIdentifier" class="settings-input auth-input" name="username" autocomplete="username" placeholder="name@example.com or username">
+                        <p class="form-field-error hidden" data-error-for="loginIdentifier"></p>
+                    </div>
+
+                    <div class="auth-field">
+                        <label class="settings-label auth-label" for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" class="settings-input auth-input" name="password" autocomplete="current-password" placeholder="••••••••">
+                        <p class="form-field-error hidden" data-error-for="loginPassword"></p>
+                    </div>
+
+                    <p class="form-message hidden" data-form-message aria-live="polite"></p>
+
+                    <button type="submit" class="btn btn--primary auth-submit">Sign In</button>
+
+                    <p class="auth-description auth-switch">
+                        Don't have an account?
+                        <a th:href="@{/register}">Sign Up</a>
+                    </p>
+                </form>
+            </section>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+    <script th:src="@{/js/login-validation.js}"></script>
+</body>
+</html>

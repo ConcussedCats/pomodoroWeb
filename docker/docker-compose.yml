@@ -1,0 +1,11 @@
+services:
+  telos:
+    image: telos_test:ver1
+    container_name: pomodoro-app
+    env_file:
+      - telos.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8082:8080"
+    restart: unless-stopped

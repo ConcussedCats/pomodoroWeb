@@ -1,0 +1,101 @@
+/* ===== MAIN CONTENT ===== */
+.main-content {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 3.2rem var(--spacing-md) 4rem;
+    position: relative;
+    z-index: 1;
+}
+
+.container {
+    max-width: 960px;
+    width: 100%;
+    background:
+        linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
+        rgba(21, 21, 21, 0.84);
+    padding: clamp(1.5rem, 2vw, 2.25rem);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(229, 189, 184, 0.08);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(18px);
+}
+
+.main-content .container h2 {
+    margin-bottom: var(--spacing-md);
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    line-height: 1.05;
+}
+
+.main-content .container h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-sm);
+    color: #fff1ea;
+}
+
+.main-content .container ol,
+.main-content .container ul {
+    margin-left: 0;
+    padding-left: 1.2rem;
+    list-style-position: outside;
+}
+
+.main-content .container img {
+    border-radius: var(--radius-lg);
+}
+
+.container--timer {
+    max-width: 1120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: transparent;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+
+.page-intro {
+    margin-bottom: 2.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.page-intro--center {
+    text-align: center;
+    align-items: center;
+}
+
+.page-title {
+    font-size: clamp(3.35rem, 5vw, 4.25rem);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+    max-width: 50rem;
+    color: var(--color-text);
+    font-weight: 900;
+}
+
+.main-content .container .page-title {
+    margin-bottom: var(--spacing-md);
+    font-size: clamp(3.35rem, 5vw, 4.25rem);
+    line-height: 0.98;
+}
+
+.page-lead {
+    max-width: 35rem;
+    color: var(--color-text-muted);
+    font-size: 1.08rem;
+    line-height: 1.7;
+}
+
+.title-accent {
+    color: var(--color-primary);
+}
+
+.home-hero {
+    padding-top: 0.35rem;
+}
+

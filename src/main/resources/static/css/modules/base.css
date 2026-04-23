@@ -1,0 +1,113 @@
+/* ===== CSS RESET & VARIABLES ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Colors */
+    --color-primary: #ff5545;
+    --color-primary-dark: #bb1614;
+    --color-primary-light: #fff;
+    --color-btn-primary: #ffb4a9;
+    --color-secondary: #c8c6c5;
+    --color-secondary-dark: #8f8d8c;
+    --color-success: #7fd8a0;
+    --color-warning: #ffd08a;
+    
+    /* Neutral Colors */
+    --color-bg: #131313;
+    --color-bg-light: #202020;
+    --color-bg-lighter: #353535;
+    --color-text: #e5e2e1;
+    --color-text-muted: rgba(229, 226, 225, 0.62);
+    --color-border: #5c403c;
+    
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+    --spacing-xxl: 4rem;
+    
+    /* Typography */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.25rem;
+    --font-size-xl: 1.5rem;
+    --font-size-xxl: 2rem;
+    --font-size-display: 4rem;
+    
+    /* Border Radius */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.5rem;
+    --radius-full: 50%;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
+    
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+/* ===== BASE STYLES ===== */
+html {
+    scrollbar-gutter: stable;
+}
+
+body {
+    font-family: var(--font-family);
+    background: #131313;
+    color: var(--color-text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.6;
+    position: relative;
+    overflow-x: hidden;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at 50% -20%, rgba(255, 85, 69, 0.15), transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+body > * {
+    position: relative;
+    z-index: 1;
+}
+
+body.settings-modal-open {
+    overflow: hidden;
+}
+
+body.settings-modal-open .main-content {
+    z-index: 8;
+}
+
+a {
+    color: var(--color-primary);
+    transition: color var(--transition-fast);
+}
+
+a:visited {
+    color: var(--color-primary);
+}
+
+a:hover,
+a:focus {
+    color: var(--color-primary-light);
+}
+

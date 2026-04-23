@@ -1,0 +1,16 @@
+FROM alpine:3.20
+WORKDIR /app
+
+RUN apk add --no-cache openjdk21-jdk && \
+    addgroup -S spring && \
+    adduser -S spring -G spring
+
+ARG JAR_FILE=target/*.jar
+COPY ${JAR_FILE} /app/app.jar
+COPY version.json /app/version.json
+
+USER spring
+EXPOSE 8080
+
+ENV JAVA_OPTS=""
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

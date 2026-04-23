@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Us - Telos</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" th:href="@{/assets/icon/icon.ico}" type="image/x-icon">
+</head>
+<body>
+    <th:block th:replace="~{fragments/header :: header('helpus')}"></th:block>
+
+    <main class="main-content info-main">
+        <div class="container info-shell">
+            <section class="info-card info-card--wide">
+                <span class="info-card__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M12 21s-7-4.4-7-10.2A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.8C19 16.6 12 21 12 21Z"></path>
+                        <path d="M12 8V5"></path>
+                        <path d="M9.5 5h5"></path>
+                    </svg>
+                </span>
+                <h2 class="info-card__title">Help Us</h2>
+                <p class="info-card__text">
+                    Telos gets better when people report rough edges, suggest sharper flows, or help keep
+                    development moving.
+                </p>
+                <div class="info-card__actions">
+                    <a class="btn btn--primary info-card__button info-card__button--primary" href="https://github.com/ConcussedCats/pomodoroWeb/issues" target="_blank" rel="noopener noreferrer">Report Bug on GitHub</a>
+                    <a class="btn btn--secondary info-card__button info-card__button--secondary" href="https://send.monobank.ua/jar/8NC2t9efmF" target="_blank" rel="noopener noreferrer">Support development (Monobank)</a>
+                </div>
+                <div class="info-card__support">
+                    <div class="info-card__qr-wrap">
+                        <img th:src="@{/assets/pictures/monobank.jpeg}" alt="QR Code for Monobank Donation" class="info-card__qr">
+                    </div>
+                    <div class="info-card__support-copy">
+                        <span class="info-card__meta-label">Donation</span>
+                        <p>
+                            Scan the QR code or use the <a href="https://send.monobank.ua/jar/8NC2t9efmF" target="_blank" rel="noopener noreferrer">Monobank link</a> to support the app.
+                        </p>
+                        <a href="https://github.com/sponsors/docholypancake" target="_blank" rel="noopener noreferrer">Donate via GitHub Sponsors</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+</body>
+</html>

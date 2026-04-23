@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<th:block th:fragment="scripts">
+    <script sec:authorize="isAuthenticated()">
+        window.TelosAuth = { authenticated: true };
+    </script>
+    <script sec:authorize="isAnonymous()">
+        window.TelosAuth = { authenticated: false };
+    </script>
+    <script th:src="@{/js/timer-state.js}"></script>
+    <script th:src="@{/js/mini-timer.js}"></script>
+    <script th:src="@{/js/mini-timer-sync.js}"></script>
+</th:block>
+
+</html>
