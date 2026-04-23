@@ -27,6 +27,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const passwordError = document.querySelector('[data-error-for="registerPassword"]');
     const confirmPasswordError = document.querySelector('[data-error-for="registerConfirmPassword"]');
 
+    function hasLowercaseLetter(value) {
+        return /\p{Ll}/u.test(value);
+    }
+
+    function hasUppercaseLetter(value) {
+        return /\p{Lu}/u.test(value);
+    }
+
     function normalizeUsername(value) {
         return value.replace(/\s+/g, "_");
     }
@@ -43,8 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function isValidPassword(value) {
         return value.length >= MIN_PASSWORD_LENGTH
             && value.length <= MAX_PASSWORD_LENGTH
-            && /[a-z]/.test(value)
-            && /[A-Z]/.test(value)
+            && hasLowercaseLetter(value)
+            && hasUppercaseLetter(value)
             && /\d/.test(value);
     }
 
@@ -52,8 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return {
             length: value.length >= MIN_PASSWORD_LENGTH,
             max: value.length <= MAX_PASSWORD_LENGTH,
-            lowercase: /[a-z]/.test(value),
-            uppercase: /[A-Z]/.test(value),
+            lowercase: hasLowercaseLetter(value),
+            uppercase: hasUppercaseLetter(value),
             number: /\d/.test(value)
         };
     }

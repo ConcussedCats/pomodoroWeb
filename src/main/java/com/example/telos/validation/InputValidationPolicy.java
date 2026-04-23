@@ -9,7 +9,7 @@ public class InputValidationPolicy {
 
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int PASSWORD_MAX_LENGTH = 64;
-    public static final String PASSWORD_PATTERN = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,64}$";
+    public static final String PASSWORD_PATTERN = "^(?=.*\\p{Ll})(?=.*\\p{Lu})(?=.*\\d).{8,64}$";
     public static final String PASSWORD_MESSAGE = "password must be 8-64 characters and include uppercase, lowercase, and a number";
     private static final Pattern PASSWORD_REGEX = Pattern.compile(PASSWORD_PATTERN);
 
