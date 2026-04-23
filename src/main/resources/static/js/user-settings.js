@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const MIN_PASSWORD_LENGTH = 8;
     const MAX_PASSWORD_LENGTH = 64;
-    const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens";
+    const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only latin letters, numbers, underscores, or hyphens";
     const PASSWORD_MESSAGE = `Password must be ${MIN_PASSWORD_LENGTH}-${MAX_PASSWORD_LENGTH} characters and include uppercase, lowercase, and a number`;
     const FORBIDDEN_VALUE_MESSAGE = "67 and six seven are not allowed here";
     const usernameForm = document.querySelector("#username-form");
@@ -30,6 +30,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const oldPasswordError = document.querySelector('[data-error-for="oldPassword"]');
     const newPasswordError = document.querySelector('[data-error-for="newPassword"]');
     const confirmNewPasswordError = document.querySelector('[data-error-for="confirmNewPassword"]');
+
+    function hasLowercaseLetter(value) {
+        return /\p{Ll}/u.test(value);
+    }
+
+    function hasUppercaseLetter(value) {
+        return /\p{Lu}/u.test(value);
+    }
 
     function showFieldError(input, errorElement, message) {
         if (!input || !errorElement) return;
@@ -74,8 +82,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function isValidPassword(value) {
         return value.length >= MIN_PASSWORD_LENGTH
             && value.length <= MAX_PASSWORD_LENGTH
-            && /[a-z]/.test(value)
-            && /[A-Z]/.test(value)
+            && hasLowercaseLetter(value)
+            && hasUppercaseLetter(value)
             && /\d/.test(value);
     }
 
@@ -83,8 +91,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return {
             length: value.length >= MIN_PASSWORD_LENGTH,
             max: value.length <= MAX_PASSWORD_LENGTH,
-            lowercase: /[a-z]/.test(value),
-            uppercase: /[A-Z]/.test(value),
+            lowercase: hasLowercaseLetter(value),
+            uppercase: hasUppercaseLetter(value),
             number: /\d/.test(value),
             match: value.length > 0 && confirmValue.length > 0 && value === confirmValue
         };

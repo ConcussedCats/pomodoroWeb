@@ -121,6 +121,28 @@ class UserServiceImplTest {
     }
 
     @Test
+    void shouldAcceptCyrillicPasswordWhenItHasUppercaseLowercaseAndNumber() {
+        User currentUser = buildUser(1L, "user@test.com", "user", "encoded-old-password");
+        UserPasswordDto dto = new UserPasswordDto();
+        dto.setOldPassword("old-password");
+        dto.setNewPassword("ПарольТест1");
+        dto.setConfirmNewPassword("ПарольТест1");
+
+        when(userRepository.findByEmailOrUsername("user@test.com")).thenReturn(Optional.of(currentUser));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(currentUser));
+        when(passwordEncoder.matches("old-password", "encoded-old-password")).thenReturn(true);
+        when(passwordEncoder.encode("ПарольТест1")).thenReturn("encoded-cyrillic-password");
+        when(userRepository.save(currentUser)).thenReturn(currentUser);
+
+        UserPasswordResponseDto response = userService.updatePassword("user@test.com", dto);
+
+        assertEquals("encoded-cyrillic-password", currentUser.getPassword());
+        assertEquals("New password was successfully updated", response.getMessage());
+        verify(passwordEncoder).encode("ПарольТест1");
+        verify(userRepository).save(currentUser);
+    }
+
+    @Test
     void shouldRejectPasswordUpdateWhenConfirmationDoesNotMatch() {
         UserPasswordDto dto = new UserPasswordDto();
         dto.setOldPassword("old-password");

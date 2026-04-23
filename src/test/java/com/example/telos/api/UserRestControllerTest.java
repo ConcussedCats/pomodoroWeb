@@ -199,6 +199,25 @@ class UserRestControllerTest {
 
     @Test
     @WithMockUser(username = "user@test.com")
+    void shouldAcceptCyrillicPasswordAtValidationLayer() throws Exception {
+        userService.nextPasswordResponse = new UserPasswordResponseDto("Password updated");
+
+        mockMvc.perform(patch("/api/user/password")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "oldPassword": "current-password",
+                                  "newPassword": "ПарольТест1",
+                                  "confirmNewPassword": "ПарольТест1"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password updated"));
+    }
+
+    @Test
+    @WithMockUser(username = "user@test.com")
     void shouldRejectBlankPasswordFields() throws Exception {
         mockMvc.perform(patch("/api/user/password")
                         .with(csrf())
