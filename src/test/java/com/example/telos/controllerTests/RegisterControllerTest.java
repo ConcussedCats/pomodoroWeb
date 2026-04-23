@@ -71,7 +71,7 @@ public class RegisterControllerTest {
                         .param("confirmPassword", "Validpass1"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("register"))
-                .andExpect(model().attribute("error", "password must be 8-64 characters and include uppercase, lowercase, and a number"))
+                .andExpect(model().attribute("error", "password cannot be empty"))
                 .andExpect(model().attribute("email", "user@test.com"))
                 .andExpect(model().attribute("username", "demo-user"));
 

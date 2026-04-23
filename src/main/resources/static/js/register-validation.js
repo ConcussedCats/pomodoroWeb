@@ -1,9 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
     const MIN_PASSWORD_LENGTH = 8;
     const MAX_PASSWORD_LENGTH = 64;
-    const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens";
+    const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only latin letters, numbers, underscores, or hyphens";
+    const INVALID_EMAIL_MESSAGE = "Email must be valid";
+    const EMAIL_MESSAGE = "Use English letters only in the domain after @, for example: gmail.com";
     const PASSWORD_MESSAGE = `Password must be ${MIN_PASSWORD_LENGTH}-${MAX_PASSWORD_LENGTH} characters and include uppercase, lowercase, and a number`;
     const FORBIDDEN_VALUE_MESSAGE = "67 and six seven are not allowed here";
+    const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@(?:(?!xn--)[A-Za-z0-9-]+\.)+(?:(?!xn--)[A-Za-z0-9-]+)$/i;
     const form = document.querySelector("#registerForm");
 
     if (!form) return;
@@ -27,6 +30,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const passwordError = document.querySelector('[data-error-for="registerPassword"]');
     const confirmPasswordError = document.querySelector('[data-error-for="registerConfirmPassword"]');
 
+    function hasLowercaseLetter(value) {
+        return /\p{Ll}/u.test(value);
+    }
+
+    function hasUppercaseLetter(value) {
+        return /\p{Lu}/u.test(value);
+    }
+
     function normalizeUsername(value) {
         return value.replace(/\s+/g, "_");
     }
@@ -40,11 +51,15 @@ document.addEventListener("DOMContentLoaded", () => {
         return /^[A-Za-z0-9_-]{3,30}$/.test(value);
     }
 
+    function isValidEmail(value) {
+        return EMAIL_REGEX.test(value);
+    }
+
     function isValidPassword(value) {
         return value.length >= MIN_PASSWORD_LENGTH
             && value.length <= MAX_PASSWORD_LENGTH
-            && /[a-z]/.test(value)
-            && /[A-Z]/.test(value)
+            && hasLowercaseLetter(value)
+            && hasUppercaseLetter(value)
             && /\d/.test(value);
     }
 
@@ -52,8 +67,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return {
             length: value.length >= MIN_PASSWORD_LENGTH,
             max: value.length <= MAX_PASSWORD_LENGTH,
-            lowercase: /[a-z]/.test(value),
-            uppercase: /[A-Z]/.test(value),
+            lowercase: hasLowercaseLetter(value),
+            uppercase: hasUppercaseLetter(value),
             number: /\d/.test(value)
         };
     }
@@ -146,7 +161,10 @@ document.addEventListener("DOMContentLoaded", () => {
             showFieldError(emailInput, emailError, "Email cannot be empty");
             isValid = false;
         } else if (!emailInput.checkValidity()) {
-            showFieldError(emailInput, emailError, "Email must be valid");
+            showFieldError(emailInput, emailError, INVALID_EMAIL_MESSAGE);
+            isValid = false;
+        } else if (!isValidEmail(email)) {
+            showFieldError(emailInput, emailError, EMAIL_MESSAGE);
             isValid = false;
         }
 

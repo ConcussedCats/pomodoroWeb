@@ -42,6 +42,7 @@ public class NoteServiceImpl implements NoteService {
                 .map(note -> new NoteResponseDto(
                         note.getNoteId(),
                         note.getNoteText(),
+                        note.getCreatedAt(),
                         null // no message
                 ))
                 .toList();
@@ -57,7 +58,12 @@ public class NoteServiceImpl implements NoteService {
         note.setNoteText(noteDto.getNoteText());
         Note updatedNote = update(note);
 
-        return new NoteResponseDto(updatedNote.getNoteId(), updatedNote.getNoteText(), "Note was updated successfully");
+        return new NoteResponseDto(
+                updatedNote.getNoteId(),
+                updatedNote.getNoteText(),
+                updatedNote.getCreatedAt(),
+                "Note was updated successfully"
+        );
     }
 
     @Override
@@ -67,7 +73,12 @@ public class NoteServiceImpl implements NoteService {
         note.setUser(user);
         note.setNoteText(noteDto.getNoteText());
         Note noteCreated = create(note);
-        return new NoteResponseDto(noteCreated.getNoteId(), noteCreated.getNoteText(), "Note was created successfully");
+        return new NoteResponseDto(
+                noteCreated.getNoteId(),
+                noteCreated.getNoteText(),
+                noteCreated.getCreatedAt(),
+                "Note was created successfully"
+        );
     }
 
     @Override

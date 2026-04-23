@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -56,12 +57,18 @@ class NoteRestControllerTest {
     @Test
     @WithMockUser(username = "user@test.com")
     void shouldReturnNotesForAuthenticatedUser() throws Exception {
-        noteService.nextNotes = List.of(new NoteResponseDto(12L, "Persisted note", null));
+        noteService.nextNotes = List.of(new NoteResponseDto(
+                12L,
+                "Persisted note",
+                LocalDateTime.of(2026, 4, 23, 12, 58),
+                null
+        ));
 
         mockMvc.perform(get("/api/productivity/notes"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].noteId").value(12))
-                .andExpect(jsonPath("$[0].noteText").value("Persisted note"));
+                .andExpect(jsonPath("$[0].noteText").value("Persisted note"))
+                .andExpect(jsonPath("$[0].createdAt").value("2026-04-23T12:58:00"));
     }
 
     @Test

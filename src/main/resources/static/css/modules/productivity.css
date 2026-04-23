@@ -941,6 +941,7 @@
 .productivity-action-menu {
     position: relative;
     z-index: 3;
+    margin-left: auto;
 }
 
 .productivity-action-menu__panel {
@@ -1138,6 +1139,16 @@ select.productivity-input option {
     .productivity-form-actions,
     .productivity-item__actions {
         width: 100%;
+    }
+
+    .productivity-item__actions {
+        justify-content: flex-end;
+    }
+
+    .productivity-action-menu__panel {
+        right: 0;
+        left: auto;
+        max-width: calc(100vw - 2rem);
     }
 
     .productivity-cancel,

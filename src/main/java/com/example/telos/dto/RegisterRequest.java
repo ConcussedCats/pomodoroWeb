@@ -2,7 +2,6 @@ package com.example.telos.dto;
 
 import com.example.telos.validation.InputValidationPolicy;
 import com.example.telos.validation.ValidUsername;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -20,7 +19,7 @@ public class RegisterRequest {
     private String username;
 
     @NotBlank(message = "email cannot be empty")
-    @Email(message = "email must be valid")
+    @Pattern(regexp = InputValidationPolicy.EMAIL_PATTERN, message = InputValidationPolicy.EMAIL_MESSAGE)
     private String email;
 
     @NotBlank(message = "password cannot be empty")

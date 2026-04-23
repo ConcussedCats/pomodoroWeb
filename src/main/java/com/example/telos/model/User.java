@@ -19,7 +19,7 @@ public class User {
     private Long userId;
 
     @Setter
-    @Column(name = "username", unique = true, nullable = false)
+    @Column(name = "username", unique = true, nullable = false, length = 30)
     private String username;
 
     @Setter

@@ -146,6 +146,22 @@ class UserJwtControllerTest {
     }
 
     @Test
+    void shouldAcceptCyrillicJwtPasswordAtValidationLayer() throws Exception {
+        mockMvc.perform(patch("/api/jwt/user/password")
+                        .header("Authorization", bearerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "oldPassword": "current-password",
+                                  "newPassword": "ПарольТест1",
+                                  "confirmNewPassword": "ПарольТест1"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password updated"));
+    }
+
+    @Test
     void shouldRejectInvalidJwtPasswordUpdate() throws Exception {
         userService.passwordException = new IllegalArgumentException("New passwords do not match");
 

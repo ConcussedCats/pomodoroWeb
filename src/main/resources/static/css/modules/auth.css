@@ -80,8 +80,9 @@
 }
 
 .form-field-error {
-    color: var(--color-primary-light);
+    color: #ff6a5c;
     font-size: var(--font-size-sm);
+    font-weight: 600;
 }
 
 .form-message {
@@ -272,8 +273,9 @@
 }
 
 .auth-page--panel .form-field-error {
-    color: var(--color-primary-light);
+    color: #ff6a5c;
     font-size: 0.82rem;
+    font-weight: 600;
 }
 
 .auth-page--register .auth-main {
@@ -543,7 +545,7 @@
 }
 
 .user-settings-page .form-field-error {
-    color: var(--color-primary-light);
+    color: #ff6a5c;
     font-size: 0.82rem;
     font-weight: 600;
 }
