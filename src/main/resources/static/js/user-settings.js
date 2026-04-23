@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const MIN_PASSWORD_LENGTH = 8;
     const MAX_PASSWORD_LENGTH = 64;
-    const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens";
+    const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only latin letters, numbers, underscores, or hyphens";
     const PASSWORD_MESSAGE = `Password must be ${MIN_PASSWORD_LENGTH}-${MAX_PASSWORD_LENGTH} characters and include uppercase, lowercase, and a number`;
     const FORBIDDEN_VALUE_MESSAGE = "67 and six seven are not allowed here";
     const usernameForm = document.querySelector("#username-form");

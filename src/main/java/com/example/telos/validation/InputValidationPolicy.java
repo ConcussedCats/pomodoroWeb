@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 public class InputValidationPolicy {
     public static final String USERNAME_PATTERN = "^[A-Za-z0-9_-]{3,30}$";
-    public static final String USERNAME_MESSAGE = "username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens";
+    public static final String USERNAME_MESSAGE = "username must be 3-30 characters and contain only latin letters, numbers, underscores, or hyphens";
     private static final Pattern USERNAME_REGEX = Pattern.compile(USERNAME_PATTERN);
 
     public static final String EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@(?:(?![Xx][Nn]--)[A-Za-z0-9-]+\\.)+(?:(?![Xx][Nn]--)[A-Za-z0-9-]+)$";
