@@ -2,8 +2,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const MIN_PASSWORD_LENGTH = 8;
     const MAX_PASSWORD_LENGTH = 64;
     const USERNAME_MESSAGE = "Username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens";
+    const EMAIL_MESSAGE = "Email must be valid and use a latin-only domain; internationalized domains are not supported";
     const PASSWORD_MESSAGE = `Password must be ${MIN_PASSWORD_LENGTH}-${MAX_PASSWORD_LENGTH} characters and include uppercase, lowercase, and a number`;
     const FORBIDDEN_VALUE_MESSAGE = "67 and six seven are not allowed here";
+    const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@(?:(?!xn--)[A-Za-z0-9-]+\.)+(?:(?!xn--)[A-Za-z0-9-]+)$/i;
     const form = document.querySelector("#registerForm");
 
     if (!form) return;
@@ -46,6 +48,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function isValidUsername(value) {
         return /^[A-Za-z0-9_-]{3,30}$/.test(value);
+    }
+
+    function isValidEmail(value) {
+        return EMAIL_REGEX.test(value);
     }
 
     function isValidPassword(value) {
@@ -153,8 +159,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!email) {
             showFieldError(emailInput, emailError, "Email cannot be empty");
             isValid = false;
-        } else if (!emailInput.checkValidity()) {
-            showFieldError(emailInput, emailError, "Email must be valid");
+        } else if (!isValidEmail(email)) {
+            showFieldError(emailInput, emailError, EMAIL_MESSAGE);
             isValid = false;
         }
 

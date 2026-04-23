@@ -7,6 +7,10 @@ public class InputValidationPolicy {
     public static final String USERNAME_MESSAGE = "username must be 3-30 characters and contain only letters, numbers, underscores, or hyphens";
     private static final Pattern USERNAME_REGEX = Pattern.compile(USERNAME_PATTERN);
 
+    public static final String EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@(?:(?![Xx][Nn]--)[A-Za-z0-9-]+\\.)+(?:(?![Xx][Nn]--)[A-Za-z0-9-]+)$";
+    public static final String EMAIL_MESSAGE = "email must be valid and use a latin-only domain; internationalized domains are not supported";
+    private static final Pattern EMAIL_REGEX = Pattern.compile(EMAIL_PATTERN);
+
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int PASSWORD_MAX_LENGTH = 64;
     public static final String PASSWORD_PATTERN = "^(?=.*\\p{Ll})(?=.*\\p{Lu})(?=.*\\d).{8,64}$";
@@ -18,6 +22,10 @@ public class InputValidationPolicy {
 
     public static boolean isValidUsername(String value) {
         return value != null && USERNAME_REGEX.matcher(value).matches();
+    }
+
+    public static boolean isValidEmail(String value) {
+        return value != null && EMAIL_REGEX.matcher(value).matches();
     }
 
     public static boolean isValidPassword(String value) {

@@ -70,6 +70,9 @@ public class UserServiceImpl implements UserService {
         if (!InputValidationPolicy.isValidUsername(username))
             throw new IllegalArgumentException(InputValidationPolicy.USERNAME_MESSAGE);
 
+        if (!InputValidationPolicy.isValidEmail(email))
+            throw new IllegalArgumentException(InputValidationPolicy.EMAIL_MESSAGE);
+
         if (!InputValidationPolicy.isValidPassword(password))
             throw new IllegalArgumentException(InputValidationPolicy.PASSWORD_MESSAGE);
 
