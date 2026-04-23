@@ -155,6 +155,7 @@ function clearValidationState() {
     if (settingsError) {
         settingsError.textContent = "";
         settingsError.classList.add("hidden");
+        settingsError.classList.remove("form-message--error", "form-message--success");
     }
 }
 
@@ -167,6 +168,8 @@ function showValidationError(message, invalidInputs) {
     if (settingsError) {
         settingsError.textContent = message;
         settingsError.classList.remove("hidden");
+        settingsError.classList.remove("form-message--success");
+        settingsError.classList.add("form-message--error");
     }
 }
 
@@ -175,7 +178,8 @@ function showSettingsMessage(message, isError = true) {
 
     settingsError.textContent = message;
     settingsError.classList.remove("hidden");
-    settingsError.style.color = isError ? "" : "#8ff0b3";
+    settingsError.classList.remove("form-message--error", "form-message--success");
+    settingsError.classList.add(isError ? "form-message--error" : "form-message--success");
 }
 
 function validateSettingsDraft() {
@@ -324,7 +328,7 @@ function clearInlineSettingsErrorState() {
     if (settingsError) {
         settingsError.textContent = "";
         settingsError.classList.add("hidden");
-        settingsError.style.color = "";
+        settingsError.classList.remove("form-message--error", "form-message--success");
     }
 }
 
