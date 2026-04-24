@@ -295,7 +295,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function setActiveTab(nextTab, options = {}) {
-        const { shouldFocus = true, shouldSyncHash = true } = options;
+        const { shouldFocus = false, shouldSyncHash = true } = options;
         state.activeTab = nextTab;
 
         tabButtons.forEach(button => {
