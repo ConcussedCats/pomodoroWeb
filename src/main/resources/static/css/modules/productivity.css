@@ -239,6 +239,9 @@
 }
 
 .productivity-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     min-width: 8.6rem;
     min-height: 3rem;
     padding: 0 1.5rem;
@@ -251,6 +254,7 @@
     font-size: 0.86rem;
     font-weight: 600;
     cursor: pointer;
+    text-decoration: none;
     text-transform: uppercase;
     transition:
         background-color 0.3s ease,
@@ -258,16 +262,25 @@
         box-shadow 0.3s ease;
 }
 
+.productivity-tab:visited {
+    color: rgba(229, 189, 184, 0.72);
+}
+
 .productivity-tab:hover,
 .productivity-tab:focus-visible {
     color: #f3f0ef;
     outline: none;
+    text-decoration: none;
 }
 
 .productivity-tab--active {
     background: var(--color-primary);
     color: #241414;
     box-shadow: 0 12px 26px rgba(255, 85, 69, 0.22);
+}
+
+.productivity-tab--active:visited {
+    color: #241414;
 }
 
 .productivity-panels,
