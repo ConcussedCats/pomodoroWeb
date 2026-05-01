@@ -5,6 +5,7 @@ import com.example.telos.exception.UsernameAlreadyTakenException;
 import com.example.telos.model.User;
 import com.example.telos.security.PostLoginRedirects;
 import com.example.telos.service.UserService;
+import com.example.telos.validation.ValidationErrorMessages;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,10 +26,18 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.util.List;
+
 @AllArgsConstructor
 @Controller
 @RequestMapping("/register")
 public class RegisterController {
+    private static final List<String> REGISTER_FIELD_PRIORITY = List.of(
+            "username",
+            "email",
+            "password",
+            "confirmPassword"
+    );
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
@@ -51,9 +60,11 @@ public class RegisterController {
                                HttpServletResponse response,
                                Model model) {
         if (bindingResult.hasErrors()) {
-            fillFormModel(model, registerRequest, bindingResult.getFieldError() != null
-                    ? bindingResult.getFieldError().getDefaultMessage()
-                    : "Please check the entered data");
+            fillFormModel(model, registerRequest, ValidationErrorMessages.firstMessage(
+                    bindingResult,
+                    REGISTER_FIELD_PRIORITY,
+                    "Please check the entered data"
+            ));
             return "register";
         }
 
