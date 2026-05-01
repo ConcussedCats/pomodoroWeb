@@ -41,7 +41,7 @@ test.describe("home timer flow", () => {
         expect(parseTime(runningValue)).toBeLessThan(25 * 60);
 
         await startButton.click();
-        await expect(startButtonText).toHaveText("START FLOW");
+        await expect(startButtonText).toHaveText("CONTINUE FLOW");
 
         const pausedValue = await timeDisplay.textContent();
         await page.waitForTimeout(1500);
