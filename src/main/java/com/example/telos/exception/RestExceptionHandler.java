@@ -2,6 +2,7 @@ package com.example.telos.exception;
 
 import com.example.telos.dto.ErrorDto;
 import com.example.telos.service.LogErrorService;
+import com.example.telos.validation.ValidationErrorMessages;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
@@ -10,7 +11,6 @@ import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -44,8 +44,7 @@ public class RestExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorDto handleValidation(HttpServletRequest request, MethodArgumentNotValidException exception) {
-        FieldError fieldError = exception.getBindingResult().getFieldError();
-        String message = fieldError != null ? fieldError.getDefaultMessage() : "Request validation failed";
+        String message = ValidationErrorMessages.firstMessage(exception.getBindingResult(), "Request validation failed");
         logErrorService.logWarn(request, HttpStatus.BAD_REQUEST, exception);
         return buildError(request, HttpStatus.BAD_REQUEST, message, "VALIDATION_ERROR");
     }
