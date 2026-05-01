@@ -187,6 +187,115 @@ test("skip forward autostarts the next phase and skip backward autostarts the pr
     assert.equal(backward.remainingSeconds, 15 * 60);
 });
 
+test("manual mode switching restores remembered time for each mode", () => {
+    const { timerState } = loadTimerStateModule();
+    const settings = timerState.getDefaultSettings();
+    const now = 6_000_000;
+    const runningPomodoro = timerState.startTimerState(
+        timerState.getDefaultTimerState(settings),
+        settings,
+        now
+    );
+    const elapsedPomodoro = timerState.hydrateTimerState(runningPomodoro, settings, now + 2 * 60 * 1000);
+
+    const shortBreak = timerState.manualSwitchToModeState(
+        elapsedPomodoro,
+        settings,
+        "short-break",
+        now + 2 * 60 * 1000
+    );
+    const elapsedShortBreak = timerState.hydrateTimerState(shortBreak, settings, now + 3 * 60 * 1000);
+    const restoredPomodoro = timerState.manualSwitchToModeState(
+        elapsedShortBreak,
+        settings,
+        "pomodoro",
+        now + 3 * 60 * 1000
+    );
+    const restoredShortBreak = timerState.manualSwitchToModeState(
+        restoredPomodoro,
+        settings,
+        "short-break",
+        now + 3 * 60 * 1000
+    );
+
+    assert.equal(shortBreak.currentMode, "short-break");
+    assert.equal(shortBreak.remainingSeconds, 5 * 60);
+    assert.equal(restoredPomodoro.currentMode, "pomodoro");
+    assert.equal(restoredPomodoro.remainingSeconds, 23 * 60);
+    assert.equal(restoredShortBreak.currentMode, "short-break");
+    assert.equal(restoredShortBreak.remainingSeconds, 4 * 60);
+});
+
+test("skip and automatic transitions use fresh phase durations instead of remembered manual mode time", () => {
+    const { timerState } = loadTimerStateModule();
+    const settings = timerState.normalizeSettings({
+        pomodoro: 25,
+        shortBreak: 5,
+        longBreak: 15,
+        focusCycles: 1,
+        patternType: "compact"
+    });
+    const now = 7_000_000;
+    const runningPomodoro = timerState.startTimerState(
+        timerState.getDefaultTimerState(settings),
+        settings,
+        now
+    );
+    const elapsedPomodoro = timerState.hydrateTimerState(runningPomodoro, settings, now + 2 * 60 * 1000);
+    const manualShortBreak = timerState.manualSwitchToModeState(
+        elapsedPomodoro,
+        settings,
+        "short-break",
+        now + 2 * 60 * 1000
+    );
+    const elapsedShortBreak = timerState.hydrateTimerState(manualShortBreak, settings, now + 3 * 60 * 1000);
+    const skippedToPomodoro = timerState.skipToNextPhaseState(elapsedShortBreak, settings, now + 3 * 60 * 1000);
+
+    const automaticShortBreak = timerState.hydrateTimerState(runningPomodoro, settings, now + 25 * 60 * 1000);
+
+    assert.equal(elapsedShortBreak.remainingSeconds, 4 * 60);
+    assert.equal(skippedToPomodoro.currentMode, "pomodoro");
+    assert.equal(skippedToPomodoro.remainingSeconds, 25 * 60);
+    assert.equal(automaticShortBreak.currentMode, "short-break");
+    assert.equal(automaticShortBreak.remainingSeconds, 5 * 60);
+});
+
+test("starting flow clears stale manual mode memory after ten running seconds", () => {
+    const { timerState } = loadTimerStateModule();
+    const settings = timerState.getDefaultSettings();
+    const now = 8_000_000;
+    const defaultState = timerState.getDefaultTimerState(settings);
+
+    const manualShortBreak = timerState.manualSwitchToModeState(defaultState, settings, "short-break", now);
+    const shortBreakStarted = timerState.startTimerState(manualShortBreak, settings, now);
+    const shortBreakAfterMinute = timerState.pauseTimerState(shortBreakStarted, settings, now + 60 * 1000);
+    const restoredPomodoro = timerState.manualSwitchToModeState(
+        shortBreakAfterMinute,
+        settings,
+        "pomodoro",
+        now + 60 * 1000
+    );
+    const pomodoroStarted = timerState.startTimerState(restoredPomodoro, settings, now + 60 * 1000);
+    const pomodoroAfterMemoryClear = timerState.hydrateTimerState(
+        pomodoroStarted,
+        settings,
+        now + 71 * 1000
+    );
+    const shortBreakAfterClear = timerState.manualSwitchToModeState(
+        pomodoroAfterMemoryClear,
+        settings,
+        "short-break",
+        now + 71 * 1000
+    );
+
+    assert.equal(shortBreakAfterMinute.remainingSeconds, 4 * 60);
+    assert.equal(restoredPomodoro.remainingSeconds, 25 * 60);
+    assert.equal(pomodoroAfterMemoryClear.currentMode, "pomodoro");
+    assert.equal(pomodoroAfterMemoryClear.remainingSeconds, (25 * 60) - 11);
+    assert.equal(shortBreakAfterClear.currentMode, "short-break");
+    assert.equal(shortBreakAfterClear.remainingSeconds, 5 * 60);
+});
+
 test("restarts paused state from a clean session when settings change", () => {
     const { timerState } = loadTimerStateModule();
     const originalSettings = timerState.getDefaultSettings();

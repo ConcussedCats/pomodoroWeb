@@ -1,6 +1,7 @@
 (function () {
     const SETTINGS_KEY = "pomodoroSettings";
     const TIMER_STATE_KEY = "pomodoroTimerState";
+    const MANUAL_MODE_MEMORY_CLEAR_DELAY_MS = 10_000;
 
     const PATTERN_TYPES = ["classic", "compact"];
     const VALID_MODES = ["pomodoro", "short-break", "long-break"];
@@ -80,6 +81,25 @@
         return safeSettings[getSettingsKey(mode)] * 60;
     }
 
+    function normalizeRemainingSecondsByMode(settings, remainingSecondsByMode = {}) {
+        const safeSettings = normalizeSettings(settings);
+
+        return VALID_MODES.reduce((remainingByMode, mode) => {
+            const rawRemainingSeconds = Number.parseInt(remainingSecondsByMode[mode], 10);
+            remainingByMode[mode] = Number.isFinite(rawRemainingSeconds) && rawRemainingSeconds >= 0
+                ? rawRemainingSeconds
+                : getModeDurationSeconds(safeSettings, mode);
+            return remainingByMode;
+        }, {});
+    }
+
+    function resetRemainingSecondsByMode(settings, currentMode, currentRemainingSeconds) {
+        return {
+            ...normalizeRemainingSecondsByMode(settings),
+            [currentMode]: Math.max(0, currentRemainingSeconds)
+        };
+    }
+
     function isBreakMode(mode) {
         return mode === "short-break" || mode === "long-break";
     }
@@ -125,6 +145,13 @@
             isRunning,
             endTime,
             remainingSeconds,
+            remainingSecondsByMode: {
+                ...normalizeRemainingSecondsByMode(settings, options.remainingSecondsByMode),
+                [phase.mode]: remainingSeconds
+            },
+            manualModeMemoryClearAt: Number.isFinite(options.manualModeMemoryClearAt)
+                ? options.manualModeMemoryClearAt
+                : null,
             sessionCompleted: Boolean(options.sessionCompleted)
         };
     }
@@ -214,6 +241,10 @@
         const isRunning = !sessionCompleted && Boolean(migratedState.isRunning);
         const rawEndTime = Number(migratedState.endTime);
         const endTime = isRunning && Number.isFinite(rawEndTime) ? rawEndTime : null;
+        const rawManualModeMemoryClearAt = Number(migratedState.manualModeMemoryClearAt);
+        const manualModeMemoryClearAt = isRunning && Number.isFinite(rawManualModeMemoryClearAt)
+            ? rawManualModeMemoryClearAt
+            : null;
 
         return {
             patternType: safeSettings.patternType,
@@ -225,6 +256,13 @@
             isRunning,
             endTime,
             remainingSeconds,
+            remainingSecondsByMode: {
+                ...normalizeRemainingSecondsByMode(safeSettings, migratedState.remainingSecondsByMode),
+                [VALID_MODES.includes(migratedState.currentMode)
+                    ? migratedState.currentMode
+                    : (phase?.mode || fallback.currentMode)]: remainingSeconds
+            },
+            manualModeMemoryClearAt,
             sessionCompleted
         };
     }
@@ -238,6 +276,10 @@
             isRunning: state.isRunning,
             endTime: state.endTime,
             remainingSeconds: state.remainingSeconds,
+            remainingSecondsByMode: state.remainingSecondsByMode
+                ? { ...state.remainingSecondsByMode }
+                : undefined,
+            manualModeMemoryClearAt: state.manualModeMemoryClearAt,
             sessionCompleted: state.sessionCompleted
         };
     }
@@ -352,6 +394,11 @@
 
         if (!nextState.isRunning) {
             nextState.remainingSeconds = Math.max(0, nextState.remainingSeconds);
+            nextState.remainingSecondsByMode = {
+                ...normalizeRemainingSecondsByMode(safeSettings, nextState.remainingSecondsByMode),
+                [nextState.currentMode]: nextState.remainingSeconds
+            };
+            nextState.manualModeMemoryClearAt = null;
             return nextState;
         }
 
@@ -362,6 +409,19 @@
         }
 
         nextState.remainingSeconds = getRemainingSeconds(nextState, now);
+        if (nextState.manualModeMemoryClearAt && now >= nextState.manualModeMemoryClearAt) {
+            nextState.remainingSecondsByMode = resetRemainingSecondsByMode(
+                safeSettings,
+                nextState.currentMode,
+                nextState.remainingSeconds
+            );
+            nextState.manualModeMemoryClearAt = null;
+        } else {
+            nextState.remainingSecondsByMode = {
+                ...normalizeRemainingSecondsByMode(safeSettings, nextState.remainingSecondsByMode),
+                [nextState.currentMode]: nextState.remainingSeconds
+            };
+        }
         return nextState;
     }
 
@@ -385,7 +445,12 @@
             ...cloneState(syncedState),
             isRunning: true,
             endTime: now + (remainingSeconds * 1000),
-            remainingSeconds
+            remainingSeconds,
+            remainingSecondsByMode: {
+                ...normalizeRemainingSecondsByMode(safeSettings, syncedState.remainingSecondsByMode),
+                [syncedState.currentMode]: remainingSeconds
+            },
+            manualModeMemoryClearAt: now + MANUAL_MODE_MEMORY_CLEAR_DELAY_MS
         };
     }
 
@@ -396,15 +461,27 @@
         if (!syncedState.isRunning) {
             return {
                 ...cloneState(syncedState),
-                endTime: null
+                endTime: null,
+                remainingSecondsByMode: {
+                    ...normalizeRemainingSecondsByMode(safeSettings, syncedState.remainingSecondsByMode),
+                    [syncedState.currentMode]: syncedState.remainingSeconds
+                },
+                manualModeMemoryClearAt: null
             };
         }
+
+        const remainingSeconds = getRemainingSeconds(syncedState, now);
 
         return {
             ...cloneState(syncedState),
             isRunning: false,
             endTime: null,
-            remainingSeconds: getRemainingSeconds(syncedState, now)
+            remainingSeconds,
+            remainingSecondsByMode: {
+                ...normalizeRemainingSecondsByMode(safeSettings, syncedState.remainingSecondsByMode),
+                [syncedState.currentMode]: remainingSeconds
+            },
+            manualModeMemoryClearAt: null
         };
     }
 
@@ -471,12 +548,21 @@
             return syncedState;
         }
 
-        const remainingSeconds = getModeDurationSeconds(safeSettings, targetMode);
+        const rememberedRemainingSeconds = {
+            ...normalizeRemainingSecondsByMode(safeSettings, syncedState.remainingSecondsByMode),
+            [syncedState.currentMode]: getRemainingSeconds(syncedState, now)
+        };
+        const remainingSeconds = rememberedRemainingSeconds[targetMode];
 
         return {
             ...cloneState(syncedState),
             currentMode: targetMode,
             remainingSeconds,
+            remainingSecondsByMode: {
+                ...rememberedRemainingSeconds,
+                [targetMode]: remainingSeconds
+            },
+            manualModeMemoryClearAt: syncedState.manualModeMemoryClearAt,
             endTime: syncedState.isRunning ? now + (remainingSeconds * 1000) : null
         };
     }
@@ -600,6 +686,8 @@
             && firstState.isRunning === secondState.isRunning
             && firstState.endTime === secondState.endTime
             && firstState.remainingSeconds === secondState.remainingSeconds
+            && VALID_MODES.every(mode => firstState.remainingSecondsByMode?.[mode] === secondState.remainingSecondsByMode?.[mode])
+            && firstState.manualModeMemoryClearAt === secondState.manualModeMemoryClearAt
             && firstState.sessionCompleted === secondState.sessionCompleted;
     }
 
