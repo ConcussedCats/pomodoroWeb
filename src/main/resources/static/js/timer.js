@@ -123,6 +123,18 @@ document.addEventListener("DOMContentLoaded", () => {
         return !timerStateStore.areStatesEqual(timerState, defaultState);
     }
 
+    function getStartButtonText(focusSessionFinished) {
+        if (timerState.isRunning) {
+            return "PAUSE FLOW";
+        }
+
+        if (focusSessionFinished) {
+            return "START AGAIN";
+        }
+
+        return canResetTimer() ? "CONTINUE FLOW" : "START FLOW";
+    }
+
     function setResetButtonState(canReset) {
         resetBtn.disabled = !canReset;
         resetBtn.setAttribute("aria-disabled", canReset ? "false" : "true");
@@ -187,9 +199,7 @@ document.addEventListener("DOMContentLoaded", () => {
         timerLabel.textContent = focusSessionFinished
             ? "Session Complete"
             : (labelText[timerState.currentMode] || "Timer");
-        startBtn.querySelector(".btn-text").textContent = timerState.isRunning
-            ? "PAUSE FLOW"
-            : (focusSessionFinished ? "START AGAIN" : "START FLOW");
+        startBtn.querySelector(".btn-text").textContent = getStartButtonText(focusSessionFinished);
         if (sessionCountEl) {
             sessionCountEl.textContent = String(currentFocusCycle);
         }
