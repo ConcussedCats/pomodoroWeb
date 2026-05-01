@@ -90,6 +90,7 @@ function runScriptInContext(context, relativePath) {
 
 function bootstrapMiniTimer({ initialStorage = {}, now = 1_000_000 } = {}) {
     const localStorage = createLocalStorage(initialStorage);
+    const playedSounds = [];
     const elements = {
         miniTimer: createElement("miniTimer", ["mini-timer", "mini-timer--pomodoro"]),
         miniTimerMode: createElement("miniTimerMode"),
@@ -119,6 +120,20 @@ function bootstrapMiniTimer({ initialStorage = {}, now = 1_000_000 } = {}) {
         Array,
         Intl,
         CustomEvent: FakeCustomEvent,
+        Audio: class FakeAudio {
+            constructor(src) {
+                this.src = src;
+                this.preload = "";
+                this.currentTime = 0;
+            }
+
+            load() {}
+
+            play() {
+                playedSounds.push(this.src);
+                return Promise.resolve();
+            }
+        },
         setInterval(callback, delay) {
             intervalId += 1;
             intervals.set(intervalId, { callback, delay });
@@ -158,6 +173,7 @@ function bootstrapMiniTimer({ initialStorage = {}, now = 1_000_000 } = {}) {
             localStorage,
             elements,
             intervals,
+            playedSounds,
             timerState: context.PomodoroTimerState
         };
     });
@@ -272,4 +288,73 @@ test("mini timer reacts to storage-driven timer changes without manual reload", 
     assert.equal(runtime.elements.miniTimerMode.textContent, "Short Break");
     assert.equal(runtime.elements.miniTimerTime.textContent, "12:34");
     assert.equal(runtime.elements.miniTimerStatus.textContent, "Paused");
+});
+
+test("mini timer plays transition sound when it advances from pomodoro to break", () => {
+    const runtime = bootstrapMiniTimer({ now: 2_000_000 });
+    const settings = runtime.timerState.normalizeSettings({
+        pomodoro: 1,
+        shortBreak: 1,
+        longBreak: 1,
+        patternType: "compact"
+    });
+    const runningState = runtime.timerState.startTimerState(
+        runtime.timerState.getDefaultTimerState(settings),
+        settings,
+        2_000_000
+    );
+
+    runtime.document.dispatchEvent(new FakeCustomEvent("timer:state-updated", {
+        detail: {
+            settings,
+            state: runningState
+        }
+    }));
+
+    withMockedNow(2_061_000, () => {
+        runtime.intervals.values().next().value.callback();
+    });
+
+    assert.equal(runtime.elements.miniTimerMode.textContent, "Short Break");
+    assert.deepEqual(runtime.playedSounds, ["assets/sounds/timer_sound_down.wav"]);
+});
+
+test("mini timer plays transition sound when it advances from break to pomodoro", () => {
+    const runtime = bootstrapMiniTimer({ now: 3_000_000 });
+    const settings = runtime.timerState.normalizeSettings({
+        pomodoro: 1,
+        shortBreak: 1,
+        longBreak: 1,
+        patternType: "compact"
+    });
+    const runningBreakState = {
+        patternType: "compact",
+        currentCycleIndex: 0,
+        currentPhaseIndex: 1,
+        currentMode: "short-break",
+        isRunning: true,
+        endTime: 3_060_000,
+        remainingSeconds: 60,
+        remainingSecondsByMode: {
+            pomodoro: 60,
+            "short-break": 60,
+            "long-break": 60
+        },
+        manualModeMemoryClearAt: null,
+        sessionCompleted: false
+    };
+
+    runtime.document.dispatchEvent(new FakeCustomEvent("timer:state-updated", {
+        detail: {
+            settings,
+            state: runningBreakState
+        }
+    }));
+
+    withMockedNow(3_061_000, () => {
+        runtime.intervals.values().next().value.callback();
+    });
+
+    assert.equal(runtime.elements.miniTimerMode.textContent, "Pomodoro");
+    assert.deepEqual(runtime.playedSounds, ["assets/sounds/timer_sound_up.wav"]);
 });
