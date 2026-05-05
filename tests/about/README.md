@@ -16,13 +16,17 @@
 
 ## Covered Blocks
 
-- page shell and static copy
+- comprehensive product overview
+- step-by-step usage guidance
+- product benefits
+- About us team roster
 - shared UI presence on a simple public page
 
 ## Automation Notes
 
 - Primary automation layer: `WebMvc smoke`
-- Secondary layer: `Playwright smoke` if this page is used in a full public-pages suite
+- Secondary layer: `JS template-content smoke`
+- Tertiary layer: `Playwright smoke` if this page is used in a full public-pages suite
 - Priority: `P2`
 - Selectors can stay semantic unless the page gains interactive UI later
 
