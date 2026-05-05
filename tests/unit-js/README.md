@@ -33,6 +33,7 @@ This folder captures JS unit-level scenarios that should later be automated outs
 - [productivity-tabs.test.mjs](productivity-tabs.test.mjs): productivity tab presence, active-state switching, panel visibility, no-route-change behavior
 - [productivity-interactions.test.mjs](productivity-interactions.test.mjs): todo/note create-edit-delete flows, deadline validation, invalid states, keyboard save behavior, anti-67 guardrails
 - [productivity-api.test.mjs](productivity-api.test.mjs): API hydration, load-failure fallback, and user-visible error handling for the productivity page
+- [about-content.test.mjs](about-content.test.mjs): About page product overview, usage guidance, benefits, and team roster content smoke
 - [dom-test-utils.mjs](dom-test-utils.mjs): shared fake DOM/runtime harness for frontend validation scripts
 - [productivity.test-utils.mjs](productivity.test-utils.mjs): shared fake DOM/runtime harness for API-backed `productivity.js`
 - [timer-state.test-utils.mjs](timer-state.test-utils.mjs): shared isolated runtime helpers for loading `timer-state.js` without UI dependencies
