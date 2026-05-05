@@ -10,28 +10,236 @@
 <body>
     <th:block th:replace="~{fragments/header :: header('about')}"></th:block>
 
-    <main class="main-content info-main">
-        <div class="container info-shell">
-            <section class="info-card">
-                <span class="info-card__icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" focusable="false">
-                        <path d="M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17Z"></path>
-                        <path d="M12 10.5v5"></path>
-                        <path d="M12 7.6h.01"></path>
-                    </svg>
-                </span>
-                <h2 class="info-card__title">About Telos</h2>
-                <p class="info-card__text">
-                    Telos is a focused workspace for deep work sessions, practical tasks, and the small rituals
-                    that make concentration easier to return to.
+    <main class="main-content about-main">
+        <div class="container about-shell">
+            <section class="about-hero" aria-labelledby="aboutTitle">
+                <p class="about-eyebrow">About Telos</p>
+                <h1 id="aboutTitle" class="about-title">Telos turns Pomodoro into a complete focus system.</h1>
+                <p class="about-lead">
+                    Telos is built for people who want more than a countdown. It combines Pomodoro cycles,
+                    task planning, notes, deadlines, saved preferences, and a persistent mini timer into one
+                    workspace that helps users begin work, stay oriented, and finish sessions with less friction.
                 </p>
-                <p class="info-card__text">
-                    The product and the team are still evolving, so the story here will grow as Telos finds its
-                    sharper shape.
-                </p>
-                <div class="info-card__actions">
-                    <a class="btn btn--primary info-card__button info-card__button--primary" th:href="@{/}">Go to timer</a>
-                    <a class="btn btn--secondary info-card__button info-card__button--secondary" th:href="@{/productivity}">Open productivity</a>
+                <div class="about-actions">
+                    <a class="btn btn--primary about-action" th:href="@{/}">Start focusing</a>
+                    <a class="btn btn--secondary about-action" th:href="@{/productivity}">Open productivity</a>
+                </div>
+            </section>
+
+            <section class="about-section about-section--product" aria-labelledby="productTitle">
+                <div class="about-section__header">
+                    <p class="about-section__eyebrow">Product</p>
+                    <h2 id="productTitle" class="about-section__title">Why Telos is useful</h2>
+                    <p class="about-section__lead">
+                        The Pomodoro technique works because it replaces vague effort with a visible rhythm:
+                        focused work, a short recovery break, repeated progress, and then a longer reset. Telos
+                        keeps that rhythm clear and turns it into a practical workspace instead of leaving users
+                        to manage the timer, tasks, and notes in separate places.
+                    </p>
+                </div>
+
+                <div class="about-feature-grid">
+                    <article class="about-feature">
+                        <h3>Work in real Pomodoro cycles</h3>
+                        <p>
+                            Telos follows structured work, short break, and long break phases. Users can choose
+                            a classic cycle for a full deep-work block or a compact cycle when they need a shorter
+                            rhythm that still preserves the Pomodoro idea.
+                        </p>
+                    </article>
+                    <article class="about-feature">
+                        <h3>Keep session progress visible</h3>
+                        <p>
+                            The timer does not only show remaining minutes. It shows the current phase, filled
+                            work dots, and the current cycle out of the planned total, so users understand where
+                            they are in the larger session.
+                        </p>
+                    </article>
+                    <article class="about-feature">
+                        <h3>Capture tasks and notes</h3>
+                        <p>
+                            The productivity page keeps tasks, priorities, descriptions, deadlines, completion
+                            state, and notes close to the timer. This helps users decide what the next focus block
+                            is for before the clock starts.
+                        </p>
+                    </article>
+                    <article class="about-feature">
+                        <h3>Stay synchronized</h3>
+                        <p>
+                            Account-based settings and productivity data make Telos feel continuous. The mini timer
+                            keeps the active session visible across pages, so users do not lose awareness while
+                            checking tasks or profile settings.
+                        </p>
+                    </article>
+                    <article class="about-feature">
+                        <h3>Reduce decision fatigue</h3>
+                        <p>
+                            Pomodoro is effective when the next action is obvious. Telos removes repeated choices
+                            by carrying the user through the planned phase pattern and restarting the next phase
+                            automatically until the session is complete.
+                        </p>
+                    </article>
+                    <article class="about-feature">
+                        <h3>Protect recovery time</h3>
+                        <p>
+                            Breaks are part of the product logic, not an afterthought. Short breaks make the next
+                            work block easier to start, and long breaks mark the end of a completed cycle.
+                        </p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="about-section" aria-labelledby="instructionsTitle">
+                <div class="about-section__header">
+                    <p class="about-section__eyebrow">How to use it</p>
+                    <h2 id="instructionsTitle" class="about-section__title">A practical flow for every session</h2>
+                </div>
+
+                <div class="about-steps">
+                    <article class="about-step">
+                        <span class="about-step__number">01</span>
+                        <div>
+                            <h3>Configure the timer</h3>
+                            <p>
+                                Open timer settings and choose focus duration, short break length, long break
+                                length, number of session cycles, sound notifications, and the cycle pattern.
+                                Classic follows work-short-work-short-work-short-work-long. Compact follows
+                                work-short-work-long for shorter sessions.
+                            </p>
+                        </div>
+                    </article>
+                    <article class="about-step">
+                        <span class="about-step__number">02</span>
+                        <div>
+                            <h3>Start, pause, reset, or skip phases</h3>
+                            <p>
+                                Start begins the current work phase. Pause keeps the remaining time. Reset returns
+                                the whole session to the first work phase. Skip buttons move backward or forward
+                                through the configured phase pattern and automatically start the selected phase,
+                                which keeps navigation fast without breaking the cycle structure.
+                            </p>
+                        </div>
+                    </article>
+                    <article class="about-step">
+                        <span class="about-step__number">03</span>
+                        <div>
+                            <h3>Track the current cycle</h3>
+                            <p>
+                                The dots below the timer represent work phases in the active cycle. The cycle label
+                                shows which cycle is currently running and how many total cycles are planned.
+                            </p>
+                        </div>
+                    </article>
+                    <article class="about-step">
+                        <span class="about-step__number">04</span>
+                        <div>
+                            <h3>Use Productivity during planning</h3>
+                            <p>
+                                Add tasks before a session, set deadlines when timing matters, mark completed work,
+                                and keep notes for context. The task list is designed to support the focus session
+                                without becoming a separate project-management ritual or another place to get stuck.
+                            </p>
+                        </div>
+                    </article>
+                    <article class="about-step">
+                        <span class="about-step__number">05</span>
+                        <div>
+                            <h3>Sign in for persistence</h3>
+                            <p>
+                                Logged-in users can keep profile data, time settings, tasks, notes, and productivity
+                                state connected to their account. Anonymous users can still use the timer locally.
+                            </p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="about-section about-benefits" aria-labelledby="benefitsTitle">
+                <div class="about-section__header">
+                    <p class="about-section__eyebrow">Why it helps</p>
+                    <h2 id="benefitsTitle" class="about-section__title">A better choice for everyday focus</h2>
+                </div>
+
+                <div class="about-benefit-list">
+                    <p>
+                        Telos makes focus sessions explicit. Instead of starting a vague work block, users see the
+                        current phase, the planned cycle, the active work progress, and the finish line.
+                    </p>
+                    <p>
+                        The built-in structure reduces context switching. Tasks, notes, deadlines, timer state, and
+                        settings live together, so users do not need to jump between unrelated tools to stay organized.
+                    </p>
+                    <p>
+                        The product supports sustainable work by making breaks part of the flow, not something users
+                        have to remember after they are already tired.
+                    </p>
+                    <p>
+                        The cycle patterns give users flexibility. A full classic cycle works for deep study or
+                        project work, while compact mode supports smaller windows without abandoning the method.
+                    </p>
+                    <p>
+                        Automatic phase transitions help users maintain momentum. When a work phase ends, Telos
+                        guides the next step instead of asking the user to rebuild the session manually.
+                    </p>
+                    <p>
+                        Saved settings make the app personal. Once the user finds a rhythm that works, Telos can
+                        keep that rhythm ready for the next session.
+                    </p>
+                </div>
+            </section>
+
+            <section class="about-section about-team" aria-labelledby="teamTitle">
+                <div class="about-section__header">
+                    <p class="about-section__eyebrow">About us</p>
+                    <h2 id="teamTitle" class="about-section__title">The team behind Telos</h2>
+                    <p class="about-section__lead">
+                        Telos was built by a small cross-functional team focused on making the product practical,
+                        testable, reliable, and easy to use. Each role shaped a different part of the experience,
+                        from the flow of the interface to the confidence that the system behaves correctly.
+                    </p>
+                </div>
+
+                <div class="about-team-grid">
+                    <article class="about-member">
+                        <h3>Oleh Blazhko</h3>
+                        <p class="about-member__role">Quality Assurance</p>
+                        <p>
+                            Oleh focuses on product quality, regression coverage, and the edge cases that appear
+                            when users move between timer, productivity, login, and profile flows. In addition, he drew the outline of this project and helped with frontend.
+                        </p>
+                    </article>
+                    <article class="about-member">
+                        <h3>Vlad Hlovatskyy</h3>
+                        <p class="about-member__role">Project Manager</p>
+                        <p>
+                            Vlad keeps the team aligned around the product goal: a focus tool that is simple enough
+                            to use every day but structured enough to support serious work sessions. Also, he helps with QA.
+                        </p>
+                    </article>
+                    <article class="about-member">
+                        <h3>Artem Uiechko</h3>
+                        <p class="about-member__role">Fullstack Dev</p>
+                        <p>
+                            Artem connects the frontend experience with backend behavior, making timer settings,
+                            profile data, authentication, tasks, notes, and validation work as one product. Also, the whole backend is the work of this man.
+                        </p>
+                    </article>
+                    <article class="about-member">
+                        <h3>Yurii Pikh</h3>
+                        <p class="about-member__role">DevOps</p>
+                        <p>
+                            Yurii works on deployment, environment stability, and the infrastructure side that lets
+                            Telos run consistently outside a local development machine(by running the website 24/7 on his laptop lol).
+                        </p>
+                    </article>
+                    <article class="about-member">
+                        <h3>Vlad Dudych</h3>
+                        <p class="about-member__role">UI/UX Design</p>
+                        <p>
+                            Vlad shapes the visual and interaction design, keeping the interface calm, readable,
+                            and direct so users can focus on the work rather than the tool.
+                        </p>
+                    </article>
                 </div>
             </section>
         </div>
