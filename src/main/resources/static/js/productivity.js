@@ -67,6 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
         </svg>
     `;
 
+    function getTabFromHash() {
+        const hashValue = window.location.hash.replace("#", "").trim().toLowerCase();
+        return ITEM_TYPES.includes(hashValue) ? hashValue : DEFAULT_TAB;
+    }
+
     function getRequestHeaders() {
         return {
             "Content-Type": "application/json",
@@ -289,7 +294,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById(inputIds[type])?.focus();
     }
 
-    function setActiveTab(nextTab) {
+    function setActiveTab(nextTab, options = {}) {
+        const { shouldFocus = false, shouldSyncHash = true } = options;
         state.activeTab = nextTab;
 
         tabButtons.forEach(button => {
@@ -305,7 +311,13 @@ document.addEventListener("DOMContentLoaded", () => {
             panel.setAttribute("aria-hidden", isActive ? "false" : "true");
         });
 
-        focusPrimaryInput(nextTab);
+        if (shouldFocus) {
+            focusPrimaryInput(nextTab);
+        }
+
+        if (shouldSyncHash && window.location.hash !== `#${nextTab}`) {
+            window.history.replaceState(null, "", `#${nextTab}`);
+        }
     }
 
     function markInvalid(input, shouldMark) {
@@ -654,7 +666,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderType(type);
         });
 
-        setActiveTab(state.activeTab);
+        setActiveTab(state.activeTab, { shouldFocus: false });
     }
 
     async function handleAddTodo(form) {
@@ -845,9 +857,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     tabButtons.forEach(button => {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", event => {
+            event.preventDefault();
             setActiveTab(button.dataset.tabTrigger || DEFAULT_TAB);
         });
+    });
+
+    window.addEventListener("hashchange", () => {
+        const nextTab = getTabFromHash();
+        if (nextTab === state.activeTab) return;
+
+        setActiveTab(nextTab, { shouldSyncHash: false });
     });
 
     forms.todo?.addEventListener("submit", event => {
@@ -1035,6 +1055,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     syncDeadlineInputState(forms.todo);
+
+    state.activeTab = getTabFromHash();
 
     render();
     loadType("todo");

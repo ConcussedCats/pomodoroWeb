@@ -23,6 +23,34 @@ document.addEventListener("DOMContentLoaded", () => {
     let settings = timerStateStore.loadSettings();
     let timerState = timerStateStore.loadTimerState(settings);
     let initialTransitionsReleased = false;
+    const soundCache = new Map();
+
+    function preloadSound(fileName) {
+        if (soundCache.has(fileName)) {
+            return soundCache.get(fileName);
+        }
+
+        const audio = new Audio(`assets/sounds/${fileName}`);
+        audio.preload = "auto";
+        audio.load();
+        soundCache.set(fileName, audio);
+        return audio;
+    }
+
+    function playSound(fileName) {
+        if (!settings.soundEnabled) return;
+        const audio = preloadSound(fileName);
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+    }
+
+    function playCompletionSound(previousState, nextState) {
+        if (previousState.currentMode === "pomodoro" && nextState.currentMode !== "pomodoro") {
+            playSound("timer_sound_down.wav");
+        } else if (previousState.currentMode !== "pomodoro" && nextState.currentMode === "pomodoro") {
+            playSound("timer_sound_up.wav");
+        }
+    }
 
     function releaseInitialTransitions() {
         if (initialTransitionsReleased) return;
@@ -97,12 +125,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function syncState(now = Date.now()) {
+        const previousState = timerState;
         const nextState = timerStateStore.hydrateTimerState(timerState, settings, now);
-        const stateChanged = !timerStateStore.areStatesEqual(timerState, nextState);
+        const stateChanged = !timerStateStore.areStatesEqual(previousState, nextState);
 
         timerState = nextState;
 
         if (stateChanged) {
+            playCompletionSound(previousState, nextState);
             timerState = timerStateStore.saveTimerState(timerState, settings);
         }
 
@@ -134,5 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     render();
+    preloadSound("timer_sound_down.wav");
+    preloadSound("timer_sound_up.wav");
     syncState(Date.now());
 });

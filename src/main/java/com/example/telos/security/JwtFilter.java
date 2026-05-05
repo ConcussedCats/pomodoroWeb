@@ -36,7 +36,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = header.replace("Bearer ", "");
+        String token = header.substring(7);
 
         try {
             String login = jwtService.extractLogin(token);

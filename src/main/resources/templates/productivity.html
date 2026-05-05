@@ -42,10 +42,10 @@
 
             <section sec:authorize="isAuthenticated()" class="productivity-surface productivity-dashboard" aria-label="Productivity tools">
                 <div class="productivity-tabs" role="tablist" aria-label="Productivity tabs">
-                    <button
+                    <a
                         id="productivity-tab-todo"
                         class="productivity-tab productivity-tab--active"
-                        type="button"
+                        href="#todo"
                         role="tab"
                         aria-selected="true"
                         tabindex="0"
@@ -53,11 +53,11 @@
                         data-tab-trigger="todo"
                     >
                         To-do
-                    </button>
-                    <button
+                    </a>
+                    <a
                         id="productivity-tab-notes"
                         class="productivity-tab"
-                        type="button"
+                        href="#notes"
                         role="tab"
                         aria-selected="false"
                         tabindex="-1"
@@ -65,7 +65,7 @@
                         data-tab-trigger="notes"
                     >
                         Notes
-                    </button>
+                    </a>
                 </div>
 
                 <div class="productivity-panels">
