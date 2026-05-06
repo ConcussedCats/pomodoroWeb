@@ -758,7 +758,16 @@ export async function bootstrapProductivityRuntime(options = {}) {
         window: null,
         location: {
             href: "https://teclos.space/productivity",
-            pathname: "/productivity"
+            pathname: "/productivity",
+            hash: ""
+        },
+        history: {
+            replaceState(_state, _title, url) {
+                if (typeof url === "string" && url.startsWith("#")) {
+                    context.location.hash = url;
+                    context.location.href = `https://teclos.space/productivity${url}`;
+                }
+            }
         },
         fetch: api.fetch,
         Date,

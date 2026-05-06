@@ -29,11 +29,11 @@ test("about page contains product overview, usage guidance, benefits, and team r
     ].forEach(step => assert.ok(template.includes(step), `Missing About page instruction: ${step}`));
 
     [
-        ["Oleh Blazhko", "QA", "regression coverage"],
-        ["Vlad Hlovatskyy", "PM", "product goal"],
-        ["Artem Uiechko", "Fullstack", "frontend experience with backend behavior"],
+        ["Oleh Blazhko", "Quality Assurance", "regression coverage"],
+        ["Vlad Hlovatskyy", "Project Manager", "product goal"],
+        ["Artem Uiechko", "Fullstack Dev", "frontend experience with backend behavior"],
         ["Yurii Pikh", "DevOps", "environment stability"],
-        ["Vlad Dudych", "UI/UX", "visual and interaction design"]
+        ["Vlad Dudych", "UI/UX Design", "visual and interaction design"]
     ].forEach(([name, role, detail]) => {
         assert.ok(template.includes(name), `Missing team member: ${name}`);
         assert.ok(template.includes(role), `Missing team role: ${role}`);

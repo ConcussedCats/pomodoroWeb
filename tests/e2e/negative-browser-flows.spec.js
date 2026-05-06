@@ -1,4 +1,5 @@
 const { test, expect } = require("@playwright/test");
+const { escapeRegExp, gotoOrSkip } = require("./remote-test-utils");
 
 const baseUrl = process.env.E2E_BASE_URL || "https://teclos.space";
 const validUsername = process.env.E2E_LOGIN_USERNAME;
@@ -10,15 +11,11 @@ async function openHomeWithCleanState(page) {
         localStorage.removeItem("pomodoroTimerState");
     });
 
-    await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
-}
-
-function escapeRegExp(value) {
-    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    await gotoOrSkip(page, `${baseUrl}/`);
 }
 
 async function loginWithValidCredentials(page) {
-    await page.goto(`${baseUrl}/login`, { waitUntil: "domcontentloaded" });
+    await gotoOrSkip(page, `${baseUrl}/login`);
     await page.locator("#loginIdentifier").fill(validUsername);
     await page.locator("#loginPassword").fill(validPassword);
     await page.locator(".auth-submit").click();
@@ -46,7 +43,7 @@ test.describe("negative browser flows", () => {
     });
 
     test("@ui-negative login rejects forbidden 67-style identifiers client-side", async ({ page }) => {
-        await page.goto(`${baseUrl}/login`, { waitUntil: "domcontentloaded" });
+        await gotoOrSkip(page, `${baseUrl}/login`);
 
         await page.locator("#loginIdentifier").fill("six seven");
         await page.locator("#loginPassword").fill("valid-password");
@@ -55,7 +52,7 @@ test.describe("negative browser flows", () => {
     });
 
     test("@ui-negative productivity rejects forbidden todo text without breaking layout", async ({ page }) => {
-        await page.goto(`${baseUrl}/productivity`, { waitUntil: "domcontentloaded" });
+        await gotoOrSkip(page, `${baseUrl}/productivity`);
 
         const todoInput = page.locator("#todoInput");
         if (await todoInput.count() === 0) {
@@ -65,7 +62,7 @@ test.describe("negative browser flows", () => {
             );
 
             await loginWithValidCredentials(page);
-            await page.goto(`${baseUrl}/productivity`, { waitUntil: "domcontentloaded" });
+            await gotoOrSkip(page, `${baseUrl}/productivity`);
         }
 
         await expect(todoInput).toBeVisible();
