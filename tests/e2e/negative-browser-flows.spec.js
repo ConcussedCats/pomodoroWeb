@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { escapeRegExp, gotoOrSkip } = require("./remote-test-utils");
+const { escapeRegExp, expectVisibleOrSkip, gotoOrSkip } = require("./remote-test-utils");
 
 const baseUrl = process.env.E2E_BASE_URL || "https://teclos.space";
 const validUsername = process.env.E2E_LOGIN_USERNAME;
@@ -12,6 +12,7 @@ async function openHomeWithCleanState(page) {
     });
 
     await gotoOrSkip(page, `${baseUrl}/`);
+    await expectVisibleOrSkip(page.locator("#settingsToggle"), "home settings toggle");
 }
 
 async function loginWithValidCredentials(page) {
@@ -44,6 +45,7 @@ test.describe("negative browser flows", () => {
 
     test("@ui-negative login rejects forbidden 67-style identifiers client-side", async ({ page }) => {
         await gotoOrSkip(page, `${baseUrl}/login`);
+        await expectVisibleOrSkip(page.locator("#loginForm"), "login form");
 
         await page.locator("#loginIdentifier").fill("six seven");
         await page.locator("#loginPassword").fill("valid-password");

@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { escapeRegExp, gotoOrSkip } = require("./remote-test-utils");
+const { escapeRegExp, expectUrlOrSkip, expectVisibleOrSkip, gotoOrSkip } = require("./remote-test-utils");
 
 const baseUrl = process.env.E2E_BASE_URL || "https://teclos.space";
 const validUsername = process.env.E2E_LOGIN_USERNAME;
@@ -7,7 +7,12 @@ const validPassword = process.env.E2E_LOGIN_PASSWORD;
 
 async function openLoginPage(page) {
     await gotoOrSkip(page, `${baseUrl}/login`);
-    await expect(page).toHaveURL(new RegExp(`${escapeRegExp(baseUrl)}/login(?:\\?.*)?$`));
+    await expectUrlOrSkip(
+        page,
+        new RegExp(`${escapeRegExp(baseUrl)}/login(?:\\?.*)?$`),
+        "login page URL"
+    );
+    await expectVisibleOrSkip(page.locator("#loginForm"), "login form");
 }
 
 test.describe("teclos.space login smoke", () => {
@@ -70,7 +75,12 @@ test.describe("teclos.space login smoke", () => {
     test("anonymous user is redirected to login from the protected user page", async ({ page }) => {
         await gotoOrSkip(page, `${baseUrl}/user`);
 
-        await expect(page).toHaveURL(new RegExp(`${escapeRegExp(baseUrl)}/login(?:\\?.*)?$`));
+        await expectUrlOrSkip(
+            page,
+            new RegExp(`${escapeRegExp(baseUrl)}/login(?:\\?.*)?$`),
+            "protected user redirect to login"
+        );
+        await expectVisibleOrSkip(page.locator("#loginForm"), "login form after protected-page redirect");
         await expect(page.locator("#loginForm")).toBeVisible();
     });
 

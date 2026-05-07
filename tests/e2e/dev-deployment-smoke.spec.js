@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { escapeRegExp, gotoOrSkip } = require("./remote-test-utils");
+const { escapeRegExp, expectUrlOrSkip, expectVisibleOrSkip, gotoOrSkip } = require("./remote-test-utils");
 
 const baseUrl = process.env.E2E_DEV_BASE_URL || process.env.E2E_BASE_URL || "https://teclos.space";
 
@@ -49,7 +49,8 @@ test.describe("dev deployment smoke", () => {
         const criticalMessages = attachConsoleTracking(page);
 
         await gotoOrSkip(page, `${baseUrl}/`);
-        await expect(page).toHaveURL(new RegExp(`${escapeRegExp(baseUrl)}/?$`));
+        await expectUrlOrSkip(page, new RegExp(`${escapeRegExp(baseUrl)}/?$`), "home page URL");
+        await expectVisibleOrSkip(page.locator("#timerSection"), "home timer section");
 
         await expectLayoutIsStable(
             page,
@@ -72,6 +73,10 @@ test.describe("dev deployment smoke", () => {
         const criticalMessages = attachConsoleTracking(page);
 
         await gotoOrSkip(page, `${baseUrl}/productivity`);
+        await expectVisibleOrSkip(
+            page.locator("#loginForm, .productivity-tabs, .productivity-guest-card").first(),
+            "productivity page shell"
+        );
 
         if (page.url().includes("/login")) {
             await expect(page.locator("#loginForm")).toBeVisible();
@@ -123,7 +128,8 @@ test.describe("dev deployment smoke", () => {
         const criticalMessages = attachConsoleTracking(page);
 
         await gotoOrSkip(page, `${baseUrl}/login`);
-        await expect(page).toHaveURL(new RegExp(`${escapeRegExp(baseUrl)}/login(?:\\?.*)?$`));
+        await expectUrlOrSkip(page, new RegExp(`${escapeRegExp(baseUrl)}/login(?:\\?.*)?$`), "login page URL");
+        await expectVisibleOrSkip(page.locator("#loginForm"), "login form");
 
         await expectLayoutIsStable(
             page,

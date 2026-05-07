@@ -271,7 +271,8 @@ export function createDocument(roots) {
 }
 
 export function runBrowserScript(scriptPath, context) {
-    const source = readFileSync(path.resolve(scriptPath), "utf8");
+    const filePath = path.resolve(scriptPath);
+    const source = readFileSync(filePath, "utf8");
     vm.createContext(context);
-    vm.runInContext(source, context, { filename: path.basename(scriptPath) });
+    vm.runInContext(source, context, { filename: filePath });
 }

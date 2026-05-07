@@ -793,8 +793,9 @@ export async function bootstrapProductivityRuntime(options = {}) {
     context.window = context;
     vm.createContext(context);
 
-    const source = readFileSync(path.resolve("src/main/resources/static/js/productivity.js"), "utf8");
-    vm.runInContext(source, context, { filename: "productivity.js" });
+    const filePath = path.resolve("src/main/resources/static/js/productivity.js");
+    const source = readFileSync(filePath, "utf8");
+    vm.runInContext(source, context, { filename: filePath });
     document.dispatchEvent({ type: "DOMContentLoaded", target: document });
     await flushAsyncWork();
 

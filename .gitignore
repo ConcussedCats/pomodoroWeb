@@ -39,6 +39,8 @@ Thumbs.db
 
 # Build
 out/
+coverage/
+test-results/
 
 # VS Code
 .vscode/

@@ -85,7 +85,7 @@ function runScriptInContext(context, relativePath) {
     const filePath = path.resolve(relativePath);
     const source = readFileSync(filePath, "utf8");
 
-    vm.runInContext(source, context, { filename: path.basename(filePath) });
+    vm.runInContext(source, context, { filename: filePath });
 }
 
 function bootstrapMiniTimer({ initialStorage = {}, now = 1_000_000 } = {}) {

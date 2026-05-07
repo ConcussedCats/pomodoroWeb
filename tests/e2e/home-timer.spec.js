@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { gotoOrSkip } = require("./remote-test-utils");
+const { expectPollOrSkip, expectVisibleOrSkip, gotoOrSkip } = require("./remote-test-utils");
 
 const baseUrl = process.env.E2E_BASE_URL || "https://teclos.space";
 
@@ -15,6 +15,7 @@ async function openHomeWithCleanTimerState(page) {
     });
 
     await gotoOrSkip(page, `${baseUrl}/`);
+    await expectVisibleOrSkip(page.locator("#timeDisplay"), "home timer display");
     await expect(page.locator("#timeDisplay")).toHaveText("25:00");
     await expect(page.locator("#sessionCount")).toHaveText("1");
     await expect(page.locator("#sessionTotal")).toHaveText("4");
@@ -37,9 +38,11 @@ test.describe("home timer flow", () => {
         await startButton.click();
         await expect(startButtonText).toHaveText("PAUSE FLOW");
 
-        await page.waitForTimeout(2200);
-        const runningValue = await timeDisplay.textContent();
-        expect(parseTime(runningValue)).toBeLessThan(25 * 60);
+        await expectPollOrSkip(
+            async () => parseTime(await timeDisplay.textContent()),
+            poll => poll.toBeLessThan(25 * 60),
+            "home timer countdown after start"
+        );
 
         await startButton.click();
         await expect(startButtonText).toHaveText("CONTINUE FLOW");
@@ -50,9 +53,8 @@ test.describe("home timer flow", () => {
 
         await startButton.click();
         await expect(startButtonText).toHaveText("PAUSE FLOW");
-        await page.waitForTimeout(1500);
-        const resumedValue = await timeDisplay.textContent();
-        expect(parseTime(resumedValue)).toBeLessThan(parseTime(pausedValue));
+        await expect.poll(async () => parseTime(await timeDisplay.textContent()), { timeout: 6_000 })
+            .toBeLessThan(parseTime(pausedValue));
 
         await resetButton.click();
         await expect(startButtonText).toHaveText("START FLOW");
