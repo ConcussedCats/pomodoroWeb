@@ -23,9 +23,13 @@ The Node emulator in `tools/esp32-emulator` is a working reference of the client
 9. **Heartbeat** — every 30 s with firmware version, capabilities, only measured metrics,
    current state and `configHash`; fetch config when the hash differs.
 10. **Command polling** — every 3 s; execute, ack with resulting state; never execute an
-    expired command; remember the last 16 executed command ids and re-send their ack.
-11. **Hardware feedback** — vibration motor, buzzer, RGB LED driven by the downloaded
+    expired command (compare `expiresAt` with the server clock); remember the last 16
+    executed command ids and re-send their ack.
+11. **One timer with the website** — keep `clockOffset` from every `serverTime`; send
+    `endsAt` while running; `SET_STATE` (continue the given phase to `endsAt`, keep the
+    given `sessionId`) and `RELEASE` (become idle, the website continues the phase).
+12. **Hardware feedback** — vibration motor, buzzer, RGB LED driven by the downloaded
     hardware settings; display of remaining time / suggested next phase if a display exists.
-12. **Factory reset** — long press clears NVS (secret, Wi-Fi) and returns to provisioning.
-13. Later (not part of this stage): OTA updates, MQTT / WebSocket instead of polling,
+13. **Factory reset** — long press clears NVS (secret, Wi-Fi) and returns to provisioning.
+14. Later (not part of this stage): OTA updates, MQTT / WebSocket instead of polling,
     battery measurement if hardware gets one.

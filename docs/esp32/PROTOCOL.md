@@ -44,6 +44,7 @@ Used in events, command acknowledgements, heartbeats and WebSocket messages.
   "remainingSeconds": 1500,
   "startedAt": 1761150000000,
   "pausedAt": null,
+  "endsAt": 1761151500000,
   "sessionId": "b0c5b9b2-3f3e-4a7e-9f2a-1f1d3c2b4a59",
   "cycleIndex": 0,
   "phaseIndex": 0
@@ -53,6 +54,8 @@ Used in events, command acknowledgements, heartbeats and WebSocket messages.
 * `remainingSeconds` is the remaining time **at `startedAt`** while `RUNNING`, and the
   frozen remaining time while `PAUSED`. The countdown is never sent every second:
   each side computes `endsAt = startedAt + remainingSeconds * 1000` locally.
+* `endsAt` — optional, `RUNNING` only: the absolute end of the phase on the server clock
+  (section 1.6). When present, the server uses it instead of `startedAt`.
 * `startedAt` — when the current running segment began (reset on every resume).
   A device without a synced clock sends `startedAt: null` and the server counts from
   the moment it received the report.
@@ -77,13 +80,28 @@ The server adds `version` (monotonic integer, +1 on every accepted change),
   timer state only from what the device reports (events and command acks).
   So there are never two independent timers.
 
-Switching rules (enforced by the web client):
+The browser and the cube behave as **one timer**: the current phase (mode, remaining
+time, running / paused, cycle position and the history session) moves with you when you
+switch. Switching rules (enforced by the web client):
 
-1. Standalone → Connected: if the browser timer is running it is paused first
-   (its `localStorage` state stays as it was and comes back when you switch back).
-2. Connected → Standalone while the cube is `RUNNING`: the user must confirm and a
-   `STOP` command is sent, or the switch is cancelled.
-3. Unbinding a device ends Connected Device Mode in every tab.
+1. **Browser → cube.** When a cube is selected and the browser timer has progress
+   (running, paused or past the first phase) while the cube is idle (`STOPPED` /
+   `FINISHED`), the website sends `SET_STATE` with the browser phase. The cube continues
+   it from the same second; the history session id is kept, so one phase stays one
+   session. The browser timer is paused.
+2. **Both active.** If the browser timer and the cube both have an active countdown, the
+   user chooses which one to keep. Keeping the browser sends `SET_STATE`, keeping the
+   cube just pauses the browser timer.
+3. **Cube → browser.** When the user switches back to the browser while the cube is
+   `RUNNING` or `PAUSED`, the website sends `RELEASE`; after the ack the browser timer
+   continues the cube phase (same mode, remaining time, cycle position and session id).
+   An idle cube hands over only its cycle position (after `FINISHED`: the next phase,
+   ready to start). If the cube cannot be reached, the user may continue from the last
+   known state.
+4. **The cube takes over.** When a linked cube starts or resumes a countdown (somebody
+   flipped it) while the website shows the browser timer, the website switches to the
+   cube automatically and pauses the browser timer. A physical flip always wins.
+5. Unbinding a device ends Connected Device Mode in every tab.
 
 ### 1.5 Phase pattern in Connected Device Mode
 
@@ -99,6 +117,19 @@ because a cube's face *is* the mode:
   the next phase.
 * Starting the mode that matches the pattern position advances normally; starting a
   different mode is a manual override, like clicking a mode tab in the browser.
+
+
+### 1.6 Phase end time and clocks
+
+Both sides count down to the same absolute moment: `endsAt` (epoch ms, server clock).
+The server returns `serverTime` in the pairing, heartbeat and config responses; the cube
+keeps `clockOffset = serverTime - localNow` (updated on every response) and converts:
+`localEndsAt = endsAt - clockOffset`. The browser does the same with the `serverTime` of
+every timer state it receives. Commands and reports may therefore arrive late without
+moving the end of the phase; the remaining difference is the one-way network delay of a
+single request. While `RUNNING`, the cube also sends `endsAt` in its snapshots; the server
+treats a report whose `endsAt` differs by less than 1.5 s from the stored one as the same
+countdown (no new version).
 
 ---
 
@@ -282,7 +313,27 @@ online (3 s), and immediately when a heartbeat reports `pendingCommands > 0`.
 ```
 
 Command types: `START` (with `mode`), `PAUSE`, `RESUME`, `STOP`, `SWITCH_MODE` (with
-`mode`, starts that mode immediately). At most one command per cube is open at a time.
+`mode`, starts that mode immediately), `SET_STATE` and `RELEASE` (handover between the
+browser and the cube, see 1.4). At most one command per cube is open at a time.
+
+`SET_STATE` carries the phase the cube must continue:
+
+```json
+{ "commandId": "…", "type": "SET_STATE", "mode": "WORK",
+  "targetState": { "status": "RUNNING", "durationSeconds": 1500, "remainingSeconds": 1121,
+                   "endsAt": 1761151121000, "sessionId": "c7e1…uuid" },
+  "createdAt": 1761150000000, "expiresAt": 1761150030000 }
+```
+
+The cube adopts it exactly: same `sessionId` and `durationSeconds` (full phase length).
+For `RUNNING` it counts down to **`endsAt`** (server clock, see 1.6), so the delivery delay
+of the command does not shift the end of the phase; `remainingSeconds` is the value at
+delivery time and is only a fallback for a cube that has never seen `serverTime`. For
+`PAUSED` it keeps `remainingSeconds` frozen. It acks with the resulting state.
+
+`RELEASE` means "the browser continues this phase": the cube stops counting and becomes
+`STOPPED` (full duration of its current mode, `sessionId: null`). It acks with that state.
+Unlike `STOP`, the server keeps the history session open, because the browser continues it.
 
 `POST /api/device/commands/{commandId}/ack`
 

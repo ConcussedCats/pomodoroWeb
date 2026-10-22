@@ -5,12 +5,14 @@ import com.example.telos.dto.device.DeviceProtocolDtos.CommandAckRequest;
 import com.example.telos.dto.device.DeviceProtocolDtos.CommandAckResponse;
 import com.example.telos.dto.device.DeviceProtocolDtos.DeviceCommandPayload;
 import com.example.telos.dto.device.DeviceProtocolDtos.DeviceCommandsResponse;
+import com.example.telos.dto.device.DeviceProtocolDtos.DeviceTargetState;
 import com.example.telos.dto.device.DeviceProtocolDtos.DeviceEventBatchRequest;
 import com.example.telos.dto.device.DeviceProtocolDtos.DeviceEventBatchResponse;
 import com.example.telos.dto.device.DeviceProtocolDtos.DeviceEventPayload;
 import com.example.telos.dto.device.DeviceProtocolDtos.DeviceEventResultDto;
 import com.example.telos.dto.device.TimerSyncDtos.CommandDto;
 import com.example.telos.dto.device.TimerSyncDtos.CreateCommandRequest;
+import com.example.telos.dto.device.TimerSyncDtos.TargetStatePayload;
 import com.example.telos.dto.device.TimerSyncDtos.TimerSnapshotPayload;
 import com.example.telos.dto.device.TimerSyncDtos.TimerStateDto;
 import com.example.telos.exception.DeviceApiException;
@@ -248,10 +250,23 @@ public class DeviceTimerService {
     // ------------------------------------------------------------------ server state transitions
 
     /**
+     * Extra rules for handover commands: SET_STATE brings the browser's pattern position and session start,
+     * RELEASE keeps the history session open because the browser continues it.
+     */
+    record TransitionOptions(Position positionOverride, Instant sessionStartedAt, boolean keepSessionOpen) {
+        static final TransitionOptions NONE = new TransitionOptions(null, null, false);
+    }
+
+    boolean applySnapshot(Device device, DeviceTimerState state, UserTimeSettings settings, TimerSnapshot next, Instant at) {
+        return applySnapshot(device, state, settings, next, at, TransitionOptions.NONE);
+    }
+
+    /**
      * Applies a device snapshot, keeps the pattern position and the session history in step.
      * Returns false when the snapshot does not change anything.
      */
-    boolean applySnapshot(Device device, DeviceTimerState state, UserTimeSettings settings, TimerSnapshot next, Instant at) {
+    boolean applySnapshot(Device device, DeviceTimerState state, UserTimeSettings settings, TimerSnapshot next, Instant at,
+                          TransitionOptions options) {
         TimerSnapshot previous = TimerSnapshot.of(state);
         if (next.sameAs(previous)) {
             return false;
@@ -270,14 +285,16 @@ public class DeviceTimerService {
         Long userId = device.getUserId();
         Long deviceId = device.getDeviceId();
 
-        if (previousActive && (!sameSession || next.status() == TimerStatus.STOPPED)) {
+        if (previousActive && !options.keepSessionOpen() && (!sameSession || next.status() == TimerStatus.STOPPED)) {
             int counted = previous.durationSeconds() - previous.remainingSecondsAt(at);
             sessionService.upsertDeviceSession(userId, deviceId, previous.sessionId(), previous.mode(),
                     previous.durationSeconds(), sessionStart(previous, at), SessionStatus.INTERRUPTED, counted, at);
         }
 
         if (newCountdown) {
-            Instant startedAt = next.startedAt() != null ? next.startedAt() : at;
+            Instant startedAt = options.sessionStartedAt() != null
+                    ? options.sessionStartedAt()
+                    : (next.startedAt() != null ? next.startedAt() : at);
             sessionService.upsertDeviceSession(userId, deviceId, next.sessionId(), next.mode(),
                     next.durationSeconds(), startedAt, SessionStatus.IN_PROGRESS, 0, null);
             position = planner.onStart(position);
@@ -290,9 +307,13 @@ public class DeviceTimerService {
                         next.durationSeconds(), startedAt, SessionStatus.COMPLETED, next.durationSeconds(), at);
             }
             position = planner.afterCompletion(position, next.mode());
-        } else if (next.status() == TimerStatus.STOPPED && previous.status() != TimerStatus.STOPPED) {
+        } else if (next.status() == TimerStatus.STOPPED && previous.status() != TimerStatus.STOPPED
+                && !options.keepSessionOpen()) {
             // STOP is the reset of a connected timer, like the reset button of the browser timer.
             position = Position.START;
+        }
+        if (options.positionOverride() != null) {
+            position = options.positionOverride();
         }
 
         state.setMode(next.mode());
@@ -346,6 +367,9 @@ public class DeviceTimerService {
 
         Instant now = clock.instant();
         DeviceCommand command = new DeviceCommand();
+        if (type == DeviceCommandType.SET_STATE) {
+            applyTarget(command, request.targetState(), now);
+        }
         command.setCommandId(UUID.randomUUID());
         command.setDeviceId(deviceId);
         command.setCreatedByUserId(userId);
@@ -360,6 +384,83 @@ public class DeviceTimerService {
         CommandDto dto = toDto(command);
         publisher.publish(device.getUserId(), "COMMAND", deviceId, "command", dto);
         return dto;
+    }
+
+    private void applyTarget(DeviceCommand command, TargetStatePayload target, Instant now) {
+        if (target == null) {
+            throw DeviceApiException.badRequest("TARGET_REQUIRED", "SET_STATE needs targetState");
+        }
+        TimerStatus status = parseEnum(TimerStatus.class, target.status())
+                .filter(value -> value == TimerStatus.RUNNING || value == TimerStatus.PAUSED)
+                .orElseThrow(() -> DeviceApiException.badRequest("INVALID_TARGET", "targetState.status must be RUNNING or PAUSED"));
+        Integer duration = target.durationSeconds();
+        if (duration == null || duration <= 0 || duration > TimerSnapshot.MAX_DURATION_SECONDS) {
+            throw DeviceApiException.badRequest("INVALID_TARGET", "targetState.durationSeconds is invalid");
+        }
+        if (status == TimerStatus.RUNNING) {
+            if (target.endsAt() == null) {
+                throw DeviceApiException.badRequest("INVALID_TARGET", "A running target needs endsAt");
+            }
+            Instant endsAt = Instant.ofEpochMilli(target.endsAt());
+            long millisLeft = endsAt.toEpochMilli() - now.toEpochMilli();
+            if (millisLeft <= 0 || millisLeft > duration * 1000L + 2_000) {
+                throw DeviceApiException.badRequest("INVALID_TARGET", "targetState.endsAt is outside the phase");
+            }
+            command.setTargetEndsAt(endsAt);
+        } else {
+            Integer remaining = target.remainingSeconds();
+            if (remaining == null || remaining < 0 || remaining > duration) {
+                throw DeviceApiException.badRequest("INVALID_TARGET", "targetState.remainingSeconds is invalid");
+            }
+            command.setTargetRemainingSeconds(remaining);
+        }
+        command.setTargetStatus(status);
+        command.setTargetDurationSeconds(duration);
+        command.setTargetSessionId(target.sessionId() != null ? target.sessionId() : UUID.randomUUID());
+        if (target.sessionStartedAt() != null && target.sessionStartedAt() > 0) {
+            Instant startedAt = Instant.ofEpochMilli(target.sessionStartedAt());
+            command.setTargetSessionStartedAt(startedAt.isAfter(now) ? now : startedAt);
+        }
+        if (target.cycleIndex() != null && target.cycleIndex() >= 0) {
+            command.setTargetCycleIndex(target.cycleIndex());
+        }
+        if (target.phaseIndex() != null && target.phaseIndex() >= 0) {
+            command.setTargetPhaseIndex(target.phaseIndex());
+        }
+    }
+
+    private DeviceTargetState targetFor(DeviceCommand command, Instant now) {
+        if (command.getType() != DeviceCommandType.SET_STATE || command.getTargetStatus() == null) {
+            return null;
+        }
+        int duration = command.getTargetDurationSeconds();
+        int remaining;
+        if (command.getTargetStatus() == TimerStatus.RUNNING) {
+            long millisLeft = command.getTargetEndsAt().toEpochMilli() - now.toEpochMilli();
+            remaining = (int) Math.min(duration, Math.max(0, (millisLeft + 999) / 1000));
+        } else {
+            remaining = command.getTargetRemainingSeconds();
+        }
+        return new DeviceTargetState(
+                command.getTargetStatus().name(),
+                duration,
+                remaining,
+                command.getTargetEndsAt() == null ? null : command.getTargetEndsAt().toEpochMilli(),
+                command.getTargetSessionId()
+        );
+    }
+
+    private TransitionOptions optionsFor(DeviceCommand command, UserTimeSettings settings) {
+        if (command.getType() == DeviceCommandType.RELEASE) {
+            return new TransitionOptions(null, null, true);
+        }
+        if (command.getType() == DeviceCommandType.SET_STATE) {
+            Position position = command.getTargetCycleIndex() == null || command.getTargetPhaseIndex() == null
+                    ? null
+                    : planner(settings).normalize(command.getTargetCycleIndex(), command.getTargetPhaseIndex());
+            return new TransitionOptions(position, command.getTargetSessionStartedAt(), false);
+        }
+        return TransitionOptions.NONE;
     }
 
     @Transactional(readOnly = true)
@@ -393,7 +494,8 @@ public class DeviceTimerService {
                     command.getType().name(),
                     command.getTargetMode() == null ? null : command.getTargetMode().name(),
                     command.getCreatedAt().toEpochMilli(),
-                    command.getExpiresAt().toEpochMilli()
+                    command.getExpiresAt().toEpochMilli(),
+                    targetFor(command, now)
             ));
         }
         return new DeviceCommandsResponse(payload);
@@ -426,7 +528,18 @@ public class DeviceTimerService {
         }
         if (request.state() != null) {
             TimerSnapshot snapshot = parseSnapshot(request.state(), now, TimerSnapshot.of(state));
-            changed = applySnapshot(device, state, settings, snapshot, now);
+            TransitionOptions options = executed ? optionsFor(command, settings) : TransitionOptions.NONE;
+            changed = applySnapshot(device, state, settings, snapshot, now, options);
+            if (!changed && options.positionOverride() != null) {
+                Position position = options.positionOverride();
+                changed = position.cycleIndex() != state.getCycleIndex() || position.phaseIndex() != state.getPhaseIndex();
+                if (changed) {
+                    state.setCycleIndex(position.cycleIndex());
+                    state.setPhaseIndex(position.phaseIndex());
+                    state.setVersion(state.getVersion() + 1);
+                    state.setUpdatedAt(now);
+                }
+            }
         }
         stateRepository.save(state);
 
@@ -539,24 +652,35 @@ public class DeviceTimerService {
 
         Instant startedAt = null;
         Instant pausedAt = null;
+        int remaining = status == TimerStatus.FINISHED ? 0 : payload.remainingSeconds();
         if (status == TimerStatus.RUNNING) {
-            // Without a synced clock the device sends startedAt = null: count from the moment we received it,
-            // unless it is the countdown we already track (otherwise every heartbeat would look like a change).
-            boolean sameCountdown = payload.startedAt() == null
-                    && previous != null
+            boolean sameRun = previous != null
                     && previous.status() == TimerStatus.RUNNING
                     && previous.mode() == mode
                     && previous.durationSeconds() == payload.durationSeconds()
                     && java.util.Objects.equals(previous.sessionId(), payload.sessionId());
-            if (sameCountdown) {
+            if (payload.endsAt() != null) {
+                // The phase end on the server clock (PROTOCOL.md 1.6) is the most precise description.
+                long millisLeft = payload.endsAt() - at.toEpochMilli();
+                remaining = (int) Math.max(0, (millisLeft + 999) / 1000);
+                startedAt = Instant.ofEpochMilli(payload.endsAt()).minusSeconds(remaining);
+                if (sameRun && Math.abs(endsAtOf(previous) - payload.endsAt()) < END_TOLERANCE_MILLIS) {
+                    return previous;
+                }
+            } else if (payload.startedAt() == null && sameRun) {
+                // Unsynced clock and the countdown we already track: not a change.
                 return previous;
+            } else {
+                startedAt = deviceTime(payload.startedAt(), at);
+                if (sameRun && Math.abs(endsAtOf(previous) - (startedAt.toEpochMilli() + remaining * 1000L))
+                        < END_TOLERANCE_MILLIS) {
+                    return previous;
+                }
             }
-            startedAt = deviceTime(payload.startedAt(), at);
         }
         if (status == TimerStatus.PAUSED) {
             pausedAt = deviceTime(payload.pausedAt(), at);
         }
-        int remaining = status == TimerStatus.FINISHED ? 0 : payload.remainingSeconds();
 
         TimerSnapshot snapshot = new TimerSnapshot(mode, status, payload.durationSeconds(), remaining,
                 startedAt, pausedAt, payload.sessionId());
@@ -628,6 +752,14 @@ public class DeviceTimerService {
         } catch (IllegalArgumentException exception) {
             return Optional.empty();
         }
+    }
+
+    private static final long END_TOLERANCE_MILLIS = 1_500;
+
+    private static long endsAtOf(TimerSnapshot snapshot) {
+        return snapshot.startedAt() == null
+                ? Long.MIN_VALUE / 2
+                : snapshot.startedAt().toEpochMilli() + snapshot.remainingSeconds() * 1000L;
     }
 
     private static String trimToNull(String value) {

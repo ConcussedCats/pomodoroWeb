@@ -67,8 +67,9 @@
         const finishedAt = completed && tracker.endTime ? Math.min(tracker.endTime, now) : now;
         const actual = completed ? tracker.plannedSeconds : Math.max(0, tracker.plannedSeconds - remaining);
 
-        if (!completed && actual < MIN_RECORDED_SECONDS) {
-            return null; // clicking through modes is not a session
+        // Clicking through modes is not a session; a phase continued from the cube must always be closed.
+        if (!completed && actual < MIN_RECORDED_SECONDS && !tracker.adopted) {
+            return null;
         }
 
         return {
@@ -163,7 +164,52 @@
         write(OUTBOX_KEY, outbox.slice(-MAX_OUTBOX));
     }
 
-    window.TelosSessionRecorder = { observe, buildRecord };
+    /** Session id and start of the current browser phase, to continue it on the cube (SET_STATE). */
+    function handOver(state) {
+        const tracker = read(TRACKER_KEY, null);
+        if (!tracker || !state || tracker.key !== phaseKey(state)) return null;
+        return { id: tracker.id, startedAt: tracker.startedAt };
+    }
+
+    /** The cube took the phase over: the browser must not record it as well. */
+    function forget(sessionId) {
+        const tracker = read(TRACKER_KEY, null);
+        if (tracker && tracker.id === sessionId) {
+            write(TRACKER_KEY, null);
+        }
+    }
+
+    /** The browser continues a cube phase: keep its session id so history stays one session. */
+    function adopt({ sessionId, state, settings, store, now = Date.now() }) {
+        closeCurrent(now);
+        if (!sessionId || !state || state.sessionCompleted) return;
+        const planned = store.getModeDurationSeconds(settings, state.currentMode);
+        const remaining = store.getRemainingSeconds(state, now);
+        write(TRACKER_KEY, {
+            id: sessionId,
+            key: phaseKey(state),
+            mode: state.currentMode,
+            plannedSeconds: planned,
+            startedAt: now - Math.max(0, planned - remaining) * 1000,
+            endTime: state.isRunning ? state.endTime : null,
+            remainingSeconds: remaining,
+            adopted: true
+        });
+    }
+
+    /** Records the current browser phase as ended now (e.g. a cube flip took over). */
+    function closeCurrent(now = Date.now()) {
+        const tracker = read(TRACKER_KEY, null);
+        if (!tracker) return;
+        write(TRACKER_KEY, null);
+        const record = buildRecord(tracker, now);
+        if (record) {
+            enqueue(record);
+            flushOutbox();
+        }
+    }
+
+    window.TelosSessionRecorder = { observe, buildRecord, handOver, forget, adopt, closeCurrent };
 
     document.addEventListener("DOMContentLoaded", () => {
         const store = window.PomodoroTimerState;

@@ -223,8 +223,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (connectedState && window.TelosDeviceLive) {
+        const lastCubeVersion = new Map();
         window.TelosDeviceLive.subscribe((message) => {
             const deviceId = connectedState.getActiveDeviceId();
+            if (!deviceId && message.type === "TIMER_STATE") {
+                // The cube was flipped while this page shows the browser timer: the cube takes over.
+                const known = lastCubeVersion.get(message.deviceId) ?? -1;
+                lastCubeVersion.set(message.deviceId, Number(message.state.version));
+                if (message.state.status === "RUNNING" && Number(message.state.version) > known) {
+                    if (timerState.isRunning) {
+                        timerState = timerStateStore.saveTimerState(
+                            timerStateStore.pauseTimerState(timerState, settings, Date.now()),
+                            settings
+                        );
+                    }
+                    connectedState.setActiveDeviceId(message.deviceId);
+                    connectedSnapshot = { state: message.state, offsetMs: connectedState.computeClockOffset(message.state) };
+                    connectedState.saveSnapshot(connectedSnapshot.state, connectedSnapshot.offsetMs);
+                    render();
+                }
+                return;
+            }
             if (!deviceId) return;
             if (message.type === "RESYNC") {
                 refreshConnected();

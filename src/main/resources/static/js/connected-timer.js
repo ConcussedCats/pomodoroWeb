@@ -4,6 +4,8 @@
 // while TelosConnectedTimer.isActive() is true. Switching rules: docs/esp32/PROTOCOL.md 1.4.
 (function () {
     const REFRESH_WHILE_PENDING_MS = 2_000;
+    // The cube polls every 3 s; give it a few polls to confirm a handover.
+    const RELEASE_TIMEOUT_MS = 12_000;
     const SERVER_MODES = {
         pomodoro: "WORK",
         "short-break": "SHORT_BREAK",
@@ -55,6 +57,13 @@
         let pendingRefreshTimer = null;
         let unsubscribeLive = null;
         let liveStatus = live?.getStatus?.() || "closed";
+        let notice = "";
+        // True while the cube holds the phase (it was handed over or the cube was used), so leaving
+        // Connected Mode copies the cube state into the browser timer.
+        let cubeOwnsPhase = false;
+        const lastCubeVersion = new Map();
+        const timerStore = window.PomodoroTimerState;
+        const recorder = () => window.TelosSessionRecorder;
 
         // ------------------------------------------------------------ helpers
 
@@ -96,6 +105,10 @@
 
             const justFinished = state?.status === "RUNNING" && nextState.status === "FINISHED";
             state = nextState;
+            lastCubeVersion.set(nextState.deviceId, Number(nextState.version));
+            if (store.isCubeActive(nextState)) {
+                cubeOwnsPhase = true;
+            }
             if (Number.isFinite(nextOffsetMs)) {
                 offsetMs = nextOffsetMs;
             }
@@ -141,6 +154,8 @@
             }
             if (lastError) {
                 setSync(lastError, "error");
+            } else if (notice) {
+                setSync(notice, "warning");
             } else if (!deviceOnline()) {
                 setSync("Cube offline. Showing the last known state.", "warning");
             } else if (pending) {
@@ -249,7 +264,7 @@
             }
             if (deviceId && !currentDevice()) {
                 // The selected cube was unbound (maybe in another tab or on another computer).
-                leave({ notice: "The selected cube is no longer linked. Using the browser timer." });
+                leave({ message: "The selected cube is no longer linked. Using the browser timer." });
             }
             render();
         }
@@ -262,7 +277,7 @@
                 lastError = "";
             } catch (error) {
                 if (error.status === 404 || error.status === 401) {
-                    leave({ notice: "This cube is no longer linked. Using the browser timer." });
+                    leave({ message: "This cube is no longer linked. Using the browser timer." });
                     return;
                 }
                 lastError = "Could not load the cube state.";
@@ -303,44 +318,70 @@
 
         // ------------------------------------------------------------ commands
 
+        /** Ends the pending command and wakes up a caller that waits for it (handover). */
+        function settlePending(outcome) {
+            const waiting = pending?.resolve;
+            pending = null;
+            waiting?.(outcome);
+        }
+
         function handleCommandUpdate(command) {
             if (!pending || command.commandId !== pending.commandId) return;
             if (command.status === "EXECUTED") {
-                pending = null;
                 lastError = "";
+                pending.onExecuted?.();
+                settlePending("EXECUTED");
                 if (command.resultingVersion && (!state || state.version < command.resultingVersion)) {
                     loadState();
                 }
             } else if (command.status === "REJECTED") {
-                pending = null;
                 lastError = `The cube rejected the command (${command.errorCode || "unknown reason"}).`;
+                settlePending("REJECTED");
             } else if (command.status === "EXPIRED") {
-                pending = null;
                 lastError = "The cube did not respond in time. Nothing was changed.";
+                settlePending("EXPIRED");
             }
             render();
         }
 
-        async function send(type, webMode) {
-            if (!active || pending || !deviceId) return;
-            const serverMode = webMode ? SERVER_MODES[webMode] : null;
+        /**
+         * Sends a command to the cube. The returned promise resolves with EXECUTED, REJECTED, EXPIRED,
+         * TIMEOUT, FAILED or BUSY once there is an answer; the UI shows success only after EXECUTED.
+         */
+        function send(type, mode, { targetState, onExecuted, timeoutMs } = {}) {
+            if (!active || pending || !deviceId) return Promise.resolve("BUSY");
+            const serverMode = mode ? (SERVER_MODES[mode] || mode) : null;
             lastError = "";
-            pending = { commandId: null, type };
-            render();
-            try {
-                const command = await store.sendCommand(deviceId, type, serverMode);
-                pending = { commandId: command.commandId, type };
-                schedulePendingRefresh();
-            } catch (error) {
-                pending = null;
-                lastError = error.code === "DEVICE_OFFLINE"
-                    ? "The cube is offline. Turn it on and check its Wi-Fi."
-                    : (error.message || "Could not send the command.");
-                if (error.code === "DEVICE_OFFLINE") {
-                    loadDevices();
-                }
-            }
-            render();
+            notice = "";
+
+            return new Promise((resolve) => {
+                pending = { commandId: null, type, resolve, onExecuted };
+                render();
+                store.sendCommand(deviceId, type, serverMode, targetState)
+                    .then((command) => {
+                        if (!pending) return;
+                        pending.commandId = command.commandId;
+                        schedulePendingRefresh();
+                        if (timeoutMs) {
+                            window.setTimeout(() => {
+                                if (pending?.commandId === command.commandId) {
+                                    settlePending("TIMEOUT");
+                                    render();
+                                }
+                            }, timeoutMs);
+                        }
+                    })
+                    .catch((error) => {
+                        lastError = error.code === "DEVICE_OFFLINE"
+                            ? "The cube is offline. Turn it on and check its Wi-Fi."
+                            : (error.message || "Could not send the command.");
+                        if (error.code === "DEVICE_OFFLINE") {
+                            loadDevices();
+                        }
+                        settlePending("FAILED");
+                        render();
+                    });
+            });
         }
 
         function onStartClick() {
@@ -381,8 +422,84 @@
             }, 1000);
         }
 
-        function enter(nextDeviceId) {
+        function readBrowserTimer() {
+            const settings = timerStore.loadSettings();
+            return { settings, state: timerStore.loadTimerState(settings) };
+        }
+
+        /** Browser -> cube: the cube continues the browser phase to the same end moment. */
+        async function handOverToCube(browser) {
+            if (!store.browserHasProgress(browser.state, browser.settings, timerStore)) return;
+            if (store.isCubeActive(state)) {
+                const keepBrowser = window.confirm(
+                    "The browser timer and the cube both have a phase in progress.\n\n"
+                    + "OK: continue the browser phase on the cube.\nCancel: keep the cube's phase."
+                );
+                if (!keepBrowser) {
+                    recorder()?.closeCurrent();
+                    return;
+                }
+            }
+            if (!deviceOnline()) {
+                notice = "The cube is offline, so the browser phase stays in the browser.";
+                render();
+                return;
+            }
+
+            const session = recorder()?.handOver(browser.state) || null;
+            const command = store.browserToCubeCommand(browser.state, browser.settings, timerStore, { offsetMs, session });
+            if (!command) return;
+            const outcome = await send(command.type, command.mode, {
+                targetState: command.targetState,
+                onExecuted: () => {
+                    cubeOwnsPhase = true;
+                    if (session) {
+                        recorder()?.forget(session.id);
+                    }
+                }
+            });
+            if (outcome === "EXECUTED") {
+                notice = "The browser phase continues on the cube.";
+            } else if (!lastError) {
+                lastError = "The cube did not take over the browser phase.";
+            }
+            render();
+        }
+
+        /** Cube -> browser before leaving Connected Mode; false keeps Connected Mode. */
+        async function handOverToBrowser() {
+            const cube = state;
+            const cubeOffset = offsetMs;
+            if (!cube) return true;
+            const settings = timerStore.loadSettings();
+
+            if (store.isCubeActive(cube)) {
+                let released = false;
+                if (deviceOnline()) {
+                    notice = "Handing the phase over to this browser…";
+                    released = (await send("RELEASE", null, { timeoutMs: RELEASE_TIMEOUT_MS })) === "EXECUTED";
+                }
+                if (!released && !window.confirm(
+                    "The cube did not confirm, so it may keep running.\nContinue its phase in this browser anyway?"
+                )) {
+                    notice = "";
+                    render();
+                    return false;
+                }
+                const browserState = store.cubeToBrowserState(cube, settings, timerStore, { offsetMs: cubeOffset });
+                timerStore.saveTimerState(browserState, settings);
+                recorder()?.adopt({ sessionId: cube.sessionId, state: browserState, settings, store: timerStore });
+            } else if (cubeOwnsPhase) {
+                const browserState = store.cubeToBrowserState(cube, settings, timerStore, { offsetMs: cubeOffset });
+                timerStore.saveTimerState(browserState, settings);
+            }
+            return true;
+        }
+
+        function enter(nextDeviceId, { handover = false, message = "" } = {}) {
             if (!nextDeviceId) return;
+            // Read the browser phase before it is paused, it may be handed over to the cube.
+            const browser = handover ? readBrowserTimer() : null;
             // Never run two independent timers: pause the browser timer first.
             document.dispatchEvent(new CustomEvent("timer:pause-local"));
             deviceId = nextDeviceId;
@@ -391,41 +508,54 @@
             offsetMs = snapshot?.offsetMs || 0;
             pending = null;
             lastError = "";
+            notice = message;
+            cubeOwnsPhase = store.isCubeActive(state);
             active = true;
             store.setActiveDeviceId(deviceId);
             timerSurface.classList.add("timer-surface--connected");
-            if (live && !unsubscribeLive) {
-                unsubscribeLive = live.subscribe(onLiveMessage);
-            }
             startRenderLoop();
             render();
-            loadState();
+            loadState().then(() => {
+                if (browser && active && deviceId === nextDeviceId) {
+                    handOverToCube(browser);
+                }
+            });
         }
 
-        /** Asks the cube to stop before the browser timer can be used again; false keeps Connected Mode. */
-        async function stopCubeBeforeLeaving() {
-            if (state?.status !== "RUNNING" && state?.status !== "PAUSED") return true;
-            const confirmed = window.confirm(
-                "The cube timer is still active. Stop it on the cube and switch to the browser timer?"
-            );
-            if (!confirmed) return false;
-            try {
-                await store.sendCommand(deviceId, "STOP");
-                return true;
-            } catch (error) {
-                return window.confirm(
-                    "The cube could not be reached, so its timer may keep running. Switch to the browser timer anyway?"
-                );
+        /** Somebody flipped the cube while the browser timer was shown: the cube wins. */
+        function takeOver(cubeId) {
+            recorder()?.closeCurrent();
+            enter(cubeId, { message: "The cube was started, so the timer now runs on the cube." });
+        }
+
+        async function takeOverIfCubeIsRunning() {
+            for (const device of devices.filter(item => item.status === "ONLINE")) {
+                try {
+                    const result = await store.fetchState(device.id);
+                    lastCubeVersion.set(device.id, Number(result.state.version));
+                    if (!active && result.state.status === "RUNNING") {
+                        store.saveSnapshot(result.state, result.offsetMs);
+                        takeOver(device.id);
+                        return;
+                    }
+                } catch (error) {
+                    // Not reachable right now; the live channel reports later changes.
+                }
             }
         }
 
-        function leave({ notice } = {}) {
+        function leave({ message } = {}) {
             if (!active) return true;
+            if (deviceId && state) {
+                lastCubeVersion.set(deviceId, Number(state.version));
+            }
             active = false;
             deviceId = null;
             state = null;
-            pending = null;
+            settlePending("CANCELLED");
             lastError = "";
+            notice = "";
+            cubeOwnsPhase = false;
             store.setActiveDeviceId(null);
             window.clearInterval(renderTimer);
             window.clearInterval(pendingRefreshTimer);
@@ -433,8 +563,8 @@
             [startBtn, resetBtn, prevCycleBtn, nextCycleBtn, settingsToggle, ...modeLabels].forEach(el => setDisabled(el, false));
             document.dispatchEvent(new CustomEvent("timer:connected-mode-changed", { detail: { active: false } }));
             render();
-            if (notice) {
-                setSync(notice, "warning");
+            if (message) {
+                setSync(message, "warning");
             }
             return true;
         }
@@ -471,9 +601,19 @@
             if (message.type === "DEVICE_REMOVED") {
                 devices = devices.filter(device => device.id !== message.deviceId);
                 if (message.deviceId === deviceId) {
-                    leave({ notice: "The selected cube was unbound. Using the browser timer." });
+                    leave({ message: "The selected cube was unbound. Using the browser timer." });
                 }
                 render();
+                return;
+            }
+            if (message.type === "TIMER_STATE" && !active) {
+                const known = lastCubeVersion.get(message.deviceId) ?? -1;
+                lastCubeVersion.set(message.deviceId, Number(message.state.version));
+                const isOwnCube = devices.some(device => device.id === message.deviceId);
+                if (isOwnCube && message.state.status === "RUNNING" && Number(message.state.version) > known) {
+                    store.saveSnapshot(message.state, store.computeClockOffset(message.state));
+                    takeOver(message.deviceId);
+                }
                 return;
             }
             if (message.deviceId !== deviceId) return;
@@ -490,9 +630,15 @@
             const selected = Number.parseInt(sourceSelect.value, 10);
             const target = Number.isFinite(selected) ? selected : null;
             if (target === deviceId) return;
+            if (pending) {
+                sourceSelect.value = deviceId ? String(deviceId) : "";
+                lastError = "Wait until the cube confirms the last command.";
+                render();
+                return;
+            }
             if (active) {
                 sourceSelect.disabled = true;
-                const canLeave = await stopCubeBeforeLeaving();
+                const canLeave = await handOverToBrowser();
                 sourceSelect.disabled = false;
                 if (!canLeave) {
                     sourceSelect.value = String(deviceId);
@@ -501,7 +647,7 @@
                 leave();
             }
             if (target) {
-                enter(target);
+                enter(target, { handover: true });
             }
         });
 
@@ -535,6 +681,10 @@
         if (storedId) {
             enter(storedId);
         }
-        loadDevices();
+        loadDevices().then(() => {
+            if (!active) {
+                takeOverIfCubeIsRunning();
+            }
+        });
     });
 })();

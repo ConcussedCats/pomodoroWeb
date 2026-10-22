@@ -70,7 +70,15 @@ public class PomodoroSessionService {
 
         Optional<PomodoroSession> existing = repository.findByUserIdAndExternalId(userId, request.externalId());
         if (existing.isPresent()) {
-            return new Recorded(toDto(existing.get()), false);
+            PomodoroSession session = existing.get();
+            // A phase started on the cube and finished in the browser: the browser closes the same session.
+            if (session.getStatus() == SessionStatus.IN_PROGRESS) {
+                session.setStatus(SessionStatus.valueOf(request.status()));
+                session.setActualDuration(Math.min(request.actualDurationSeconds(), session.getPlannedDuration()));
+                session.setFinishedAt(finishedAt);
+                repository.save(session);
+            }
+            return new Recorded(toDto(session), false);
         }
 
         PomodoroSession session = new PomodoroSession();

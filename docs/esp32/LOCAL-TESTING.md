@@ -25,8 +25,11 @@ pages with a fake DOM, BLE adapter with a fake `navigator.bluetooth`, Node emula
 E2E_BASE_URL=http://localhost:8080 E2E_DEV_BASE_URL=http://localhost:8080 npx playwright test
 ```
 
-Existing Playwright e2e suite against the local app (start it first, see 2). Without the
-variables the suite targets the production site.
+Playwright e2e suite against the local app (start it first, see 2). Without the variables
+the suite targets the production site. `tests/e2e/device-handover.spec.js` runs only
+against a local server: it registers a user, pairs the Node emulator inside the test and
+checks browser → cube, cube → browser (same phase end within 100 ms) and the automatic
+takeover when the cube is flipped.
 
 ## 2. Run the app locally
 

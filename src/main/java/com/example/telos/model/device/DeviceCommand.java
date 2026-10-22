@@ -59,4 +59,31 @@ public class DeviceCommand {
 
     @Column(name = "completed_at")
     private Instant completedAt;
+
+    // ---- SET_STATE only: the phase the cube must continue
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "target_status", length = 16)
+    private TimerStatus targetStatus;
+
+    @Column(name = "target_duration_seconds")
+    private Integer targetDurationSeconds;
+
+    @Column(name = "target_remaining_seconds")
+    private Integer targetRemainingSeconds;
+
+    @Column(name = "target_ends_at")
+    private Instant targetEndsAt;
+
+    @Column(name = "target_session_id")
+    private UUID targetSessionId;
+
+    @Column(name = "target_session_started_at")
+    private Instant targetSessionStartedAt;
+
+    @Column(name = "target_cycle_index")
+    private Integer targetCycleIndex;
+
+    @Column(name = "target_phase_index")
+    private Integer targetPhaseIndex;
 }

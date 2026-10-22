@@ -146,7 +146,7 @@ public class SimulatedCube {
         for (JsonNode command : pollCommands()) {
             String type = command.get("type").asText();
             String targetMode = command.get("mode").isNull() ? null : command.get("mode").asText();
-            boolean executed = execute(type, targetMode);
+            boolean executed = execute(type, targetMode, command.path("targetState"));
             ack(command.get("commandId").asText(), executed ? "EXECUTED" : "REJECTED", executed ? null : "INVALID_STATE");
         }
     }
@@ -207,9 +207,35 @@ public class SimulatedCube {
         seq = 0;
     }
 
-    private boolean execute(String type, String targetMode) {
+    private boolean execute(String type, String targetMode, JsonNode target) {
         long now = clock.millis();
         switch (type) {
+            case "SET_STATE" -> {
+                // Continue the browser phase; count to endsAt so a late delivery ends at the same moment.
+                mode = targetMode;
+                durationSeconds = target.get("durationSeconds").asInt();
+                sessionId = UUID.fromString(target.get("sessionId").asText());
+                if (target.get("status").asText().equals("RUNNING")) {
+                    long endsAt = target.get("endsAt").asLong();
+                    status = "RUNNING";
+                    remainingSeconds = (int) Math.max(0, (endsAt - now + 999) / 1000);
+                    startedAt = endsAt - remainingSeconds * 1000L;
+                    pausedAt = null;
+                } else {
+                    status = "PAUSED";
+                    remainingSeconds = target.get("remainingSeconds").asInt();
+                    startedAt = null;
+                    pausedAt = now;
+                }
+            }
+            case "RELEASE" -> {
+                status = "STOPPED";
+                durationSeconds = durationOf(mode);
+                remainingSeconds = durationSeconds;
+                startedAt = null;
+                pausedAt = null;
+                sessionId = null;
+            }
             case "START", "SWITCH_MODE" -> start(targetMode, now);
             case "PAUSE" -> {
                 if (!status.equals("RUNNING")) return false;
@@ -282,6 +308,7 @@ public class SimulatedCube {
         state.put("startedAt", startedAt);
         state.put("pausedAt", pausedAt);
         state.put("sessionId", sessionId == null ? null : sessionId.toString());
+        state.put("endsAt", status.equals("RUNNING") && startedAt != null ? startedAt + remainingSeconds * 1000L : null);
         return state;
     }
 

@@ -42,7 +42,14 @@ DeviceDto = {
 | POST | `/api/devices/{id}/commands` | `{"type":"START","mode":"WORK","clientRequestId":"uuid"}` | `202 CommandDto` (`status: PENDING`) |
 | GET | `/api/devices/{id}/commands` | – | last 20 `CommandDto` |
 
-* `type`: `START` (needs `mode`), `PAUSE`, `RESUME`, `STOP`, `SWITCH_MODE` (needs `mode`).
+* `type`: `START` (needs `mode`), `PAUSE`, `RESUME`, `STOP`, `SWITCH_MODE` (needs `mode`),
+  `SET_STATE` (needs `mode` and `targetState`, hands the browser phase to the cube) and
+  `RELEASE` (the browser continues the cube phase).
+* `targetState` for `SET_STATE`:
+  `{"status":"RUNNING|PAUSED","durationSeconds":1500,"remainingSeconds":1121,"endsAt":1761151121000,
+  "sessionId":"uuid","sessionStartedAt":1761149800000,"cycleIndex":0,"phaseIndex":2}` —
+  `endsAt` (server clock) is required for `RUNNING`, `remainingSeconds` for `PAUSED`;
+  `400 TARGET_REQUIRED` / `400 INVALID_TARGET` otherwise.
 * `mode` accepts `WORK`/`SHORT_BREAK`/`LONG_BREAK` or the browser names
   `pomodoro`/`short-break`/`long-break`.
 * `409 DEVICE_OFFLINE` when the cube is offline; `409 COMMAND_IN_PROGRESS` while the previous
@@ -67,6 +74,10 @@ CommandDto = {
   "createdAt": …, "expiresAt": …, "completedAt": null, "resultingVersion": null
 }
 ```
+
+How the website moves the phase between the browser and the cube is described in
+PROTOCOL.md 1.4 (`connected-timer.js` implements it, `connected-state.js` has the pure
+conversions `browserToCubeCommand` / `cubeToBrowserState`).
 
 Countdown on the client: when `status == RUNNING`, remaining =
 `max(0, ceil((endsAt - correctedNow) / 1000))` where

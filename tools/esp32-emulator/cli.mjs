@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Interactive software emulator of the ESP32 Pomodoro Flip Cube (not proof of hardware behaviour).
-// Usage: node tools/esp32-emulator/cli.mjs --api http://localhost:8080 --hardware-id EMU000000001 [--state-file f.json]
+// Usage: node tools/esp32-emulator/cli.mjs --api http://localhost:8080 --hardware-id EMU000000001
+//        [--state-file f.json]
 import readline from "node:readline";
 
 import { CubeState, FACES } from "./cube-state.mjs";

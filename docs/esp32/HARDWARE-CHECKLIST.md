@@ -30,6 +30,15 @@ and website according to the protocol and covered by tests with software emulato
 - [ ] Unbinding on the website: the cube gets 401 and returns to BLE provisioning.
 - [ ] Heartbeat every 30 s; the website shows OFFLINE ~90 s after power-off.
 
+## One timer for browser and cube
+
+- [ ] `SET_STATE`: a running browser phase continues on the cube and both show the same
+      remaining time (< 1 s) during the whole phase.
+- [ ] The cube learns `clockOffset` from `serverTime` and still ends on time without SNTP.
+- [ ] `RELEASE`: the cube goes idle and the browser continues to the same end.
+- [ ] Flipping the cube while the website shows the browser timer switches the website to
+      the cube within ~1 s.
+
 ## Hardware settings
 
 - [ ] Vibration on/off, sound on/off, RGB brightness are applied after the config

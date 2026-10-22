@@ -33,8 +33,11 @@ software emulators.
 * **Standalone Mode** — the browser timer works exactly as before (localStorage, auto
   transitions, classic / compact).
 * **Connected Device Mode** — a cube is selected above the timer. The cube is the only
-  thing counting down; the website shows the server state and sends commands. The browser
-  timer is paused while a cube is selected and comes back when you switch back.
+  thing counting down; the website shows the server state and sends commands.
+* **One timer** — switching between "This browser" and a cube moves the current phase
+  (mode, end moment, cycle position, history session) to the other side; flipping the
+  cube while the browser timer is shown switches the website to the cube. Both sides
+  count down to the same `endsAt`, so they stay within network delay of each other.
 
 ## Code map
 
@@ -62,3 +65,6 @@ software emulators.
   no timer page is open, only the phase that was running when you come back is recorded.
 * No JWT (`/api/jwt/**`) variants of the new user endpoints yet; the website uses the session.
 * No rate limiting on pairing creation yet.
+* Anyone who knows a cube's `hardwareId` can pair it first while it is unpaired; the owner
+  then sees "linked to another account" until it is unbound. Closing this needs a
+  per-device secret burned into the firmware (proof of possession).

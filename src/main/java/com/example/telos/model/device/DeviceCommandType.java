@@ -5,7 +5,11 @@ public enum DeviceCommandType {
     PAUSE(false),
     RESUME(false),
     STOP(false),
-    SWITCH_MODE(true);
+    SWITCH_MODE(true),
+    /** Continue the browser phase on the cube (handover browser -> cube). */
+    SET_STATE(true),
+    /** The browser continues the phase: the cube stops without closing the history session. */
+    RELEASE(false);
 
     private final boolean requiresMode;
 

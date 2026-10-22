@@ -95,7 +95,12 @@ public final class DeviceProtocolDtos {
     public record DeviceEventBatchResponse(List<DeviceEventResultDto> results, TimerStateDto state) {
     }
 
-    public record DeviceCommandPayload(UUID commandId, String type, String mode, long createdAt, long expiresAt) {
+    /** SET_STATE target as the cube sees it; remainingSeconds is computed at delivery time. */
+    public record DeviceTargetState(String status, int durationSeconds, int remainingSeconds, Long endsAt, UUID sessionId) {
+    }
+
+    public record DeviceCommandPayload(UUID commandId, String type, String mode, long createdAt, long expiresAt,
+                                       DeviceTargetState targetState) {
     }
 
     public record DeviceCommandsResponse(List<DeviceCommandPayload> commands) {

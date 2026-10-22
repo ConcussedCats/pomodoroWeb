@@ -406,3 +406,58 @@ test("display and tech faces do not change timer state", () => {
     assert.deepEqual(cube.snapshot(), state);
 }
 );
+
+test("SET_STATE running keeps the server end moment after late delivery", () => {
+    const c = clock(1_000);
+    const cube = new CubeState({ now: c.now });
+    cube.setClockOffset(100);
+    cube.applyCommand({ type: "SET_STATE", mode: "WORK", targetState: { status: "RUNNING", durationSeconds: 60, remainingSeconds: 60, endsAt: 61_100, sessionId: "one" } });
+    c.advance(30_100);
+    assert.equal(cube.getRemainingSeconds(), 30);
+});
+
+test("SET_STATE applies the clock offset", () => {
+    const c = clock(1_000);
+    const cube = new CubeState({ now: c.now });
+    cube.setClockOffset(500);
+    cube.applyCommand({ type: "SET_STATE", mode: "WORK", targetState: { status: "RUNNING", durationSeconds: 60, remainingSeconds: 60, endsAt: 61_500, sessionId: "one" } });
+    assert.equal(cube.snapshot().endsAt, 61_500);
+});
+
+test("SET_STATE paused keeps its frozen remaining time", () => {
+    const c = clock();
+    const cube = new CubeState({ now: c.now });
+    cube.applyCommand({ type: "SET_STATE", mode: "WORK", targetState: { status: "PAUSED", durationSeconds: 60, remainingSeconds: 19, sessionId: "one" } });
+    c.advance(10_000);
+    assert.equal(cube.getRemainingSeconds(), 19);
+});
+
+test("SET_STATE rejects invalid targets", () => {
+    const cube = new CubeState();
+    const result = cube.applyCommand({ type: "SET_STATE", mode: "BAD", targetState: {} });
+    assert.equal(result.errorCode, "INVALID_TARGET");
+});
+
+test("RELEASE stops the cube and clears its session", () => {
+    const cube = new CubeState();
+    cube.applyFace("WORK");
+    cube.applyCommand({ type: "RELEASE" });
+    assert.equal(cube.state.status, "STOPPED");
+    assert.equal(cube.state.sessionId, null);
+});
+
+test("running snapshots include server-clock endsAt", () => {
+    const c = clock();
+    const cube = new CubeState({ now: c.now });
+    cube.setClockOffset(200);
+    cube.applyFace("WORK");
+    assert.equal(cube.snapshot().endsAt, 2_500_200);
+});
+
+test("client learns clock offsets from server responses", async () => {
+    const c = clock(1_000);
+    const f = fakeFetch([response({ deviceId: 1, deviceSecret: "s", serverTime: 1_300 }, 201)]);
+    const client = new DeviceClient({ hardwareId: "EMU", apiBaseUrl: "http://x", fetch: f.fetch, now: c.now });
+    await client.pair("token");
+    assert.equal(client.clockOffset, 300);
+});

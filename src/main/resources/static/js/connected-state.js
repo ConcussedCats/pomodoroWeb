@@ -184,12 +184,103 @@
         return `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     }
 
-    function sendCommand(deviceId, type, mode) {
+    function sendCommand(deviceId, type, mode, targetState) {
+        const body = { type, mode: mode || null, clientRequestId: newRequestId() };
+        if (targetState) {
+            body.targetState = targetState;
+        }
         return request(`/api/devices/${encodeURIComponent(deviceId)}/commands`, {
             method: "POST",
             headers: csrfHeaders(true),
-            body: JSON.stringify({ type, mode: mode || null, clientRequestId: newRequestId() })
+            body: JSON.stringify(body)
         });
+    }
+
+    // ------------------------------------------------------------ handover browser <-> cube (PROTOCOL.md 1.4, 1.6)
+
+    const SERVER_MODES = {
+        pomodoro: "WORK",
+        "short-break": "SHORT_BREAK",
+        "long-break": "LONG_BREAK"
+    };
+
+    function isCubeActive(state) {
+        return state?.status === "RUNNING" || state?.status === "PAUSED";
+    }
+
+    /** True when the browser timer is somewhere else than its untouched starting point. */
+    function browserHasProgress(browserState, settings, timerStore) {
+        if (!browserState || browserState.sessionCompleted) return false;
+        return !timerStore.areStatesEqual(browserState, timerStore.getDefaultTimerState(settings));
+    }
+
+    /**
+     * SET_STATE command for the current browser phase, or null when there is nothing to hand over.
+     * endsAt is converted to the server clock, so the cube ends the phase at the same moment.
+     */
+    function browserToCubeCommand(browserState, settings, timerStore, { offsetMs = 0, now = Date.now(), session } = {}) {
+        const remainingSeconds = timerStore.getRemainingSeconds(browserState, now);
+        if (remainingSeconds <= 0) return null;
+        const running = browserState.isRunning && Number.isFinite(browserState.endTime);
+
+        return {
+            type: "SET_STATE",
+            mode: SERVER_MODES[browserState.currentMode] || "WORK",
+            targetState: {
+                status: running ? "RUNNING" : "PAUSED",
+                durationSeconds: timerStore.getModeDurationSeconds(settings, browserState.currentMode),
+                remainingSeconds,
+                endsAt: running ? browserState.endTime + offsetMs : null,
+                sessionId: session?.id || null,
+                sessionStartedAt: session?.startedAt ?? null,
+                cycleIndex: browserState.currentCycleIndex,
+                phaseIndex: browserState.currentPhaseIndex
+            }
+        };
+    }
+
+    /**
+     * Browser timer state that continues the cube phase: same mode, end moment (local clock), cycle position.
+     * An idle cube hands over only its position (after FINISHED that is the next phase, ready to start).
+     */
+    function cubeToBrowserState(cubeState, settings, timerStore, { offsetMs = 0, now = Date.now() } = {}) {
+        const phases = timerStore.getPatternPhases(settings);
+        if (cubeState.sessionCompleted) {
+            return timerStore.hydrateTimerState({
+                currentCycleIndex: settings.focusCycles - 1,
+                currentPhaseIndex: phases.length - 1,
+                currentMode: phases[phases.length - 1].mode,
+                isRunning: false,
+                remainingSeconds: 0,
+                sessionCompleted: true
+            }, settings, now);
+        }
+
+        const cycleIndex = Math.max(0, Number(cubeState.cycleIndex) || 0);
+        const phaseIndex = Math.min(Math.max(0, Number(cubeState.phaseIndex) || 0), phases.length - 1);
+        const active = isCubeActive(cubeState);
+        const mode = active ? webModeOf(cubeState.mode) : phases[phaseIndex].mode;
+        const running = cubeState.status === "RUNNING" && Number.isFinite(cubeState.endsAt);
+        const endTime = running ? cubeState.endsAt - offsetMs : null;
+
+        let remainingSeconds = timerStore.getModeDurationSeconds(settings, mode);
+        if (running) {
+            remainingSeconds = Math.max(0, Math.ceil((endTime - now) / 1000));
+        } else if (cubeState.status === "PAUSED") {
+            remainingSeconds = Math.max(0, Number(cubeState.remainingSeconds) || 0);
+        }
+
+        // hydrateTimerState is the public normalizer of timer-state.js.
+        return timerStore.hydrateTimerState({
+            currentCycleIndex: cycleIndex,
+            currentPhaseIndex: phaseIndex,
+            currentMode: mode,
+            isRunning: running,
+            endTime,
+            remainingSeconds,
+            manualModeMemoryClearAt: null,
+            sessionCompleted: false
+        }, settings, now);
     }
 
     // Logging out must not leave this account's cube selected for the next person on this browser.
@@ -214,6 +305,10 @@
         toView,
         fetchDevices,
         fetchState,
-        sendCommand
+        sendCommand,
+        isCubeActive,
+        browserHasProgress,
+        browserToCubeCommand,
+        cubeToBrowserState
     };
 })();

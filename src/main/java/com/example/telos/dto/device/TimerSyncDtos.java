@@ -48,17 +48,32 @@ public final class TimerSyncDtos {
             Long pausedAt,
             UUID sessionId,
             Integer cycleIndex,
+            Integer phaseIndex,
+            Long endsAt
+    ) {
+    }
+
+    /** Browser phase handed over to the cube with SET_STATE. endsAt is on the server clock. */
+    public record TargetStatePayload(
+            String status,
+            Integer durationSeconds,
+            Integer remainingSeconds,
+            Long endsAt,
+            UUID sessionId,
+            Long sessionStartedAt,
+            Integer cycleIndex,
             Integer phaseIndex
     ) {
     }
 
     public record CreateCommandRequest(
             @NotBlank(message = "Command type is required")
-            @Pattern(regexp = "START|PAUSE|RESUME|STOP|SWITCH_MODE", message = "Unknown command type")
+            @Pattern(regexp = "START|PAUSE|RESUME|STOP|SWITCH_MODE|SET_STATE|RELEASE", message = "Unknown command type")
             String type,
             String mode,
             @Size(max = 64, message = "clientRequestId must be at most 64 characters")
-            String clientRequestId
+            String clientRequestId,
+            TargetStatePayload targetState
     ) {
     }
 
