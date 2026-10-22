@@ -9,7 +9,11 @@ function parseTime(value) {
 }
 
 async function openHomeWithCleanTimerState(page) {
+    // Init scripts run on every navigation; clear the timer only on the first load,
+    // otherwise the reload test would wipe the state it wants to check.
     await page.addInitScript(() => {
+        if (sessionStorage.getItem("e2eTimerStateCleared")) return;
+        sessionStorage.setItem("e2eTimerStateCleared", "true");
         localStorage.removeItem("pomodoroSettings");
         localStorage.removeItem("pomodoroTimerState");
     });

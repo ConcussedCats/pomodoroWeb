@@ -13,6 +13,7 @@ It helps users manage tasks, track focus sessions, and improve productivity.
 * Mini timer accessible across pages
 * User authentication (login & profile)
 * Dark/light theme
+* ESP32 Pomodoro Flip Cube: pairing over Bluetooth, timer sync, device settings, session history ([docs](docs/esp32/README.md))
 
 ## 🛠 Tech Stack
 
