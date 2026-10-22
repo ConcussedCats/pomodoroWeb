@@ -1,0 +1,232 @@
+.devices-main, .history-main {
+    align-items: flex-start;
+    padding: clamp(6rem, 11vh, 7.5rem) var(--spacing-md) 5rem;
+}
+
+.devices-shell, .history-shell {
+    max-width: 68rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.devices-dashboard {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.devices-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 1rem;
+}
+
+.devices-hero h1, .history-dashboard h1 {
+    margin: .25rem 0;
+    font-size: clamp(3rem, 7vw, 5rem);
+    line-height: 1;
+}
+
+.devices-hero p:not(.eyebrow),
+.history-dashboard header > p:not(.eyebrow) {
+    color: var(--color-text-muted);
+}
+
+.devices-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.device-card, .device-wizard {
+    padding: 1.35rem;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 1rem;
+    background: rgba(27, 27, 28, .7);
+}
+
+.device-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.device-card h2 {
+    margin: 0;
+}
+
+.device-badge {
+    flex: 0 0 auto;
+    align-self: center;
+    line-height: 1.2;
+    letter-spacing: .08em;
+    padding: .25rem .6rem;
+    border-radius: 99px;
+    font-size: .72rem;
+    font-weight: 700;
+}
+
+.device-badge--online {
+    background: #1e6d4a;
+    color: #c9ffe1;
+}
+
+.device-badge--offline {
+    background: #653134;
+    color: #ffd2d2;
+}
+
+.device-meta, .device-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin: 1rem 0;
+    color: var(--color-text-muted);
+    font-size: .9rem;
+}
+
+.device-metrics span {
+    padding: .25rem .5rem;
+    background: rgba(255, 255, 255, .05);
+    border-radius: .4rem;
+}
+
+.device-actions, .device-settings, .device-rename {
+    display: flex;
+    gap: .65rem;
+    align-items: end;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+}
+
+.device-settings label {
+    display: flex;
+    gap: .35rem;
+    flex-direction: column;
+}
+
+.device-settings input[type=range] {
+    accent-color: var(--color-primary);
+}
+
+.device-unconfirmed {
+    color: #ffb4a9;
+    font-size: .8rem;
+}
+
+.devices-empty, .history-empty {
+    padding: 1rem;
+    border: 1px dashed rgba(255, 255, 255, .16);
+    border-radius: .8rem;
+    color: var(--color-text-muted);
+}
+
+.device-wizard {
+    position: fixed;
+    z-index: 50;
+    inset: 10vh max(1rem, calc((100vw - 42rem)/2)) auto;
+    box-shadow: 0 24px 70px #000;
+    max-height: 80vh;
+    overflow: auto;
+}
+
+.device-wizard__close {
+    float: right;
+    background: transparent;
+    border: 0;
+    color: white;
+    font-size: 2rem;
+}
+
+.device-wizard__actions {
+    display: flex;
+    gap: .75rem;
+    margin-top: 1rem;
+}
+
+.wizard-field {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    margin: .8rem 0;
+}
+
+.wizard-password {
+    display: flex;
+    gap: .5rem;
+}
+
+.wizard-status {
+    padding: .6rem 0;
+    color: var(--color-text-muted);
+}
+
+@media(max-width: 700px) {
+    .devices-main, .history-main {
+        padding-top: 8rem
+    }
+
+    .devices-hero {
+        align-items: flex-start;
+        flex-direction: column
+    }
+
+    .device-wizard {
+        inset: 5rem 1rem auto
+    }
+
+    .device-card__head, .device-settings {
+        flex-direction: column;
+        align-items: stretch
+    }
+
+}
+
+
+/* Inline rename form: a normal text field, not the big number style of the timer settings */
+.device-rename .device-rename__input {
+    flex: 1 1 14rem;
+    min-width: 0;
+    max-width: 22rem;
+    min-height: 2.5rem;
+    padding: .45rem .8rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-light);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-base);
+    font-weight: 500;
+}
+
+.device-rename .device-rename__input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.device-settings label.device-toggle {
+    flex-direction: row;
+    align-items: center;
+    gap: .45rem;
+}
+
+.device-settings .device-unconfirmed {
+    flex-basis: 100%;
+}
+
+@media (max-width: 600px) {
+    .devices-hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .device-card__head {
+        align-items: flex-start;
+    }
+
+    .device-rename .device-rename__input {
+        max-width: none;
+    }
+}

@@ -9,6 +9,8 @@
         window.TelosAuth = { authenticated: false };
     </script>
     <script th:src="@{/js/timer-state.js}"></script>
+    <script sec:authorize="isAuthenticated()" th:src="@{/js/device-live.js}"></script>
+    <script sec:authorize="isAuthenticated()" th:src="@{/js/connected-state.js}"></script>
     <script th:src="@{/js/mini-timer.js}"></script>
     <script th:src="@{/js/mini-timer-sync.js}"></script>
 </th:block>

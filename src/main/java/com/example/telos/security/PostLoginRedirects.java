@@ -53,6 +53,8 @@ public class PostLoginRedirects {
                 || "/about".equals(target)
                 || "/helpus".equals(target)
                 || "/productivity".equals(target)
+                || "/devices".equals(target)
+                || "/history".equals(target)
                 || "/user".equals(target);
     }
 }

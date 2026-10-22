@@ -1282,3 +1282,87 @@
     color: rgba(229, 226, 225, 0.46);
     line-height: 1.35;
 }
+
+/* Connected Device Mode: timer source picker above the timer */
+.device-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin: 0 auto var(--spacing-md);
+    max-width: 40rem;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.device-bar.hidden {
+    display: none;
+}
+
+.device-bar__label {
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.device-bar__select {
+    min-height: 2.5rem;
+    max-width: 100%;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    background: var(--color-bg-light);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+}
+
+.device-bar__select:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.device-bar__status {
+    padding: 0.2rem 0.65rem;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    border: 1px solid currentColor;
+}
+
+.device-bar__status.hidden {
+    display: none;
+}
+
+.device-bar__status[data-status="online"] {
+    color: var(--color-success);
+}
+
+.device-bar__status[data-status="offline"] {
+    color: var(--color-warning);
+}
+
+.device-bar__sync {
+    flex-basis: 100%;
+    text-align: center;
+    min-height: 1.2em;
+}
+
+.device-bar__sync[data-tone="ok"] {
+    color: var(--color-success);
+}
+
+.device-bar__sync[data-tone="warning"],
+.device-bar__sync[data-tone="pending"] {
+    color: var(--color-warning);
+}
+
+.device-bar__sync[data-tone="error"] {
+    color: #ffb4a9;
+}
+
+.timer-surface--connected .btn--cycle {
+    opacity: 0.35;
+}

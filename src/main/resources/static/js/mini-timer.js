@@ -19,6 +19,12 @@ document.addEventListener("DOMContentLoaded", () => {
         "long-break": "Long Break"
     };
 
+    // Connected Device Mode: show the cube timer instead of the browser timer (connected-state.js).
+    const connectedState = window.TelosConnectedState;
+    let connectedSnapshot = connectedState?.getActiveDeviceId()
+        ? connectedState.loadSnapshot(connectedState.getActiveDeviceId())
+        : null;
+
     let timerTick = null;
     let settings = timerStateStore.loadSettings();
     let timerState = timerStateStore.loadTimerState(settings);
@@ -107,7 +113,52 @@ document.addEventListener("DOMContentLoaded", () => {
         return "Paused";
     }
 
+    function isConnectedMode() {
+        return Boolean(connectedState?.getActiveDeviceId());
+    }
+
+    function renderConnected() {
+        const view = connectedState.toView(connectedSnapshot?.state, connectedSnapshot?.offsetMs);
+        miniTimer.classList.remove(...timerModeClasses);
+        miniTimer.classList.add(`mini-timer--${view.webMode}`);
+        miniTimer.dataset.running = String(view.isRunning);
+        miniTimerMode.textContent = connectedSnapshot ? (labelText[view.webMode] || "Timer") : "Cube";
+        miniTimerTime.textContent = formatTime(view.remainingSeconds);
+        miniTimerStatus.textContent = `Cube · ${view.statusText}`;
+        miniTimer.setAttribute(
+            "aria-label",
+            `Cube timer ${miniTimerMode.textContent} ${miniTimerTime.textContent}, ${view.statusText}. Open timer page`
+        );
+        setTicking(view.isRunning);
+        releaseInitialTransitions();
+    }
+
+    async function refreshConnected() {
+        const deviceId = connectedState?.getActiveDeviceId();
+        if (!deviceId) {
+            connectedSnapshot = null;
+            render();
+            return;
+        }
+        try {
+            const result = await connectedState.fetchState(deviceId);
+            connectedSnapshot = result;
+            connectedState.saveSnapshot(result.state, result.offsetMs);
+        } catch (error) {
+            if (error.status === 404 || error.status === 401) {
+                connectedState.setActiveDeviceId(null);
+                connectedSnapshot = null;
+            }
+        }
+        render();
+    }
+
     function render() {
+        if (isConnectedMode()) {
+            renderConnected();
+            return;
+        }
+
         miniTimer.classList.remove(...timerModeClasses);
         miniTimer.classList.add(`mini-timer--${timerState.currentMode}`);
         miniTimer.dataset.running = String(timerState.isRunning);
@@ -153,6 +204,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     window.addEventListener("storage", (event) => {
+        if (connectedState && (event.key === connectedState.keys.ACTIVE_DEVICE_KEY
+            || event.key === connectedState.keys.SNAPSHOT_KEY)) {
+            const deviceId = connectedState.getActiveDeviceId();
+            connectedSnapshot = deviceId ? connectedState.loadSnapshot(deviceId) : null;
+            render();
+            return;
+        }
+
         if (event.key === timerStateStore.keys.SETTINGS_KEY) {
             settings = timerStateStore.loadSettings();
         }
@@ -162,6 +221,28 @@ document.addEventListener("DOMContentLoaded", () => {
             render();
         }
     });
+
+    if (connectedState && window.TelosDeviceLive) {
+        window.TelosDeviceLive.subscribe((message) => {
+            const deviceId = connectedState.getActiveDeviceId();
+            if (!deviceId) return;
+            if (message.type === "RESYNC") {
+                refreshConnected();
+            } else if (message.type === "TIMER_STATE" && message.deviceId === deviceId
+                && connectedState.isNewer(message.state, connectedSnapshot?.state)) {
+                connectedSnapshot = { state: message.state, offsetMs: connectedState.computeClockOffset(message.state) };
+                connectedState.saveSnapshot(connectedSnapshot.state, connectedSnapshot.offsetMs);
+                render();
+            } else if (message.type === "DEVICE_REMOVED" && message.deviceId === deviceId) {
+                connectedState.setActiveDeviceId(null);
+                connectedSnapshot = null;
+                render();
+            }
+        });
+    }
+    if (isConnectedMode()) {
+        refreshConnected();
+    }
 
     render();
     preloadSound("timer_sound_down.wav");

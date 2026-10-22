@@ -20,6 +20,8 @@
         <nav class="nav" id="primaryNavigation">
             <a class="nav-btn" th:classappend="${activePage == 'home'} ? ' nav-btn--active' : ''" th:href="@{/}">Timer</a>
             <a class="nav-btn" th:classappend="${activePage == 'productivity'} ? ' nav-btn--active' : ''" th:href="@{/productivity}">Productivity</a>
+            <a sec:authorize="isAuthenticated()" class="nav-btn" th:classappend="${activePage == 'devices'} ? ' nav-btn--active' : ''" th:href="@{/devices}">Devices</a>
+            <a sec:authorize="isAuthenticated()" class="nav-btn" th:classappend="${activePage == 'history'} ? ' nav-btn--active' : ''" th:href="@{/history}">History</a>
             <a class="nav-btn" th:classappend="${activePage == 'about'} ? ' nav-btn--active' : ''" th:href="@{/about}">About</a>
             <a class="nav-btn nav-btn--accent" th:classappend="${activePage == 'helpus'} ? ' nav-btn--active' : ''" th:href="@{/helpus}">Help Us</a>
         </nav>
