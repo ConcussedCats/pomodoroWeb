@@ -739,40 +739,32 @@
     font-size: 0.72rem;
 }
 
-.device-menu__switch {
-    appearance: none;
-    width: 2rem;
-    height: 1.1rem;
-    flex: 0 0 auto;
-    position: relative;
-    border-radius: var(--radius-full);
-    background: var(--color-bg-lighter);
+/* Toggle rows reuse the timer settings switch (.settings-checkbox in timer.css) */
+.device-menu__toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+    background: rgba(32, 32, 32, 0.3);
     cursor: pointer;
-    transition: background-color var(--transition-fast);
 }
 
-.device-menu__switch::after {
-    content: "";
-    position: absolute;
-    top: 0.15rem;
-    left: 0.15rem;
-    width: 0.8rem;
-    height: 0.8rem;
-    border-radius: 50%;
-    background: var(--color-text-muted);
-    transition: transform var(--transition-fast), background-color var(--transition-fast);
+.device-menu__toggle-row .settings-sound-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
 }
 
-.device-menu__switch:checked {
-    background: var(--color-primary);
+.device-menu__toggle-text {
+    color: var(--color-text);
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
 
-.device-menu__switch:checked::after {
-    transform: translateX(0.9rem);
-    background: #ffffff;
-}
-
-.device-menu__switch:focus-visible {
+.device-menu__toggle-row .settings-checkbox:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
 }

@@ -73,13 +73,25 @@
                                 <span class="device-menu__value" data-device-menu-brightness-value>60%</span>
                                 <input type="range" min="0" max="100" step="5" name="rgbBrightness" data-device-menu-brightness>
                             </label>
-                            <label class="device-menu__control">
-                                <span class="device-menu__control-label">Vibration</span>
-                                <input type="checkbox" class="device-menu__switch" name="vibrationEnabled" data-device-menu-vibration>
+                            <label class="device-menu__toggle-row">
+                                <span class="settings-sound-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" focusable="false">
+                                        <path d="M2 9v6M22 9v6M6 6v12M18 6v12M10 4h4v16h-4z"></path>
+                                    </svg>
+                                </span>
+                                <span class="device-menu__toggle-text">Vibration</span>
+                                <input type="checkbox" class="settings-checkbox" name="vibrationEnabled" data-device-menu-vibration>
                             </label>
-                            <label class="device-menu__control">
-                                <span class="device-menu__control-label">Sound</span>
-                                <input type="checkbox" class="device-menu__switch" name="soundEnabled" data-device-menu-sound>
+                            <label class="device-menu__toggle-row">
+                                <span class="settings-sound-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" focusable="false">
+                                        <path d="M4 9v6h4l5 4V5L8 9H4Z"></path>
+                                        <path d="M16 8.5a5 5 0 0 1 0 7"></path>
+                                        <path d="M18.5 6a8.5 8.5 0 0 1 0 12"></path>
+                                    </svg>
+                                </span>
+                                <span class="device-menu__toggle-text">Sound</span>
+                                <input type="checkbox" class="settings-checkbox" name="soundEnabled" data-device-menu-sound>
                             </label>
                             <p class="device-menu__note" data-device-menu-note aria-live="polite"></p>
                         </div>

@@ -170,13 +170,15 @@
         }
 
         function renderToggle(parent, settingsData, capabilities, [key, label, capability, iconName]) {
+            // Same row and switch as "Sound notifications" in the timer settings.
             const labelEl = add(parent, "label", undefined, "device-toggle");
-            const input = add(labelEl, "input", undefined, "device-toggle__input");
+            const iconBox = add(labelEl, "span", undefined, "settings-sound-icon");
+            iconBox.appendChild(icon(iconName, "device-icon device-icon--small"));
+            add(labelEl, "span", label, "device-toggle__text");
+            const input = add(labelEl, "input", undefined, "settings-checkbox");
             input.type = "checkbox";
             input.name = key;
             input.checked = Boolean(settingsData[key]);
-            labelEl.appendChild(icon(iconName, "device-icon device-icon--small"));
-            add(labelEl, "span", label, "device-toggle__text");
             if (capabilities[capability] !== true) {
                 add(labelEl, "small", "not confirmed by firmware", "device-unconfirmed");
             }
