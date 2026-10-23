@@ -14,6 +14,7 @@
 
     let active = false;
 
+    // select() and getStatus() are added once the page is ready (used by the device menu in the header).
     window.TelosConnectedTimer = {
         isActive: () => active
     };
@@ -23,10 +24,6 @@
         const live = window.TelosDeviceLive;
         const isAuthenticated = window.TelosAuth?.authenticated === true;
 
-        const deviceBar = document.getElementById("deviceBar");
-        const sourceSelect = document.getElementById("timerSource");
-        const deviceStatusEl = document.getElementById("deviceStatus");
-        const syncStatusEl = document.getElementById("deviceSync");
         const timerSurface = document.getElementById("timerSection");
         const timeDisplay = document.getElementById("timeDisplay");
         const timerLabel = document.querySelector(".timer-label");
@@ -42,7 +39,7 @@
         const sessionTotalEl = document.getElementById("sessionTotal");
         const sessionProjectionTextEl = document.getElementById("sessionProjectionText");
 
-        if (!store || !isAuthenticated || !deviceBar || !sourceSelect || !timerSurface || !startBtn) return;
+        if (!store || !isAuthenticated || !timerSurface || !startBtn) return;
 
         const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" });
         const finishSound = new Audio("assets/sounds/timer_sound_down.wav");
@@ -58,6 +55,7 @@
         let unsubscribeLive = null;
         let liveStatus = live?.getStatus?.() || "closed";
         let notice = "";
+        let browserNotice = "";
         // True while the cube holds the phase (it was handed over or the cube was used), so leaving
         // Connected Mode copies the cube state into the browser timer.
         let cubeOwnsPhase = false;
@@ -75,10 +73,29 @@
             return currentDevice()?.status === "ONLINE";
         }
 
+        let syncText = "";
+        let syncTone = "idle";
+
         function setSync(text, tone) {
-            if (!syncStatusEl) return;
-            syncStatusEl.textContent = text;
-            syncStatusEl.dataset.tone = tone;
+            syncText = text;
+            syncTone = tone;
+            publishStatus();
+        }
+
+        function getStatus() {
+            return {
+                active,
+                deviceId,
+                devices: devices.slice(),
+                syncText,
+                syncTone,
+                pending: Boolean(pending)
+            };
+        }
+
+        /** The header device menu renders the timer source and the sync state from this event. */
+        function publishStatus() {
+            document.dispatchEvent(new CustomEvent("connected:status", { detail: getStatus() }));
         }
 
         function formatTime(totalSeconds) {
@@ -122,34 +139,9 @@
 
         // ------------------------------------------------------------ rendering
 
-        function renderDeviceBar() {
-            const showBar = devices.length > 0;
-            deviceBar.classList.toggle("hidden", !showBar);
-
-            sourceSelect.replaceChildren();
-            const browserOption = document.createElement("option");
-            browserOption.value = "";
-            browserOption.textContent = "This browser";
-            sourceSelect.appendChild(browserOption);
-            devices.forEach((device) => {
-                const option = document.createElement("option");
-                option.value = String(device.id);
-                option.textContent = `${device.name} (${device.status === "ONLINE" ? "online" : "offline"})`;
-                sourceSelect.appendChild(option);
-            });
-            sourceSelect.value = deviceId ? String(deviceId) : "";
-
-            if (deviceStatusEl) {
-                const device = currentDevice();
-                deviceStatusEl.classList.toggle("hidden", !device);
-                deviceStatusEl.textContent = device ? device.status : "";
-                deviceStatusEl.dataset.status = device ? device.status.toLowerCase() : "none";
-            }
-        }
-
         function renderSyncStatus() {
             if (!active) {
-                setSync("", "idle");
+                setSync(browserNotice, browserNotice ? "warning" : "idle");
                 return;
             }
             if (lastError) {
@@ -202,7 +194,6 @@
         }
 
         function render() {
-            renderDeviceBar();
             renderSyncStatus();
             if (!active) return;
 
@@ -262,7 +253,9 @@
                 render();
                 return;
             }
-            if (deviceId && !currentDevice()) {
+            if (deviceId && currentDevice() && !deviceOnline()) {
+                fallbackToBrowser();
+            } else if (deviceId && !currentDevice()) {
                 // The selected cube was unbound (maybe in another tab or on another computer).
                 leave({ message: "The selected cube is no longer linked. Using the browser timer." });
             }
@@ -509,6 +502,7 @@
             pending = null;
             lastError = "";
             notice = message;
+            browserNotice = "";
             cubeOwnsPhase = store.isCubeActive(state);
             active = true;
             store.setActiveDeviceId(deviceId);
@@ -562,11 +556,28 @@
             timerSurface.classList.remove("timer-surface--connected");
             [startBtn, resetBtn, prevCycleBtn, nextCycleBtn, settingsToggle, ...modeLabels].forEach(el => setDisabled(el, false));
             document.dispatchEvent(new CustomEvent("timer:connected-mode-changed", { detail: { active: false } }));
+            browserNotice = message || "";
             render();
-            if (message) {
-                setSync(message, "warning");
-            }
             return true;
+        }
+
+        /**
+         * The selected cube went offline: never leave the user with dead controls. The browser continues
+         * the last known phase to the same end and the cube can be picked again when it is back.
+         */
+        function fallbackToBrowser() {
+            if (!active) return;
+            const cube = state;
+            if (cube && (store.isCubeActive(cube) || cubeOwnsPhase)) {
+                const { settings, browserState } = store.continueInBrowser(cube, offsetMs, timerStore);
+                if (store.isCubeActive(cube) && browserState) {
+                    recorder()?.adopt({ sessionId: cube.sessionId, state: browserState, settings, store: timerStore });
+                }
+            }
+            leave({
+                message: "The cube went offline, so the timer continues in this browser. "
+                    + "Pick the cube again in the chip menu when it is back."
+            });
         }
 
         function onLiveMessage(message) {
@@ -594,6 +605,10 @@
                 if (device) {
                     device.status = message.status;
                     device.lastSeenAt = message.lastSeenAt;
+                    if (active && message.deviceId === deviceId && message.status !== "ONLINE") {
+                        fallbackToBrowser();
+                        return;
+                    }
                     render();
                 }
                 return;
@@ -626,30 +641,53 @@
 
         // ------------------------------------------------------------ wiring
 
-        sourceSelect.addEventListener("change", async () => {
-            const selected = Number.parseInt(sourceSelect.value, 10);
-            const target = Number.isFinite(selected) ? selected : null;
-            if (target === deviceId) return;
+        /**
+         * Switches the timer source: a cube id or null for this browser. The current phase moves to the
+         * new source (PROTOCOL.md 1.4). Returns false when the switch was cancelled.
+         */
+        async function select(target) {
+            const nextId = Number.isFinite(Number(target)) && Number(target) > 0 ? Number(target) : null;
+            if (nextId === deviceId) return true;
             if (pending) {
-                sourceSelect.value = deviceId ? String(deviceId) : "";
                 lastError = "Wait until the cube confirms the last command.";
                 render();
-                return;
+                return false;
             }
             if (active) {
-                sourceSelect.disabled = true;
                 const canLeave = await handOverToBrowser();
-                sourceSelect.disabled = false;
                 if (!canLeave) {
-                    sourceSelect.value = String(deviceId);
-                    return;
+                    render();
+                    return false;
                 }
                 leave();
             }
-            if (target) {
-                enter(target, { handover: true });
+            if (nextId) {
+                const target = devices.find(item => item.id === nextId);
+                if (target && target.status !== "ONLINE") {
+                    browserNotice = "This cube is offline, so the timer stays in this browser.";
+                    render();
+                    return false;
+                }
+                browserNotice = "";
+                enter(nextId, { handover: true });
             }
-        });
+            return true;
+        }
+
+        window.TelosConnectedTimer.select = select;
+        window.TelosConnectedTimer.getStatus = getStatus;
+
+        /** "/?timerSource=12" or "/?timerSource=browser" from the device menu on other pages. */
+        function takeSourceFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            if (!params.has("timerSource")) return false;
+            const requested = params.get("timerSource");
+            params.delete("timerSource");
+            const query = params.toString();
+            window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : "") + window.location.hash);
+            select(requested === "browser" ? null : requested);
+            return true;
+        }
 
         startBtn.addEventListener("click", onStartClick);
         resetBtn?.addEventListener("click", onResetClick);
@@ -682,6 +720,7 @@
             enter(storedId);
         }
         loadDevices().then(() => {
+            if (takeSourceFromUrl()) return;
             if (!active) {
                 takeOverIfCubeIsRunning();
             }

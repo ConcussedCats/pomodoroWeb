@@ -35,17 +35,35 @@
             <section sec:authorize="isAuthenticated()" class="devices-dashboard">
                 <header class="devices-hero">
                     <div>
-                        <p class="eyebrow">Telos hardware</p>
-                        <h1>My Devices</h1>
-                        <p>Manage your connected focus cubes.</p>
+                        <p class="devices-eyebrow">Telos hardware</p>
+                        <h1 class="devices-title">My Devices</h1>
+                        <p class="devices-lead">Manage your connected focus cubes.</p>
                     </div>
-                    <button class="btn btn--primary" type="button" data-add-device>Add device</button>
+                    <button class="btn btn--primary devices-add" type="button" data-add-device>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                        <span>Add device</span>
+                    </button>
                 </header>
                 <p class="form-message hidden" data-page-message aria-live="polite"></p>
                 <div class="devices-list" data-devices-list aria-live="polite"></div>
                 <p class="devices-empty" data-empty-state>
                     No cubes connected yet. Add your first cube to get started.
                 </p>
+                <aside class="devices-helper">
+                    <span class="devices-helper__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M12 11v5M12 8h.01"></path>
+                        </svg>
+                    </span>
+                    <div class="devices-helper__text">
+                        <h2>Pairing another cube?</h2>
+                        <p>Hold the reset button of a new or reset cube to start Bluetooth pairing, then use Add device.</p>
+                    </div>
+                    <button class="devices-helper__action" type="button" data-add-device>Add device &rarr;</button>
+                </aside>
 
                 <section class="device-wizard hidden" data-wizard aria-labelledby="wizard-title">
                     <button type="button" class="device-wizard__close" data-wizard-close aria-label="Close pairing">

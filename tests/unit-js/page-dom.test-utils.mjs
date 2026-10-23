@@ -221,6 +221,9 @@ export function createPageDocument() {
         createElement(tag) {
             return new FakeElement(tag, document);
         },
+        createElementNS(namespace, tag) {
+            return new FakeElement(tag, document);
+        },
         addEventListener(type, listener) {
             if (!listeners.has(type)) listeners.set(type, []);
             listeners.get(type).push(listener);

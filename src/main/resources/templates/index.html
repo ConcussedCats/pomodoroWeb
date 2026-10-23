@@ -24,15 +24,6 @@
                 </p>
             </section>
 
-            <div sec:authorize="isAuthenticated()" id="deviceBar" class="device-bar hidden" aria-label="Timer source">
-                <label class="device-bar__label" for="timerSource">Timer</label>
-                <select id="timerSource" class="device-bar__select">
-                    <option value="">This browser</option>
-                </select>
-                <span id="deviceStatus" class="device-bar__status hidden" data-status="none"></span>
-                <span id="deviceSync" class="device-bar__sync" data-tone="idle" aria-live="polite"></span>
-            </div>
-
             <div id="timerSection" class="section-view timer-surface timer-surface--hydrating">
                 <div class="timer-modes" aria-label="Timer mode selection">
                     <button class="mode-label mode-label--active" data-mode="pomodoro" type="button" aria-pressed="true">Pomodoro</button>

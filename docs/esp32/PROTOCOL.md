@@ -101,7 +101,10 @@ switch. Switching rules (enforced by the web client):
 4. **The cube takes over.** When a linked cube starts or resumes a countdown (somebody
    flipped it) while the website shows the browser timer, the website switches to the
    cube automatically and pauses the browser timer. A physical flip always wins.
-5. Unbinding a device ends Connected Device Mode in every tab.
+5. **The cube goes offline.** When the selected cube is reported `OFFLINE`, the website
+   switches back to the browser timer, which continues the last known phase to the same
+   end. The controls never stay blocked; the cube can be picked again when it is back.
+6. Unbinding a device ends Connected Device Mode in every tab.
 
 ### 1.5 Phase pattern in Connected Device Mode
 

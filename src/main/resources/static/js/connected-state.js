@@ -291,6 +291,22 @@
         }
     }, true);
 
+    /**
+     * The selected cube is gone (offline): the browser timer continues its last known phase and the
+     * browser becomes the timer source again. Returns the browser state that was saved.
+     */
+    function continueInBrowser(cubeState, offsetMs, timerStore) {
+        const settings = timerStore.loadSettings();
+        let browserState = null;
+        if (cubeState) {
+            browserState = cubeToBrowserState(cubeState, settings, timerStore, { offsetMs });
+            timerStore.saveTimerState(browserState, settings);
+        }
+        setActiveDeviceId(null);
+        document.dispatchEvent(new CustomEvent("connected:source-changed", { detail: { deviceId: null } }));
+        return { settings, browserState };
+    }
+
     window.TelosConnectedState = {
         keys: { ACTIVE_DEVICE_KEY, SNAPSHOT_KEY },
         getActiveDeviceId,
@@ -306,6 +322,7 @@
         fetchDevices,
         fetchState,
         sendCommand,
+        continueInBrowser,
         isCubeActive,
         browserHasProgress,
         browserToCubeCommand,

@@ -38,6 +38,12 @@ function startCubeLoop(client, cube) {
     return () => clearInterval(timer);
 }
 
+/** Picks the timer source in the header device menu (chip icon). */
+async function chooseSource(page, value) {
+    await page.locator("[data-device-menu] summary").click();
+    await page.locator(`[data-device-menu] button[data-source="${value}"]`).click();
+}
+
 async function browserTimer(page) {
     return page.evaluate(() => JSON.parse(localStorage.getItem("pomodoroTimerState")));
 }
@@ -80,7 +86,7 @@ test.describe.serial("browser and cube behave as one timer", () => {
         stopCube = startCubeLoop(client, cube);
 
         await page.reload();
-        await expect(page.locator("#deviceBar")).toBeVisible();
+        await expect(page.locator("[data-device-menu] summary")).toBeVisible();
     });
 
     test.afterAll(async () => {
@@ -94,8 +100,10 @@ test.describe.serial("browser and cube behave as one timer", () => {
         await page.waitForTimeout(1500);
         const before = await browserTimer(page);
 
-        await page.locator("#timerSource").selectOption(String(deviceId));
-        await expect(page.locator("#deviceSync")).toHaveText("The browser phase continues on the cube.", { timeout: 15_000 });
+        await chooseSource(page, String(deviceId));
+        await expect(page.locator("[data-device-menu-sync]"))
+            .toHaveText("The browser phase continues on the cube.", { timeout: 15_000 });
+        await expect(page.locator("[data-device-menu]")).toHaveAttribute("data-source", "cube");
 
         expect(cube.state.status).toBe("RUNNING");
         expect(Math.abs(cube.state.localEndsAt - before.endTime)).toBeLessThan(100);
@@ -104,7 +112,7 @@ test.describe.serial("browser and cube behave as one timer", () => {
 
     test("cube phase continues in the browser with the same end", async () => {
         const cubeEnd = cube.state.localEndsAt;
-        await page.locator("#timerSource").selectOption("");
+        await chooseSource(page, "browser");
 
         await expect.poll(async () => (await browserTimer(page)).isRunning, { timeout: 15_000 }).toBe(true);
         const after = await browserTimer(page);
@@ -119,7 +127,7 @@ test.describe.serial("browser and cube behave as one timer", () => {
         cube.applyFace("SHORT_BREAK");
         await client.flushEvents();
 
-        await expect(page.locator("#timerSource")).toHaveValue(String(deviceId), { timeout: 10_000 });
+        await expect(page.locator("[data-device-menu]")).toHaveAttribute("data-source", "cube", { timeout: 10_000 });
         await expect(page.locator(".mode-label--active")).toHaveAttribute("data-mode", "short-break");
         expect((await browserTimer(page)).isRunning).toBe(false);
 

@@ -68,125 +68,216 @@
             parent.appendChild(el);
             return el;
         }
-        function metricLabel(key, value) {
-            return `${key.replace(/([A-Z])/g, " $1").replace(/^./, c => c.toUpperCase())}: ${value}`;
+        const ICONS = {
+            cube: "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4"
+                + "A2 2 0 0 0 21 16zM3.3 7l8.7 5 8.7-5M12 22V12",
+            refresh: "M21 12a9 9 0 1 1-2.64-6.36M21 3v6h-6",
+            vibration: "M2 9v6M22 9v6M6 6v12M18 6v12M10 4h4v16h-4z",
+            sound: "M11 5 6 9H2v6h4l5 4V5zM15.5 8.5a5 5 0 0 1 0 7",
+            brightness: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2"
+                + "M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4",
+            power: "M18.4 6.6a9 9 0 1 1-12.8 0M12 2v10"
+        };
+
+        function icon(name, className = "device-icon") {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("aria-hidden", "true");
+            svg.setAttribute("class", className);
+            const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", ICONS[name]);
+            svg.appendChild(path);
+            return svg;
         }
+
+        /** Only values the firmware really reported, with readable units. */
+        function metricText(key, value) {
+            if (key === "wifiRssi") return `Wi-Fi ${value} dBm`;
+            if (key === "uptimeSeconds") {
+                const hours = Math.floor(Number(value) / 3600);
+                const minutes = Math.floor((Number(value) % 3600) / 60);
+                return `Uptime ${hours ? `${hours}h ` : ""}${minutes}m`;
+            }
+            if (key === "freeHeapBytes") return `Free memory ${Math.round(Number(value) / 1024)} KB`;
+            return `${key}: ${value}`;
+        }
+
+        function renderHead(card, device) {
+            const status = String(device.status || "OFFLINE").toUpperCase();
+            const head = add(card, "div", undefined, "device-card__head");
+            const identity = add(head, "div", undefined, "device-card__identity");
+            const iconBox = add(identity, "div", undefined, "device-card__icon");
+            iconBox.appendChild(icon("cube"));
+
+            const titleBlock = add(identity, "div", undefined, "device-card__title-block");
+            const titleRow = add(titleBlock, "div", undefined, "device-card__title-row");
+            add(titleRow, "h2", device.name || "Unnamed cube", "device-card__title");
+            const badge = add(titleRow, "span", status === "ONLINE" ? "ONLINE" : "OFFLINE",
+                `device-badge device-badge--${status === "ONLINE" ? "online" : "offline"}`);
+            badge.setAttribute("aria-label", `Status ${status.toLowerCase()}`);
+
+            const meta = add(titleBlock, "div", undefined, "device-meta");
+            add(meta, "span", `Firmware ${device.firmwareVersion || "not reported"}`);
+            const seen = add(meta, "time", `Last seen: ${relative(device.lastSeenAt)}`);
+            if (device.lastSeenAt) {
+                seen.dateTime = new Date(device.lastSeenAt).toISOString();
+                seen.title = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" })
+                    .format(new Date(device.lastSeenAt));
+            }
+            Object.entries(device.metrics || {}).forEach(([key, value]) => {
+                add(meta, "span", metricText(key, value), "device-metric");
+            });
+
+            const refresh = add(head, "button", undefined, "device-card__refresh");
+            refresh.type = "button";
+            refresh.title = "Check the connection status again";
+            refresh.appendChild(icon("refresh"));
+            add(refresh, "span", "Refresh");
+            refresh.addEventListener("click", () => loadDevices());
+        }
+
+        function renderRename(body, device) {
+            const section = add(body, "div", undefined, "device-section");
+            const inputId = `device-name-${device.id}`;
+            const label = add(section, "label", "Device name", "device-section__label");
+            label.htmlFor = inputId;
+            const rename = add(section, "form", undefined, "device-rename");
+            const nameInput = add(rename, "input", undefined, "device-rename__input");
+            nameInput.id = inputId;
+            nameInput.value = device.name || "";
+            nameInput.maxLength = 40;
+            nameInput.setAttribute("aria-label", "Device name");
+            const renameButton = add(rename, "button", "Rename", "btn btn--secondary device-button");
+            renameButton.type = "submit";
+            rename.addEventListener("submit", async event => {
+                event.preventDefault();
+                const name = nameInput.value.trim();
+                if (!name) return setMessage(message, "Enter a device name.", true);
+                try {
+                    const updated = await request(`/api/devices/${device.id}`, {
+                        method: "PATCH",
+                        headers: headers(true),
+                        body: JSON.stringify({ name })
+                    }, "Could not rename device.");
+                    updated.settings = device.settings;
+                    state.devices = state.devices.map(item => item.id === device.id ? updated : item);
+                    render();
+                    setMessage(message, "Device renamed.");
+                } catch (error) {
+                    setMessage(message, error.message, true);
+                }
+            });
+        }
+
+        function renderToggle(parent, settingsData, capabilities, [key, label, capability, iconName]) {
+            const labelEl = add(parent, "label", undefined, "device-toggle");
+            const input = add(labelEl, "input", undefined, "device-toggle__input");
+            input.type = "checkbox";
+            input.name = key;
+            input.checked = Boolean(settingsData[key]);
+            labelEl.appendChild(icon(iconName, "device-icon device-icon--small"));
+            add(labelEl, "span", label, "device-toggle__text");
+            if (capabilities[capability] !== true) {
+                add(labelEl, "small", "not confirmed by firmware", "device-unconfirmed");
+            }
+        }
+
+        function renderSettings(body, device) {
+            const settingsData = device.settings || {};
+            const capabilities = settingsData.capabilities || device.capabilities || {};
+            const settings = add(body, "form", undefined, "device-settings");
+
+            const toggles = add(settings, "div", undefined, "device-settings__toggles");
+            renderToggle(toggles, settingsData, capabilities, ["vibrationEnabled", "Vibration", "vibration", "vibration"]);
+            renderToggle(toggles, settingsData, capabilities, ["soundEnabled", "Sound", "sound", "sound"]);
+
+            const rgb = add(settings, "label", undefined, "device-range");
+            const rgbHead = add(rgb, "span", undefined, "device-range__head");
+            add(rgbHead, "span", "RGB brightness", "device-section__label");
+            const value = add(rgbHead, "span", `${settingsData.rgbBrightness ?? 60}%`, "device-range__value");
+            const rgbRow = add(rgb, "span", undefined, "device-range__row");
+            rgbRow.appendChild(icon("brightness", "device-icon device-icon--small"));
+            const range = add(rgbRow, "input", undefined, "device-range__input");
+            range.type = "range";
+            range.name = "rgbBrightness";
+            range.min = "0";
+            range.max = "100";
+            range.value = String(settingsData.rgbBrightness ?? 60);
+            range.setAttribute("aria-label", "RGB brightness");
+            range.addEventListener("input", () => {
+                value.textContent = `${range.value}%`;
+            });
+            if (capabilities.rgb !== true) {
+                add(rgb, "small", "not confirmed by firmware", "device-unconfirmed");
+            }
+
+            const save = add(settings, "button", "Save settings", "btn btn--secondary device-button device-settings__save");
+            save.type = "submit";
+            if (device.settings) {
+                add(settings, "p", settingsData.appliedOnDevice ? "Applied on cube." : "Saved, waiting for cube.",
+                    `device-settings__state device-settings__state--${settingsData.appliedOnDevice ? "applied" : "waiting"}`);
+            }
+
+            settings.addEventListener("submit", async event => {
+                event.preventDefault();
+                const payload = {
+                    vibrationEnabled: settings.elements.vibrationEnabled.checked,
+                    soundEnabled: settings.elements.soundEnabled.checked,
+                    rgbBrightness: Number(settings.elements.rgbBrightness.value)
+                };
+                try {
+                    const updated = await request(`/api/devices/${device.id}/settings`, {
+                        method: "PUT",
+                        headers: headers(true),
+                        body: JSON.stringify(payload)
+                    }, "Could not save settings.");
+                    device.settings = updated;
+                    setMessage(message, updated.appliedOnDevice ? "Applied on cube." : "Saved, waiting for cube.");
+                    render();
+                } catch (error) {
+                    setMessage(message, error.message, true);
+                }
+            });
+        }
+
+        function renderFooter(body, device) {
+            const footer = add(body, "div", undefined, "device-actions");
+            const unbind = add(footer, "button", undefined, "device-unbind");
+            unbind.type = "button";
+            unbind.appendChild(icon("power", "device-icon device-icon--small"));
+            add(unbind, "span", "Unbind device");
+            unbind.addEventListener("click", async () => {
+                const confirmed = window.confirm(
+                    "Unbind this cube? Its secret stops working and the cube must be re-paired."
+                );
+                if (!confirmed) return;
+                try {
+                    await request(`/api/devices/${device.id}`, {
+                        method: "DELETE",
+                        headers: headers()
+                    }, "Could not unbind device.");
+                    state.devices = state.devices.filter(item => item.id !== device.id);
+                    render();
+                    setMessage(message, "Device unbound. Re-pair the cube to use it again.");
+                } catch (error) {
+                    setMessage(message, error.message, true);
+                }
+            });
+            const hardware = add(footer, "span", "Hardware ID: ", "device-hardware-id");
+            add(hardware, "span", device.hardwareId || "unknown", "device-hardware-id__value");
+        }
+
         function render() {
             list.replaceChildren();
             empty.classList.toggle("hidden", state.devices.length > 0);
             state.devices.forEach(device => {
                 const card = add(list, "article", undefined, "device-card");
                 card.dataset.deviceId = device.id;
-                const head = add(card, "div", undefined, "device-card__head");
-                add(head, "h2", device.name || "Unnamed cube");
-                add(head, "span", device.status || "OFFLINE",
-                    `device-badge device-badge--${String(device.status || "OFFLINE").toLowerCase()}`);
-                const meta = add(card, "div", undefined, "device-meta");
-                add(meta, "span", `Firmware ${device.firmwareVersion || "not reported"}`);
-                const seen = add(meta, "time", `Last seen: ${relative(device.lastSeenAt)}`);
-                if (device.lastSeenAt) {
-                    seen.dateTime = new Date(device.lastSeenAt).toISOString();
-                    seen.title = new Intl.DateTimeFormat(undefined, {
-                        dateStyle: "medium", timeStyle: "short"
-                    }).format(new Date(device.lastSeenAt));
-                }
-                if (device.metrics && Object.keys(device.metrics).length) {
-                    const metrics = add(card, "div", undefined, "device-metrics");
-                    Object.entries(device.metrics).forEach(([key, value]) => add(metrics, "span",
-                        metricLabel(key, value)));
-                }
-                const rename = add(card, "form", undefined, "device-rename");
-                const nameInput = add(rename, "input", undefined, "device-rename__input");
-                nameInput.value = device.name || "";
-                nameInput.maxLength = 40;
-                nameInput.setAttribute("aria-label", "Device name");
-                const renameButton = add(rename, "button", "Rename", "btn btn--secondary");
-                renameButton.type = "submit";
-                rename.addEventListener("submit", async event => {
-                    event.preventDefault();
-                    const name = nameInput.value.trim();
-                    if (!name) return setMessage(message, "Enter a device name.", true);
-                    try {
-                        const updated = await request(`/api/devices/${device.id}`, {
-                            method: "PATCH",
-                            headers: headers(true),
-                            body: JSON.stringify({ name })
-                        }, "Could not rename device.");
-                        updated.settings = device.settings;
-                        state.devices = state.devices.map(item => item.id === device.id ? updated : item);
-                        render();
-                        setMessage(message, "Device renamed.");
-                    } catch (error) {
-                        setMessage(message, error.message, true);
-                    }
-                });
-                const settings = add(card, "form", undefined, "device-settings");
-                const settingsData = device.settings || {};
-                const capabilities = settingsData.capabilities || device.capabilities || {};
-                const toggles = [
-                    ["vibrationEnabled", "Vibration", "vibration"],
-                    ["soundEnabled", "Sound", "sound"]
-                ];
-                toggles.forEach(([key, label, capability]) => {
-                    const labelEl = add(settings, "label", label, "device-toggle");
-                    const input = add(labelEl, "input");
-                    input.type = "checkbox";
-                    input.name = key;
-                    input.checked = Boolean(settingsData[key]);
-                    if (capabilities[capability] !== true) add(labelEl, "small",
-                        "not confirmed by firmware", "device-unconfirmed");
-                });
-                const rgbLabel = add(settings, "label", "RGB brightness");
-                const range = add(rgbLabel, "input");
-                range.type = "range";
-                range.name = "rgbBrightness";
-                range.min = "0";
-                range.max = "100";
-                range.value = String(settingsData.rgbBrightness ?? 50);
-                if (capabilities.rgb !== true) add(rgbLabel, "small", "not confirmed by firmware",
-                    "device-unconfirmed");
-                const save = add(settings, "button", "Save settings", "btn btn--secondary");
-                save.type = "submit";
-                settings.addEventListener("submit", async event => {
-                    event.preventDefault();
-                    const payload = {
-                        vibrationEnabled: settings.elements.vibrationEnabled.checked,
-                        soundEnabled: settings.elements.soundEnabled.checked,
-                        rgbBrightness: Number(settings.elements.rgbBrightness.value)
-                    };
-                    try {
-                        const updated = await request(`/api/devices/${device.id}/settings`, {
-                            method: "PUT", headers: headers(true), body: JSON.stringify(payload)
-                        }, "Could not save settings.");
-                        device.settings = updated;
-                        const settingsMessage = updated.appliedOnDevice
-                            ? "Applied on cube."
-                            : "Saved, waiting for cube.";
-                        setMessage(message, settingsMessage);
-                        render();
-                    } catch (error) {
-                        setMessage(message, error.message, true);
-                    }
-                });
-                const actions = add(card, "div", undefined, "device-actions");
-                const unbind = add(actions, "button", "Unbind", "btn btn--secondary");
-                unbind.type = "button";
-                unbind.addEventListener("click", async () => {
-                    const confirmed = window.confirm(
-                        "Unbind this cube? Its secret stops working and the cube must be re-paired."
-                    );
-                    if (!confirmed) return;
-                    try {
-                        await request(`/api/devices/${device.id}`, {
-                            method: "DELETE", headers: headers()
-                        }, "Could not unbind device.");
-                        state.devices = state.devices.filter(item => item.id !== device.id);
-                        render();
-                        setMessage(message, "Device unbound. Re-pair the cube to use it again.");
-                    } catch (error) {
-                        setMessage(message, error.message, true);
-                    }
-                });
+                renderHead(card, device);
+                const body = add(card, "div", undefined, "device-card__body");
+                renderRename(body, device);
+                renderSettings(body, device);
+                renderFooter(body, device);
             });
         }
         async function loadDevices() {
@@ -454,7 +545,7 @@
             }
         }
 
-        document.querySelector("[data-add-device]")?.addEventListener("click", startWizard);
+        document.querySelectorAll("[data-add-device]").forEach(button => button.addEventListener("click", startWizard));
         document.querySelector("[data-wizard-close]")?.addEventListener("click", clearWizard);
         window.TelosDeviceLive?.subscribe(onLiveMessage);
         loadDevices();

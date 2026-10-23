@@ -203,6 +203,14 @@ document.addEventListener("DOMContentLoaded", () => {
         render();
     });
 
+    // The device menu or an offline cube switched this tab back to the browser timer.
+    document.addEventListener("connected:source-changed", () => {
+        connectedSnapshot = null;
+        settings = timerStateStore.loadSettings();
+        timerState = timerStateStore.loadTimerState(settings);
+        render();
+    });
+
     window.addEventListener("storage", (event) => {
         if (connectedState && (event.key === connectedState.keys.ACTIVE_DEVICE_KEY
             || event.key === connectedState.keys.SNAPSHOT_KEY)) {
@@ -252,6 +260,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 connectedSnapshot = { state: message.state, offsetMs: connectedState.computeClockOffset(message.state) };
                 connectedState.saveSnapshot(connectedSnapshot.state, connectedSnapshot.offsetMs);
                 render();
+            } else if (message.type === "DEVICE_STATUS" && message.deviceId === deviceId && message.status !== "ONLINE") {
+                // The cube went offline: continue its phase in the browser timer (same as on the timer page).
+                connectedState.continueInBrowser(connectedSnapshot?.state, connectedSnapshot?.offsetMs, timerStateStore);
             } else if (message.type === "DEVICE_REMOVED" && message.deviceId === deviceId) {
                 connectedState.setActiveDeviceId(null);
                 connectedSnapshot = null;

@@ -194,14 +194,15 @@ test("device list shows name, status, firmware, last seen and only reported metr
     assert.equal(first.querySelector(".device-badge").textContent, "ONLINE");
     assert.match(first.textContent, /Firmware 0\.1\.0/);
     assert.match(first.textContent, /Last seen: Just now/);
-    assert.match(first.textContent, /Wifi Rssi: -60/);
+    assert.match(first.textContent, /Wi-Fi -60 dBm/);
 
     assert.equal(second.querySelector(".device-badge").textContent, "OFFLINE");
     assert.ok(second.querySelector(".device-badge").classList.contains("device-badge--offline"));
     assert.match(second.textContent, /Firmware not reported/);
     assert.match(second.textContent, /Never seen/);
-    assert.equal(second.querySelector(".device-metrics"), null);
+    assert.equal(second.querySelectorAll(".device-metric").length, 0);
     assert.doesNotMatch(first.textContent + second.textContent, /battery/i);
+    assert.match(first.textContent, /Hardware ID: A1B2C3D4E5F6/);
     assert.ok(page.$("[data-empty-state]").classList.contains("hidden"));
 });
 
@@ -251,13 +252,13 @@ test("unbind asks for confirmation and only then sends DELETE", async () => {
     });
     await flush();
 
-    page.buttonByText(page.cards()[0], "Unbind").click();
+    page.buttonByText(page.cards()[0], "Unbind device").click();
     await flush();
     assert.equal(page.http.calls.some(item => item.options.method === "DELETE"), false);
     assert.equal(page.cards().length, 1);
 
     answer = true;
-    page.buttonByText(page.cards()[0], "Unbind").click();
+    page.buttonByText(page.cards()[0], "Unbind device").click();
     await flush();
     const call = page.http.calls.find(item => item.options.method === "DELETE");
     assert.equal(call.options.headers["X-CSRF-TOKEN"], "csrf-token");
@@ -325,7 +326,7 @@ test("heartbeat updates do not wipe a name the user is typing", async () => {
     assert.equal(page.cards()[0].querySelector("form.device-rename").querySelector("input").value, "Half typed");
 
     input.blur();
-    assert.match(page.cards()[0].textContent, /Wifi Rssi: -70/);
+    assert.match(page.cards()[0].textContent, /Wi-Fi -70 dBm/);
 });
 
 test("RESYNC reloads the device list from the server", async () => {
