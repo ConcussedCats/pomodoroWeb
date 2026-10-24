@@ -1,0 +1,608 @@
+/* ===== Shared page shell of Devices and History ===== */
+.devices-main,
+.history-main {
+    align-items: flex-start;
+    padding: clamp(6rem, 11vh, 7.5rem) var(--spacing-md) 5rem;
+}
+
+.devices-shell,
+.history-shell {
+    max-width: 64rem;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.history-dashboard h1 {
+    margin: 0.25rem 0;
+    font-size: clamp(3rem, 7vw, 5rem);
+    line-height: 1;
+}
+
+.history-dashboard header > p:not(.eyebrow) {
+    color: var(--color-text-muted);
+}
+
+.devices-empty,
+.history-empty {
+    padding: 1rem 1.25rem;
+    border: 1px dashed rgba(229, 226, 225, 0.14);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-muted);
+}
+
+/* Guest card centered like on the Productivity page */
+.devices-shell .productivity-guest-card,
+.history-shell .productivity-guest-card {
+    margin-inline: auto;
+}
+
+/* ===== My Devices ===== */
+.devices-dashboard {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.devices-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1.5rem;
+    padding-bottom: 0.5rem;
+}
+
+.devices-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--color-primary);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+}
+
+.devices-eyebrow::before {
+    content: "";
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 8px var(--color-primary);
+}
+
+.devices-title {
+    font-size: clamp(2.5rem, 6vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+}
+
+.devices-lead {
+    margin-top: 0.5rem;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-lg);
+}
+
+.devices-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex: 0 0 auto;
+}
+
+.devices-add svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    transition: transform var(--transition-normal);
+}
+
+.devices-add:hover svg {
+    transform: rotate(90deg);
+}
+
+.devices-list {
+    display: grid;
+    gap: 1.25rem;
+}
+
+/* --- Card --- */
+.device-card,
+.device-wizard {
+    position: relative;
+    padding: clamp(1.25rem, 3vw, 2rem);
+    border: 1px solid rgba(229, 226, 225, 0.08);
+    border-radius: 1.25rem;
+    background: rgba(14, 14, 14, 0.9);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.device-card {
+    transition: border-color var(--transition-normal);
+}
+
+.device-card:hover {
+    border-color: rgba(229, 226, 225, 0.13);
+}
+
+.device-icon {
+    width: 1.4rem;
+    height: 1.4rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.device-icon--small {
+    width: 1rem;
+    height: 1rem;
+}
+
+.device-card__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(229, 226, 225, 0.06);
+}
+
+.device-card__identity {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.device-card__icon {
+    width: 3rem;
+    height: 3rem;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(229, 226, 225, 0.07);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-light);
+    color: var(--color-primary);
+}
+
+.device-card__title-block {
+    min-width: 0;
+}
+
+.device-card__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.device-card__title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+}
+
+.device-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.15rem 0.6rem;
+    border: 1px solid currentColor;
+    border-radius: var(--radius-sm);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+}
+
+.device-badge::before {
+    content: "";
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.device-badge--online {
+    color: var(--color-success);
+}
+
+.device-badge--offline {
+    color: var(--color-warning);
+}
+
+.device-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    margin-top: 0.4rem;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+}
+
+.device-meta > * + *::before {
+    content: "•";
+    margin-right: 0.75rem;
+    color: rgba(229, 226, 225, 0.25);
+}
+
+.device-card__refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid rgba(229, 226, 225, 0.08);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-light);
+    color: var(--color-text-muted);
+    font-family: inherit;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.device-card__refresh:hover,
+.device-card__refresh:focus-visible {
+    color: var(--color-text);
+    border-color: rgba(229, 226, 225, 0.2);
+}
+
+.device-card__refresh .device-icon {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+.device-card__body {
+    display: grid;
+    gap: 1.5rem;
+    padding-top: 1.5rem;
+}
+
+.device-section__label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.device-rename {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    max-width: 36rem;
+}
+
+.device-rename .device-rename__input {
+    flex: 1 1 14rem;
+    min-width: 0;
+    min-height: 2.75rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid rgba(229, 226, 225, 0.1);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-light);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    transition: border-color var(--transition-fast);
+}
+
+.device-rename .device-rename__input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.device-button {
+    min-height: 2.75rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* --- Hardware settings panel --- */
+.device-settings {
+    display: grid;
+    grid-template-columns: auto minmax(12rem, 1fr) auto;
+    align-items: center;
+    gap: 1.25rem 2rem;
+    padding: 1.25rem;
+    border: 1px solid rgba(229, 226, 225, 0.04);
+    border-radius: var(--radius-lg);
+    background: rgba(32, 32, 32, 0.55);
+}
+
+.device-settings__toggles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    min-width: 15rem;
+}
+
+/* Same row and switch as "Sound notifications" in the timer settings (.settings-checkbox) */
+.device-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.85rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+    background: rgba(32, 32, 32, 0.3);
+    cursor: pointer;
+}
+
+.device-toggle__text {
+    color: var(--color-text);
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.device-toggle .settings-checkbox:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.device-range {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.device-range__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.device-range__head .device-section__label {
+    margin-bottom: 0;
+}
+
+.device-range__value {
+    color: var(--color-primary);
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.device-range__row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.device-range__input {
+    width: 100%;
+    accent-color: var(--color-primary);
+    cursor: pointer;
+}
+
+.device-settings__save {
+    justify-self: end;
+}
+
+.device-settings__state {
+    grid-column: 1 / -1;
+    margin-top: -0.5rem;
+    font-size: 0.76rem;
+}
+
+.device-settings__state--applied {
+    color: var(--color-success);
+}
+
+.device-settings__state--waiting {
+    color: var(--color-warning);
+}
+
+.device-unconfirmed {
+    flex-basis: 100%;
+    color: #ffb4a9;
+    font-size: 0.7rem;
+}
+
+/* --- Footer of the card --- */
+.device-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.device-unbind {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1rem;
+    border: 1px solid rgba(255, 85, 69, 0.25);
+    border-radius: var(--radius-lg);
+    background: transparent;
+    color: #ffb4a9;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.device-unbind:hover,
+.device-unbind:focus-visible {
+    background: rgba(255, 85, 69, 0.1);
+    color: var(--color-primary-light);
+}
+
+.device-hardware-id {
+    color: rgba(229, 226, 225, 0.35);
+    font-size: 0.72rem;
+}
+
+.device-hardware-id__value {
+    color: var(--color-text-muted);
+    letter-spacing: 0.08em;
+}
+
+/* --- Pairing helper --- */
+.devices-helper {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 1px dashed rgba(229, 226, 225, 0.1);
+    border-radius: 1.25rem;
+    background: rgba(14, 14, 14, 0.4);
+}
+
+.devices-helper__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(229, 226, 225, 0.04);
+    color: var(--color-text-muted);
+}
+
+.devices-helper__icon svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.devices-helper__text {
+    flex: 1 1 auto;
+}
+
+.devices-helper__text h2 {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
+.devices-helper__text p {
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+}
+
+.devices-helper__action {
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: var(--color-btn-primary);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+}
+
+.devices-helper__action:hover {
+    color: var(--color-primary);
+}
+
+/* ===== Pairing wizard ===== */
+.device-wizard {
+    position: fixed;
+    z-index: 50;
+    inset: 10vh max(1rem, calc((100vw - 42rem) / 2)) auto;
+    max-height: 80vh;
+    overflow: auto;
+    background: rgba(19, 19, 19, 0.98);
+    box-shadow: 0 24px 70px #000;
+}
+
+.device-wizard__close {
+    float: right;
+    border: 0;
+    background: transparent;
+    color: var(--color-text);
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.device-wizard__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.wizard-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0.8rem 0;
+}
+
+.wizard-password {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.wizard-status {
+    padding: 0.6rem 0;
+    color: var(--color-text-muted);
+}
+
+/* ===== Small screens ===== */
+@media (max-width: 860px) {
+    .device-settings {
+        grid-template-columns: 1fr;
+    }
+
+    .device-settings__save {
+        justify-self: stretch;
+    }
+}
+
+@media (max-width: 700px) {
+    .devices-main,
+    .history-main {
+        padding-top: 8rem;
+    }
+
+    .devices-hero {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .device-card__head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .devices-helper {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .device-wizard {
+        inset: 5rem 1rem auto;
+    }
+}

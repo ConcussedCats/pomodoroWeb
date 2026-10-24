@@ -20,6 +20,8 @@
         <nav class="nav" id="primaryNavigation">
             <a class="nav-btn" th:classappend="${activePage == 'home'} ? ' nav-btn--active' : ''" th:href="@{/}">Timer</a>
             <a class="nav-btn" th:classappend="${activePage == 'productivity'} ? ' nav-btn--active' : ''" th:href="@{/productivity}">Productivity</a>
+            <a sec:authorize="isAuthenticated()" class="nav-btn" th:classappend="${activePage == 'devices'} ? ' nav-btn--active' : ''" th:href="@{/devices}">Devices</a>
+            <a sec:authorize="isAuthenticated()" class="nav-btn" th:classappend="${activePage == 'history'} ? ' nav-btn--active' : ''" th:href="@{/history}">History</a>
             <a class="nav-btn" th:classappend="${activePage == 'about'} ? ' nav-btn--active' : ''" th:href="@{/about}">About</a>
             <a class="nav-btn nav-btn--accent" th:classappend="${activePage == 'helpus'} ? ' nav-btn--active' : ''" th:href="@{/helpus}">Help Us</a>
         </nav>
@@ -44,6 +46,59 @@
                     <div class="account-menu__panel">
                         <a class="account-menu__link" th:href="@{/login}">Log In</a>
                         <a class="account-menu__link account-menu__link--light" th:href="@{/register}">Sign Up</a>
+                    </div>
+                </details>
+                <details sec:authorize="isAuthenticated()" class="account-menu device-menu" data-device-menu>
+                    <summary class="device-menu__toggle" aria-label="Timer source and cube settings">
+                        <svg class="device-menu__chip" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <rect x="7" y="7" width="10" height="10" rx="1.6"></rect>
+                            <rect x="10" y="10" width="4" height="4" rx="0.6"></rect>
+                            <path d="M9.5 3.5V7M14.5 3.5V7M9.5 17v3.5M14.5 17v3.5M3.5 9.5H7M3.5 14.5H7M17 9.5h3.5M17 14.5h3.5"></path>
+                        </svg>
+                        <span class="device-menu__label" data-device-menu-label>Browser</span>
+                        <span class="device-menu__status hidden" data-device-menu-status></span>
+                        <span class="account-menu__caret" aria-hidden="true"></span>
+                    </summary>
+                    <div class="account-menu__panel device-menu__panel">
+                        <div class="device-menu__head">
+                            <span class="device-menu__title">Timer runs on</span>
+                            <span class="device-menu__count" data-device-menu-count></span>
+                        </div>
+                        <div class="device-menu__sources" data-device-menu-sources role="group" aria-label="Timer source"></div>
+                        <p class="device-menu__sync hidden" data-device-menu-sync aria-live="polite"></p>
+                        <div class="device-menu__controls hidden" data-device-menu-controls>
+                            <p class="device-menu__controls-title" data-device-menu-controls-title>Cube settings</p>
+                            <label class="device-menu__control device-menu__control--range">
+                                <span class="device-menu__control-label">RGB brightness</span>
+                                <span class="device-menu__value" data-device-menu-brightness-value>60%</span>
+                                <input type="range" min="0" max="100" step="5" name="rgbBrightness" data-device-menu-brightness>
+                            </label>
+                            <label class="device-menu__toggle-row">
+                                <span class="settings-sound-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" focusable="false">
+                                        <path d="M2 9v6M22 9v6M6 6v12M18 6v12M10 4h4v16h-4z"></path>
+                                    </svg>
+                                </span>
+                                <span class="device-menu__toggle-text">Vibration</span>
+                                <input type="checkbox" class="settings-checkbox" name="vibrationEnabled" data-device-menu-vibration>
+                            </label>
+                            <label class="device-menu__toggle-row">
+                                <span class="settings-sound-icon" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" focusable="false">
+                                        <path d="M4 9v6h4l5 4V5L8 9H4Z"></path>
+                                        <path d="M16 8.5a5 5 0 0 1 0 7"></path>
+                                        <path d="M18.5 6a8.5 8.5 0 0 1 0 12"></path>
+                                    </svg>
+                                </span>
+                                <span class="device-menu__toggle-text">Sound</span>
+                                <input type="checkbox" class="settings-checkbox" name="soundEnabled" data-device-menu-sound>
+                            </label>
+                            <p class="device-menu__note" data-device-menu-note aria-live="polite"></p>
+                        </div>
+                        <a class="device-menu__link" th:href="@{/devices}">
+                            <span>Device settings &amp; pairing</span>
+                            <span aria-hidden="true">&rarr;</span>
+                        </a>
                     </div>
                 </details>
                 <details sec:authorize="isAuthenticated()" class="account-menu account-menu--profile">

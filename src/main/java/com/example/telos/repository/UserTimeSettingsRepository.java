@@ -10,4 +10,6 @@ import java.util.Optional;
 @Repository
 public interface UserTimeSettingsRepository extends JpaRepository<UserTimeSettings, Long> {
     Optional<UserTimeSettings> findByUser(User user);
+
+    Optional<UserTimeSettings> findByUser_UserId(Long userId);
 }
