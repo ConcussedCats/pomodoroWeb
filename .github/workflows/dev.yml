@@ -9,48 +9,49 @@ on:
 permissions:
   contents: write
 
+env:
+  IMAGE_REPOSITORY: whyisthecodeworking/telosrepo
+
 jobs:
   publish_push_img:
     name: Publish Push Img
-    runs-on:
-      - self-hosted
-      - windows
-      - build
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
       - name: Increment version
-        shell: powershell
-        env:
-          PUBLISH_BRANCH: dev
-        run: .\Increment-Version.ps1 -Branch $env:PUBLISH_BRANCH -VersionFilePath .\version.json
+        shell: pwsh
+        run: ./Increment-Version.ps1 -Branch dev -VersionFilePath ./version.json
 
       - name: Publish build
-        shell: powershell
-        env:
-          PUBLISH_BRANCH: dev
-        run: .\publish.ps1 -Branch $env:PUBLISH_BRANCH
+        run: ./mvnw -B clean package -DskipTests -Dmaven.compiler.proc=full
 
       - name: Commit bumped version
-        shell: powershell
         run: |
-          $version = (Get-Content .\version.json -Raw | ConvertFrom-Json).version
+          version=$(jq -r .version version.json)
+          echo "VERSION=$version" >> "$GITHUB_ENV"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add version.json
           git commit -m "bump version to $version [skip ci]"
           git push origin HEAD:refs/heads/dev
 
-      - name: Build and push image
+      - name: Docker Hub login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push image
-        shell: powershell
-        env:
-          PUBLISH_BRANCH: dev
-        run: .\CreatePushImg.ps1 -BranchName $env:PUBLISH_BRANCH -SkipDockerLogin
+        run: |
+          docker build -f telos.docker -t "$IMAGE_REPOSITORY:$VERSION-dev" -t "$IMAGE_REPOSITORY:latest" .
+          docker push --all-tags "$IMAGE_REPOSITORY"
