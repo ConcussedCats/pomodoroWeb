@@ -7,71 +7,67 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+env:
+  AWS_REGION: eu-north-1
+  IMAGE_REPOSITORY: whyisthecodeworking/telosrepo
+  STACK_NAME: telos
 
 jobs:
-  publish_push_img:
-    name: Publish Push Img
-    runs-on:
-      - self-hosted
-      - windows
-      - build
+  publish_push_deploy:
+    name: Publish Push Deploy
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Increment version
-        shell: powershell
-        env:
-          PUBLISH_BRANCH: staging_telos
-        run: .\Increment-Version.ps1 -Branch $env:PUBLISH_BRANCH -VersionFilePath .\version.json
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
 
       - name: Publish build
-        shell: powershell
-        env:
-          PUBLISH_BRANCH: staging_telos
-        run: .\publish.ps1 -Branch $env:PUBLISH_BRANCH
+        run: ./mvnw -B clean package -DskipTests -Dmaven.compiler.proc=full
 
-      - name: Commit bumped version
-        shell: powershell
-        run: |
-          $version = (Get-Content .\version.json -Raw | ConvertFrom-Json).version
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add version.json
-          git commit -m "bump version to $version [skip ci]"
-          git push origin HEAD:refs/heads/staging_telos
-
-      - name: Build and push image
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push image
-        shell: powershell
-        env:
-          PUBLISH_BRANCH: staging_telos
-        run: .\CreatePushImg.ps1 -BranchName $env:PUBLISH_BRANCH -SkipDockerLogin
-
-  deploy_to_prod:
-    name: Deploy To Prod
-    runs-on:
-      - self-hosted
-      - windows
-      - host
-    needs: publish_push_img
-
-    steps:
       - name: Docker Hub login
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Deploy
-        shell: powershell
+      - name: Build and push image
         run: |
-          cd D:\SourceTree\Telos\docker
-          .\Pull-Deploy.Img.ps1 -SkipDockerLogin
+          IMAGE_TAG="${GITHUB_SHA::7}-staging_telos"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+          docker build -f telos.docker -t "$IMAGE_REPOSITORY:$IMAGE_TAG" -t "$IMAGE_REPOSITORY:latest" .
+          docker push --all-tags "$IMAGE_REPOSITORY"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to ECS
+        run: |
+          # a re-run of the same commit has nothing to change; that is not a failure
+          if ! output=$(aws cloudformation update-stack --stack-name "$STACK_NAME" --use-previous-template \
+            --capabilities CAPABILITY_IAM \
+            --parameters \
+              ParameterKey=ImageTag,ParameterValue="$IMAGE_TAG" \
+              ParameterKey=ImageRepository,UsePreviousValue=true \
+              ParameterKey=DockerHubSecretArn,UsePreviousValue=true \
+              ParameterKey=VpcId,UsePreviousValue=true \
+              ParameterKey=SubnetIds,UsePreviousValue=true \
+              ParameterKey=DesiredCount,UsePreviousValue=true \
+              ParameterKey=CertificateArn,UsePreviousValue=true 2>&1); then
+            echo "$output"
+            grep -q "No updates are to be performed" <<< "$output" && exit 0
+            exit 1
+          fi
+          aws cloudformation wait stack-update-complete --stack-name "$STACK_NAME"
