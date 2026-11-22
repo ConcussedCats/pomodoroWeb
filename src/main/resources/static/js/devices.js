@@ -372,12 +372,6 @@
                 await TelosBleProvisioning.connect(device);
                 showWizardDevice(device?.name);
                 const info = await TelosBleProvisioning.readDeviceInfo();
-                if (info.provisioned) {
-                    throw Object.assign(
-                        new Error("This cube is already provisioned. Reset it before pairing."),
-                        { code: "ALREADY_PROVISIONED" }
-                    );
-                }
                 state.deviceInfo = info;
                 wifiStep();
             } catch (error) {

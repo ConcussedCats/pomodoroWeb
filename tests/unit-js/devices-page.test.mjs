@@ -477,11 +477,12 @@ test("denied Bluetooth permission and a closed chooser are explained", async () 
     }
 });
 
-test("an already provisioned cube is not paired again", async () => {
+test("an already provisioned cube can receive new Wi-Fi credentials", async () => {
     const page = setupPage({ bluetooth: createFakeBluetooth({ info: { hardwareId: "X", provisioned: true } }) });
     await flush();
     await goToWifiStep(page);
-    assert.match(page.$("[data-wizard-content]").textContent, /already provisioned/);
+    assert.match(page.$("[data-wizard-content]").textContent, /Wi-Fi password/);
+    assert.doesNotMatch(page.$("[data-wizard-content]").textContent, /Reset it before pairing/);
 });
 
 test("closing the wizard stops pairing polls and the token countdown", async () => {
