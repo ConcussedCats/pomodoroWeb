@@ -340,6 +340,7 @@ public class DeviceTimerService {
     @Transactional
     public CommandDto createCommand(Long userId, Long deviceId, CreateCommandRequest request) {
         Device device = ownedDevice(userId, deviceId);
+        lockState(deviceId, ownerSettings(userId));
         DeviceCommandType type = DeviceCommandType.valueOf(request.type());
         TimerMode mode = null;
         if (type.requiresMode()) {
@@ -361,15 +362,12 @@ public class DeviceTimerService {
         if (presenceService.effectiveStatus(device) != DeviceConnectionStatus.ONLINE) {
             throw DeviceApiException.conflict("DEVICE_OFFLINE", "The cube is offline, the command cannot be delivered");
         }
-        if (pendingCommandCount(deviceId) > 0) {
-            throw DeviceApiException.conflict("COMMAND_IN_PROGRESS", "Wait until the cube confirms the previous command");
-        }
-
         Instant now = clock.instant();
         DeviceCommand command = new DeviceCommand();
         if (type == DeviceCommandType.SET_STATE) {
             applyTarget(command, request.targetState(), now);
         }
+        supersedeOpenCommands(device, now);
         command.setCommandId(UUID.randomUUID());
         command.setDeviceId(deviceId);
         command.setCreatedByUserId(userId);
@@ -384,6 +382,22 @@ public class DeviceTimerService {
         CommandDto dto = toDto(command);
         publisher.publish(device.getUserId(), "COMMAND", deviceId, "command", dto);
         return dto;
+    }
+
+    private void supersedeOpenCommands(Device device, Instant now) {
+        List<DeviceCommand> openCommands = commandRepository
+                .findByDeviceIdAndStatusInAndExpiresAtAfterOrderByCreatedAtAsc(
+                        device.getDeviceId(), OPEN_COMMAND_STATUSES, now);
+        for (DeviceCommand command : openCommands) {
+            if (commandRepository.complete(command.getCommandId(), OPEN_COMMAND_STATUSES,
+                    DeviceCommandStatus.SUPERSEDED, "SUPERSEDED_BY_NEW_COMMAND", now, null) != 1) {
+                continue;
+            }
+            command.setStatus(DeviceCommandStatus.SUPERSEDED);
+            command.setErrorCode("SUPERSEDED_BY_NEW_COMMAND");
+            command.setCompletedAt(now);
+            publisher.publish(device.getUserId(), "COMMAND", device.getDeviceId(), "command", toDto(command));
+        }
     }
 
     private void applyTarget(DeviceCommand command, TargetStatePayload target, Instant now) {
@@ -514,6 +528,10 @@ public class DeviceTimerService {
         if (command.getStatus() == DeviceCommandStatus.EXECUTED || command.getStatus() == DeviceCommandStatus.REJECTED) {
             // Repeated ack (e.g. the response was lost): same answer, nothing changes.
             return new CommandAckResponse(command.getCommandId(), command.getStatus().name(), toDto(state, settings));
+        }
+        if (command.getStatus() == DeviceCommandStatus.SUPERSEDED) {
+            throw new DeviceApiException(HttpStatus.GONE, "COMMAND_SUPERSEDED",
+                    "A newer command replaced this command");
         }
         if (command.getStatus() == DeviceCommandStatus.EXPIRED || !now.isBefore(command.getExpiresAt())) {
             markExpired(command, device.getUserId(), now);

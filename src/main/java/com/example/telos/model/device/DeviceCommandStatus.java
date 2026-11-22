@@ -5,9 +5,10 @@ public enum DeviceCommandStatus {
     DELIVERED,
     EXECUTED,
     REJECTED,
-    EXPIRED;
+    EXPIRED,
+    SUPERSEDED;
 
     public boolean isFinal() {
-        return this == EXECUTED || this == REJECTED || this == EXPIRED;
+        return this == EXECUTED || this == REJECTED || this == EXPIRED || this == SUPERSEDED;
     }
 }
