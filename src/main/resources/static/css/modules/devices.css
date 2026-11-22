@@ -113,8 +113,7 @@
 }
 
 /* --- Card --- */
-.device-card,
-.device-wizard {
+.device-card {
     position: relative;
     padding: clamp(1.25rem, 3vw, 2rem);
     border: 1px solid rgba(229, 226, 225, 0.08);
@@ -186,7 +185,8 @@
     gap: 0.75rem;
 }
 
-.device-card__title {
+/* Specific enough to beat ".main-content .container h2" from layout.css. */
+.devices-shell h2.device-card__title {
     font-size: var(--font-size-xl);
     font-weight: 700;
     letter-spacing: -0.01em;
@@ -497,7 +497,8 @@
     flex: 1 1 auto;
 }
 
-.devices-helper__text h2 {
+.devices-shell .devices-helper__text h2 {
+    margin: 0;
     font-size: var(--font-size-sm);
     font-weight: 600;
 }
@@ -527,54 +528,349 @@
 }
 
 /* ===== Pairing wizard ===== */
-.device-wizard {
+.device-wizard-overlay {
     position: fixed;
     z-index: 50;
-    inset: 10vh max(1rem, calc((100vw - 42rem) / 2)) auto;
-    max-height: 80vh;
-    overflow: auto;
-    background: rgba(19, 19, 19, 0.98);
-    box-shadow: 0 24px 70px #000;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.72);
+    backdrop-filter: blur(8px);
+}
+
+.device-wizard-overlay.hidden {
+    display: none;
+}
+
+.device-wizard {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 31rem;
+    max-height: calc(100vh - 2rem);
+    overflow: hidden auto;
+    border: 1px solid rgba(229, 226, 225, 0.1);
+    border-radius: 1.25rem;
+    background: #151515;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85);
+}
+
+/* Thin coral highlight along the top edge. */
+.device-wizard::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 85, 69, 0.45), transparent);
+}
+
+.device-wizard__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem 1.6rem 0.5rem;
+}
+
+.device-wizard__step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.5rem;
+    color: var(--color-primary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.device-wizard__pulse {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: var(--color-primary);
+    animation: device-wizard-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes device-wizard-pulse {
+    50% {
+        opacity: 0.35;
+    }
 }
 
 .device-wizard h2 {
-    margin: 0.35rem 0 0.75rem;
-    font-size: clamp(1.4rem, 3.5vw, 1.9rem);
-    line-height: 1.2;
-    overflow-wrap: anywhere;
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
 }
 
 .device-wizard__close {
-    float: right;
-    border: 0;
-    background: transparent;
-    color: var(--color-text);
-    font-size: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid transparent;
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-muted);
     cursor: pointer;
+    transition: color var(--transition-fast), background var(--transition-fast),
+        border-color var(--transition-fast);
+}
+
+.device-wizard__close:hover,
+.device-wizard__close:focus-visible {
+    border-color: rgba(229, 226, 225, 0.12);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+.device-wizard__close svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.2;
+    stroke-linecap: round;
+}
+
+.device-wizard__body {
+    padding: 0.5rem 1.6rem 1.5rem;
+}
+
+.device-wizard__body p {
+    margin: 0.5rem 0 0;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+}
+
+.device-wizard__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1.1rem 1.6rem;
+    border-top: 1px solid rgba(229, 226, 225, 0.06);
+    background: #111111;
+}
+
+.device-wizard__device {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-muted);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.72rem;
+}
+
+.device-wizard__device::before {
+    content: "";
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--color-success);
+    box-shadow: 0 0 0 3px rgba(127, 216, 160, 0.18);
+}
+
+.device-wizard__device.hidden {
+    display: none;
 }
 
 .device-wizard__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: 0.6rem;
+    margin-left: auto;
+}
+
+.device-wizard .btn {
+    min-width: 0;
+    min-height: 2.6rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.75rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+/* Notes inside a step: the security notice and the 2.4 GHz hint. */
+.wizard-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    margin-top: 0.9rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid rgba(229, 226, 225, 0.06);
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
+
+.device-wizard__body .wizard-note p {
+    margin: 0;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.wizard-note .device-icon {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    margin-top: 0.1rem;
+    color: var(--color-primary);
+}
+
+.wizard-note--secure .device-icon {
+    color: var(--color-success);
+}
+
+.wizard-note strong {
+    color: var(--color-text);
+    font-weight: 600;
 }
 
 .wizard-field {
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
-    margin: 0.8rem 0;
+    gap: 0.45rem;
+    margin-top: 1.1rem;
 }
 
-.wizard-password {
+.wizard-field__head {
     display: flex;
-    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
-.wizard-status {
-    padding: 0.6rem 0;
+.wizard-field__label {
+    color: var(--color-text);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.wizard-field__hint {
     color: var(--color-text-muted);
+    font-size: 0.7rem;
+}
+
+.wizard-badge {
+    padding: 0.15rem 0.55rem;
+    border: 1px solid rgba(255, 208, 138, 0.25);
+    border-radius: 999px;
+    background: rgba(255, 208, 138, 0.1);
+    color: var(--color-warning);
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.wizard-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.wizard-input-wrap > .device-icon {
+    position: absolute;
+    left: 0.85rem;
+    width: 1rem;
+    height: 1rem;
+    color: var(--color-primary);
+    pointer-events: none;
+}
+
+.wizard-input {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.9rem;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid rgba(229, 226, 225, 0.1);
+    border-radius: 0.75rem;
+    background: #0f0f0f;
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--font-size-sm);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.wizard-input::placeholder {
+    color: rgba(229, 226, 225, 0.35);
+}
+
+.wizard-input:hover {
+    border-color: rgba(229, 226, 225, 0.2);
+}
+
+.wizard-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+}
+
+.wizard-input--icon {
+    padding-left: 2.5rem;
+}
+
+.wizard-input--toggle {
+    padding-right: 5.5rem;
+}
+
+.wizard-reveal {
+    position: absolute;
+    right: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.6rem;
+    border: 0;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.wizard-reveal:hover,
+.wizard-reveal:focus-visible {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+}
+
+.wizard-reveal .device-icon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.device-wizard__body .wizard-status {
+    margin: 0.75rem 0 0;
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--color-text);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.78rem;
+}
+
+.device-wizard__body .wizard-status--muted {
+    padding: 0;
+    background: transparent;
+    color: var(--color-text-muted);
+    font-family: inherit;
 }
 
 /* ===== Small screens ===== */
@@ -609,7 +905,17 @@
         align-items: flex-start;
     }
 
-    .device-wizard {
-        inset: 5rem 1rem auto;
+    .device-wizard__header,
+    .device-wizard__body,
+    .device-wizard__footer {
+        padding-inline: 1.15rem;
+    }
+
+    .device-wizard__actions {
+        width: 100%;
+    }
+
+    .device-wizard__actions .btn {
+        flex: 1 1 0;
     }
 }

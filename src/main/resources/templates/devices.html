@@ -66,19 +66,35 @@
                 </aside>
             </section>
         </div>
-
-        <!-- Outside .devices-shell: its backdrop-filter would make position: fixed relative to it. -->
-        <section sec:authorize="isAuthenticated()" class="device-wizard hidden" data-wizard aria-labelledby="wizard-title">
-            <button type="button" class="device-wizard__close" data-wizard-close aria-label="Close pairing">
-                ×
-            </button>
-            <p class="eyebrow">Add a cube</p>
-            <h2 id="wizard-title" data-wizard-title>Check browser support</h2>
-            <div data-wizard-content></div>
-            <p class="form-message hidden" data-wizard-message aria-live="polite"></p>
-            <div class="device-wizard__actions" data-wizard-actions></div>
-        </section>
     </main>
+
+    <!-- Outside <main>: .main-content is its own stacking layer below the header, and .devices-shell has a backdrop-filter. -->
+    <div sec:authorize="isAuthenticated()" class="device-wizard-overlay hidden" data-wizard>
+        <section class="device-wizard" role="dialog" aria-modal="true" aria-labelledby="wizard-title">
+            <header class="device-wizard__header">
+                <div>
+                    <p class="device-wizard__step">
+                        <span class="device-wizard__pulse" aria-hidden="true"></span>
+                        <span data-wizard-step>Telos hardware</span>
+                    </p>
+                    <h2 id="wizard-title" data-wizard-title>Check browser support</h2>
+                </div>
+                <button type="button" class="device-wizard__close" data-wizard-close aria-label="Close pairing">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M18 6 6 18M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </header>
+            <div class="device-wizard__body">
+                <div data-wizard-content></div>
+                <p class="form-message hidden" data-wizard-message aria-live="polite"></p>
+            </div>
+            <footer class="device-wizard__footer">
+                <span class="device-wizard__device hidden" data-wizard-device></span>
+                <div class="device-wizard__actions" data-wizard-actions></div>
+            </footer>
+        </section>
+    </div>
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
     <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>

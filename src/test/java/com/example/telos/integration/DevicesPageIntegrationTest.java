@@ -9,22 +9,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DevicesPageIntegrationTest extends DeviceIntegrationTestSupport {
 
     /**
-     * The pairing dialog is position: fixed. Inside .devices-shell (which has a backdrop-filter)
-     * it would be sized against the shell instead of the window and get squeezed.
+     * The pairing dialog is position: fixed. Inside .devices-shell (backdrop-filter) it was sized against the
+     * shell and squeezed; inside <main> (its own stacking layer) it could not cover the header.
      */
     @Test
-    void pairingWizardIsNotNestedInsideTheShell() throws Exception {
+    void pairingWizardIsRenderedOutsideMain() throws Exception {
         String html = mockMvc.perform(get("/devices").with(as(OWNER)))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
-        int main = html.indexOf("<main");
-        int wizard = html.indexOf("class=\"device-wizard hidden\"");
-        assertThat(main).isNotNegative();
-        assertThat(wizard).isGreaterThan(main);
-
-        String beforeWizard = html.substring(main, wizard);
-        assertThat(count(beforeWizard, "<div")).isEqualTo(count(beforeWizard, "</div>"));
+        int mainEnd = html.indexOf("</main>");
+        int wizard = html.indexOf("class=\"device-wizard-overlay hidden\"");
+        assertThat(mainEnd).isNotNegative();
+        assertThat(wizard).as("wizard is rendered after </main>").isGreaterThan(mainEnd);
     }
 
     /** Without the --primary / --secondary modifiers a visited link takes the global a:visited color. */
@@ -38,13 +35,5 @@ class DevicesPageIntegrationTest extends DeviceIntegrationTestSupport {
             assertThat(html).as(page).contains("productivity-guest-button--primary\" href=\"/login\"");
             assertThat(html).as(page).contains("productivity-guest-button--secondary\" href=\"/register\"");
         }
-    }
-
-    private static int count(String text, String token) {
-        int found = 0;
-        for (int at = text.indexOf(token); at >= 0; at = text.indexOf(token, at + token.length())) {
-            found++;
-        }
-        return found;
     }
 }
