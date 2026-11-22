@@ -27,6 +27,19 @@ class DevicesPageIntegrationTest extends DeviceIntegrationTestSupport {
         assertThat(count(beforeWizard, "<div")).isEqualTo(count(beforeWizard, "</div>"));
     }
 
+    /** Without the --primary / --secondary modifiers a visited link takes the global a:visited color. */
+    @Test
+    void guestButtonsKeepTheirColorsWhenVisited() throws Exception {
+        for (String page : new String[] {"/devices", "/history"}) {
+            String html = mockMvc.perform(get(page))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+
+            assertThat(html).as(page).contains("productivity-guest-button--primary\" href=\"/login\"");
+            assertThat(html).as(page).contains("productivity-guest-button--secondary\" href=\"/register\"");
+        }
+    }
+
     private static int count(String text, String token) {
         int found = 0;
         for (int at = text.indexOf(token); at >= 0; at = text.indexOf(token, at + token.length())) {
