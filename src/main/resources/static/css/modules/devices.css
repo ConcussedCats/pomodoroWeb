@@ -537,6 +537,13 @@
     box-shadow: 0 24px 70px #000;
 }
 
+.device-wizard h2 {
+    margin: 0.35rem 0 0.75rem;
+    font-size: clamp(1.4rem, 3.5vw, 1.9rem);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
 .device-wizard__close {
     float: right;
     border: 0;
