@@ -64,19 +64,20 @@
                     </div>
                     <button class="devices-helper__action" type="button" data-add-device>Add device &rarr;</button>
                 </aside>
-
-                <section class="device-wizard hidden" data-wizard aria-labelledby="wizard-title">
-                    <button type="button" class="device-wizard__close" data-wizard-close aria-label="Close pairing">
-                        ×
-                    </button>
-                    <p class="eyebrow">Add a cube</p>
-                    <h2 id="wizard-title" data-wizard-title>Check browser support</h2>
-                    <div data-wizard-content></div>
-                    <p class="form-message hidden" data-wizard-message aria-live="polite"></p>
-                    <div class="device-wizard__actions" data-wizard-actions></div>
-                </section>
             </section>
         </div>
+
+        <!-- Outside .devices-shell: its backdrop-filter would make position: fixed relative to it. -->
+        <section sec:authorize="isAuthenticated()" class="device-wizard hidden" data-wizard aria-labelledby="wizard-title">
+            <button type="button" class="device-wizard__close" data-wizard-close aria-label="Close pairing">
+                ×
+            </button>
+            <p class="eyebrow">Add a cube</p>
+            <h2 id="wizard-title" data-wizard-title>Check browser support</h2>
+            <div data-wizard-content></div>
+            <p class="form-message hidden" data-wizard-message aria-live="polite"></p>
+            <div class="device-wizard__actions" data-wizard-actions></div>
+        </section>
     </main>
 
     <th:block th:replace="~{fragments/footer :: footer}"></th:block>
