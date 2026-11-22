@@ -10,7 +10,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** V7..V9 applied on top of V1..V6 keep the existing data and add the declared constraints. */
+/** Later migrations applied on top of V1..V6 keep the existing data and add the declared constraints. */
 class MigrationCompatibilityIntegrationTest extends PostgresIntegrationTest {
 
     private static Timestamp now() {
@@ -34,7 +34,7 @@ class MigrationCompatibilityIntegrationTest extends PostgresIntegrationTest {
     void allMigrationsAppliedAndExistingDataKept() {
         assertThat(jdbcTemplate.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL ORDER BY installed_rank",
-                String.class)).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+                String.class)).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11");
 
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT count(*) FROM users WHERE email IN ('user@test.com', 'guest@test.com', 'demo@test.com')",

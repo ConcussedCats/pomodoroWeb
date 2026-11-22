@@ -333,13 +333,15 @@
             } else if (command.status === "EXPIRED") {
                 lastError = "The cube did not respond in time. Nothing was changed.";
                 settlePending("EXPIRED");
+            } else if (command.status === "SUPERSEDED") {
+                settlePending("SUPERSEDED");
             }
             render();
         }
 
         /**
          * Sends a command to the cube. The returned promise resolves with EXECUTED, REJECTED, EXPIRED,
-         * TIMEOUT, FAILED or BUSY once there is an answer; the UI shows success only after EXECUTED.
+         * SUPERSEDED, TIMEOUT, FAILED or BUSY once there is an answer; the UI shows success only after EXECUTED.
          */
         function send(type, mode, { targetState, onExecuted, timeoutMs } = {}) {
             if (!active || pending || !deviceId) return Promise.resolve("BUSY");

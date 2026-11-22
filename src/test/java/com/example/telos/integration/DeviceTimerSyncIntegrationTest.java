@@ -407,15 +407,24 @@ class DeviceTimerSyncIntegrationTest extends DeviceIntegrationTestSupport {
     }
 
     @Test
-    void onlyOneOpenCommandAtATime() throws Exception {
+    void latestCommandSupersedesThePreviousOpenCommand() throws Exception {
         SimulatedCube cube = pairedCube(OWNER, "ONECMD00001");
-        assertThat(postCommand(cube, "{\"type\":\"START\",\"mode\":\"WORK\"}").getResponse().getStatus()).isEqualTo(202);
-        MvcResult second = postCommand(cube, "{\"type\":\"STOP\"}");
-        assertThat(second.getResponse().getStatus()).isEqualTo(409);
-        assertThat(json(second).get("errorCode").asText()).isEqualTo("COMMAND_IN_PROGRESS");
+        JsonNode first = json(postCommand(cube, "{\"type\":\"START\",\"mode\":\"WORK\"}"));
+        MvcResult secondResult = postCommand(cube, "{\"type\":\"STOP\"}");
+        JsonNode second = json(secondResult);
 
-        cube.executePendingCommands();
-        assertThat(postCommand(cube, "{\"type\":\"STOP\"}").getResponse().getStatus()).isEqualTo(202);
+        assertThat(secondResult.getResponse().getStatus()).isEqualTo(202);
+        assertThat(commandStatus(cube, first)).isEqualTo("SUPERSEDED");
+        assertThat(commandById(cube, first).get("errorCode").asText()).isEqualTo("SUPERSEDED_BY_NEW_COMMAND");
+        assertThat(commandStatus(cube, second)).isEqualTo("PENDING");
+
+        JsonNode polled = cube.pollCommands();
+        assertThat(polled).hasSize(1);
+        assertThat(polled.get(0).get("commandId").asText()).isEqualTo(second.get("commandId").asText());
+
+        MvcResult lateAck = cube.ack(first.get("commandId").asText(), "EXECUTED", null);
+        assertThat(lateAck.getResponse().getStatus()).isEqualTo(410);
+        assertThat(json(lateAck).get("errorCode").asText()).isEqualTo("COMMAND_SUPERSEDED");
     }
 
     @Test
