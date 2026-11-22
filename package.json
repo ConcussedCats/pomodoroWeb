@@ -1,0 +1,24 @@
+{
+  "name": "telos-pomodoro-web",
+  "version": "0.18.0",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:all",
+    "test:all": "npm run test:java && npm run test:unit:js && npm run test:e2e",
+    "test:java": "./mvnw clean test",
+    "test:java:quiet": "./mvnw -q clean test",
+    "test:unit:js": "node --test tests/unit-js/*.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:quiet": "playwright test --reporter=line",
+    "test:smoke": "playwright test tests/e2e/dev-deployment-smoke.spec.js",
+    "test:smoke:quiet": "playwright test tests/e2e/dev-deployment-smoke.spec.js --reporter=line",
+    "coverage": "npm run coverage:java && npm run coverage:unit:js",
+    "coverage:all": "npm run coverage && npm run test:e2e",
+    "coverage:java": "./mvnw clean verify",
+    "coverage:unit:js": "c8 --all --src src/main/resources/static/js --include 'src/main/resources/static/js/**/*.js' --reporter=text --reporter=html --reporter=lcov node --test tests/unit-js/*.test.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.58.2",
+    "c8": "10.1.3"
+  }
+}

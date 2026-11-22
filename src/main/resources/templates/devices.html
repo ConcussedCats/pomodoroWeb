@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Devices - Telos</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" th:href="@{/assets/icon/icon.ico}">
+</head>
+<body class="devices-page">
+    <th:block th:replace="~{fragments/header :: header('devices')}"></th:block>
+
+    <main class="main-content devices-main">
+        <div class="container devices-shell">
+            <section sec:authorize="isAnonymous()" class="productivity-guest-card">
+                <span class="productivity-guest-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <rect x="6.5" y="10.2" width="11" height="9" rx="1.8"></rect>
+                        <path d="M8.8 10.2V7.8a3.2 3.2 0 0 1 6.4 0v2.4"></path>
+                        <path d="M12 14.1v2"></path>
+                    </svg>
+                </span>
+                <h2 class="productivity-guest-title">Login required</h2>
+                <p class="productivity-guest-text">Sign in to pair a Telos cube and see its settings.</p>
+                <div class="productivity-guest-actions">
+                    <a class="btn btn--primary productivity-guest-button" th:href="@{/login}">Log in</a>
+                    <a class="btn btn--secondary productivity-guest-button" th:href="@{/register}">
+                        Create free account
+                    </a>
+                </div>
+            </section>
+
+            <section sec:authorize="isAuthenticated()" class="devices-dashboard">
+                <header class="devices-hero">
+                    <div>
+                        <p class="devices-eyebrow">Telos hardware</p>
+                        <h1 class="devices-title">My Devices</h1>
+                        <p class="devices-lead">Manage your connected focus cubes.</p>
+                    </div>
+                    <button class="btn btn--primary devices-add" type="button" data-add-device>
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M12 5v14M5 12h14"></path>
+                        </svg>
+                        <span>Add device</span>
+                    </button>
+                </header>
+                <p class="form-message hidden" data-page-message aria-live="polite"></p>
+                <div class="devices-list" data-devices-list aria-live="polite"></div>
+                <p class="devices-empty" data-empty-state>
+                    No cubes connected yet. Add your first cube to get started.
+                </p>
+                <aside class="devices-helper">
+                    <span class="devices-helper__icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false">
+                            <circle cx="12" cy="12" r="9"></circle>
+                            <path d="M12 11v5M12 8h.01"></path>
+                        </svg>
+                    </span>
+                    <div class="devices-helper__text">
+                        <h2>Pairing another cube?</h2>
+                        <p>Hold the reset button of a new or reset cube to start Bluetooth pairing, then use Add device.</p>
+                    </div>
+                    <button class="devices-helper__action" type="button" data-add-device>Add device &rarr;</button>
+                </aside>
+
+                <section class="device-wizard hidden" data-wizard aria-labelledby="wizard-title">
+                    <button type="button" class="device-wizard__close" data-wizard-close aria-label="Close pairing">
+                        ×
+                    </button>
+                    <p class="eyebrow">Add a cube</p>
+                    <h2 id="wizard-title" data-wizard-title>Check browser support</h2>
+                    <div data-wizard-content></div>
+                    <p class="form-message hidden" data-wizard-message aria-live="polite"></p>
+                    <div class="device-wizard__actions" data-wizard-actions></div>
+                </section>
+            </section>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+    <script th:src="@{/js/ble-provisioning.js}"></script>
+    <script th:src="@{/js/devices.js}"></script>
+</body>
+</html>

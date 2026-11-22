@@ -49,7 +49,7 @@ export function loadTimerStateModule() {
     context.window = context;
 
     vm.createContext(context);
-    vm.runInContext(source, context, { filename: "timer-state.js" });
+    vm.runInContext(source, context, { filename: filePath });
 
     return {
         timerState: context.PomodoroTimerState,

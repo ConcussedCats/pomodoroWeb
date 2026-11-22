@@ -222,6 +222,8 @@
 
     <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
     <script th:src="@{/js/settings.js}"></script>
+    <script sec:authorize="isAuthenticated()" th:src="@{/js/connected-timer.js}"></script>
     <script th:src="@{/js/timer.js}"></script>
+    <script sec:authorize="isAuthenticated()" th:src="@{/js/session-recorder.js}"></script>
 </body>
 </html>

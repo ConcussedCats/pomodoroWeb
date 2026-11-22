@@ -374,11 +374,16 @@ async function syncSettingsOnLoad() {
     }
 
     try {
+        const previousSettings = loadSettingsFromStorage();
         const syncedSettings = await fetchSettingsFromApi();
         savedSettings = timerStateStore.saveSettings(syncedSettings);
         applySettingsToInputs(savedSettings);
         document.dispatchEvent(new CustomEvent("settings:loaded", { detail: savedSettings }));
-        document.dispatchEvent(new CustomEvent("settings:updated", { detail: savedSettings }));
+        // Only a real change resets a paused timer (same rule as mini-timer-sync.js).
+        if (JSON.stringify(timerStateStore.normalizeSettings(previousSettings))
+            !== JSON.stringify(savedSettings)) {
+            document.dispatchEvent(new CustomEvent("settings:updated", { detail: savedSettings }));
+        }
     } catch (error) {
         savedSettings = loadSettingsFromStorage();
         applySettingsToInputs(savedSettings);

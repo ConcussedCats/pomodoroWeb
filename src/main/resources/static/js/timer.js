@@ -20,6 +20,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!timerStateStore || !timeDisplay || !startBtn || !resetBtn || !timerLabel || !progressBar) return;
 
+    // Connected Device Mode (connected-timer.js): the cube owns the timer, this browser timer stays paused.
+    const connectedTimer = window.TelosConnectedTimer;
+    const isConnectedMode = () => connectedTimer?.isActive() === true;
+
     const labelText = {
         pomodoro: "Focus Time",
         "short-break": "Short Break",
@@ -186,6 +190,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function render() {
+        if (isConnectedMode()) {
+            setWorkerState(false);
+            return;
+        }
+
         const remainingSeconds = timerStateStore.getRemainingSeconds(timerState);
         const minutes = Math.floor(remainingSeconds / 60);
         const seconds = remainingSeconds % 60;
@@ -295,6 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     startBtn.addEventListener("click", () => {
+        if (isConnectedMode()) return;
         const now = Date.now();
 
         if (timerState.isRunning) {
@@ -310,7 +320,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     resetBtn.addEventListener("click", () => {
-        if (!canResetTimer()) return;
+        if (isConnectedMode() || !canResetTimer()) return;
 
         playSound("timer_sound_down.wav");
         timerState = timerStateStore.resetTimerState(timerState, settings);
@@ -319,7 +329,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     prevCycleBtn?.addEventListener("click", () => {
-        if (!timerStateStore.canSkipToPreviousPhase(timerState, settings)) return;
+        if (isConnectedMode() || !timerStateStore.canSkipToPreviousPhase(timerState, settings)) return;
 
         playSound("timer_sound_up.wav");
         timerState = timerStateStore.skipToPreviousPhaseState(timerState, settings, Date.now());
@@ -328,7 +338,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     nextCycleBtn?.addEventListener("click", () => {
-        if (!timerStateStore.canSkipToNextPhase(timerState, settings)) return;
+        if (isConnectedMode() || !timerStateStore.canSkipToNextPhase(timerState, settings)) return;
         playSound("timer_sound_down.wav");
         timerState = timerStateStore.skipToNextPhaseState(timerState, settings, Date.now());
         persistTimerState();
@@ -337,7 +347,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     modeLabels.forEach((label) => {
         label.addEventListener("click", () => {
-            if (timerState.sessionCompleted) return;
+            if (isConnectedMode() || timerState.sessionCompleted) return;
 
             const targetMode = label.dataset.mode;
             if (!targetMode || targetMode === timerState.currentMode) return;
@@ -355,6 +365,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     switchToLongBreakBtn?.addEventListener("click", () => {
         closeLongBreakHint();
+        if (isConnectedMode()) return;
         playSound("timer_sound_down.wav");
         applyManualMode("long-break", true);
     });
@@ -362,6 +373,7 @@ document.addEventListener("DOMContentLoaded", () => {
     continueShortBreakBtn?.addEventListener("click", () => {
         const targetMode = pendingManualMode || "short-break";
         closeLongBreakHint();
+        if (isConnectedMode()) return;
         playSound("timer_sound_down.wav");
         applyManualMode(targetMode, true);
     });
@@ -379,6 +391,20 @@ document.addEventListener("DOMContentLoaded", () => {
         render();
     });
 
+    // Switching to a cube: keep the browser timer where it is, but paused.
+    document.addEventListener("timer:pause-local", () => {
+        if (!timerState.isRunning) return;
+        timerState = timerStateStore.pauseTimerState(timerState, settings, Date.now());
+        persistTimerState();
+        render();
+    });
+
+    // Back to Standalone Mode: show the browser timer again.
+    document.addEventListener("timer:connected-mode-changed", () => {
+        timerState = timerStateStore.loadTimerState(settings);
+        render();
+    });
+
     window.addEventListener("storage", (event) => {
         if (event.key === timerStateStore.keys.SETTINGS_KEY) {
             settings = timerStateStore.loadSettings();
@@ -392,6 +418,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     preloadSound("timer_sound_down.wav");
     preloadSound("timer_sound_up.wav");
+    // A cube was already selected when the page opened: the browser timer must not run next to it.
+    if (isConnectedMode() && timerState.isRunning) {
+        timerState = timerStateStore.pauseTimerState(timerState, settings, Date.now());
+    }
     persistTimerState();
     syncTimerState(Date.now(), false);
 });

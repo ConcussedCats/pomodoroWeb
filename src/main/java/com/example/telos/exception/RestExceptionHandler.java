@@ -70,6 +70,21 @@ public class RestExceptionHandler {
         return buildError(request, HttpStatus.NOT_FOUND, "API endpoint was not found", "ENDPOINT_NOT_FOUND");
     }
 
+    @ExceptionHandler(DeviceApiException.class)
+    public org.springframework.http.ResponseEntity<ErrorDto> handleDeviceApi(HttpServletRequest request, DeviceApiException exception) {
+        logErrorService.logWarn(request, exception.getStatus(), exception);
+        return org.springframework.http.ResponseEntity
+                .status(exception.getStatus())
+                .body(buildError(request, exception.getStatus(), exception.getMessage(), exception.getErrorCode()));
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorDto handleDataConflict(HttpServletRequest request, org.springframework.dao.DataIntegrityViolationException exception) {
+        logErrorService.logWarn(request, HttpStatus.CONFLICT, exception);
+        return buildError(request, HttpStatus.CONFLICT, "The request conflicts with existing data", "CONFLICT");
+    }
+
     @ExceptionHandler(UsernameAlreadyTakenException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorDto handleUsernameConflict(HttpServletRequest request, UsernameAlreadyTakenException exception) {

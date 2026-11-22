@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>History - Telos</title>
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="icon" th:href="@{/assets/icon/icon.ico}">
+</head>
+<body class="history-page">
+    <th:block th:replace="~{fragments/header :: header('history')}"></th:block>
+
+    <main class="main-content history-main">
+        <div class="container history-shell">
+            <section sec:authorize="isAnonymous()" class="productivity-guest-card">
+                <span class="productivity-guest-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <rect x="6.5" y="10.2" width="11" height="9" rx="1.8"></rect>
+                        <path d="M8.8 10.2V7.8a3.2 3.2 0 0 1 6.4 0v2.4"></path>
+                        <path d="M12 14.1v2"></path>
+                    </svg>
+                </span>
+                <h2 class="productivity-guest-title">Login required</h2>
+                <p class="productivity-guest-text">Sign in to review your focus history and progress.</p>
+                <div class="productivity-guest-actions">
+                    <a class="btn btn--primary productivity-guest-button" th:href="@{/login}">Log in</a>
+                    <a class="btn btn--secondary productivity-guest-button" th:href="@{/register}">
+                        Create free account
+                    </a>
+                </div>
+            </section>
+
+            <section sec:authorize="isAuthenticated()" class="history-dashboard">
+                <header>
+                    <p class="eyebrow">Your progress</p>
+                    <h1>History</h1>
+                    <p>See the focus time you have put in.</p>
+                </header>
+                <p class="form-message hidden" data-history-message aria-live="polite"></p>
+                <div class="history-stats" data-history-stats></div>
+                <section class="history-chart-section">
+                    <h2>Focus this week</h2>
+                    <div
+                        class="history-chart"
+                        data-history-chart
+                        role="img"
+                        aria-label="Focus minutes over the last seven days"
+                    ></div>
+                </section>
+                <section class="history-sessions">
+                    <div class="history-sessions__heading">
+                        <h2>Sessions</h2>
+                    </div>
+                    <div data-session-list></div>
+                    <p class="history-empty hidden" data-history-empty>
+                        No sessions yet. Start a focus session to see it here.
+                    </p>
+                    <button class="btn btn--secondary hidden" type="button" data-next-page>Load more</button>
+                </section>
+            </section>
+        </div>
+    </main>
+
+    <th:block th:replace="~{fragments/footer :: footer}"></th:block>
+    <th:block th:replace="~{fragments/mini-timer-scripts :: scripts}"></th:block>
+    <script th:src="@{/js/history.js}"></script>
+</body>
+</html>

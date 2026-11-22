@@ -1282,3 +1282,7 @@
     color: rgba(229, 226, 225, 0.46);
     line-height: 1.35;
 }
+
+.timer-surface--connected .btn--cycle {
+    opacity: 0.35;
+}
