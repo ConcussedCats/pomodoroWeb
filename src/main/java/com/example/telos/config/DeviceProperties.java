@@ -8,6 +8,8 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "telos.device")
 public record DeviceProperties(
         Duration pairingTtl,
+        Integer pairingRateLimit,
+        Duration pairingRateWindow,
         Duration heartbeatInterval,
         Duration offlineAfter,
         Duration commandTtl,
@@ -17,6 +19,8 @@ public record DeviceProperties(
     public DeviceProperties {
         if (schedulingEnabled == null) schedulingEnabled = true;
         if (pairingTtl == null) pairingTtl = Duration.ofMinutes(5);
+        if (pairingRateLimit == null) pairingRateLimit = 10;
+        if (pairingRateWindow == null) pairingRateWindow = Duration.ofMinutes(10);
         if (heartbeatInterval == null) heartbeatInterval = Duration.ofSeconds(30);
         if (offlineAfter == null) offlineAfter = Duration.ofSeconds(90);
         if (commandTtl == null) commandTtl = Duration.ofSeconds(30);
@@ -24,6 +28,6 @@ public record DeviceProperties(
     }
 
     public static DeviceProperties defaults() {
-        return new DeviceProperties(null, null, null, null, null, true);
+        return new DeviceProperties(null, null, null, null, null, null, null, true);
     }
 }
