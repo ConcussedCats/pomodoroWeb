@@ -63,9 +63,19 @@ public class DevicePairingService {
     /** Opens a new pairing session; any previous open session of the user stops being valid. */
     @Transactional
     public PairingCreatedDto create(Long userId) {
+        Instant now = clock.instant();
+        Instant windowStart = now.minus(properties.pairingRateWindow());
+        if (pairingRepository.countByUserIdAndCreatedAtGreaterThanEqual(userId, windowStart)
+                >= properties.pairingRateLimit()) {
+            throw new DeviceApiException(
+                    HttpStatus.TOO_MANY_REQUESTS,
+                    "PAIRING_RATE_LIMITED",
+                    "Too many pairing attempts, try again in a few minutes"
+            );
+        }
+
         pairingRepository.expireOpenPairingsOfUser(userId);
 
-        Instant now = clock.instant();
         String token = DeviceSecrets.newToken();
         DevicePairing pairing = new DevicePairing();
         pairing.setUserId(userId);

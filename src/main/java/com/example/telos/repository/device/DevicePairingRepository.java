@@ -16,6 +16,8 @@ public interface DevicePairingRepository extends JpaRepository<DevicePairing, Lo
 
     Optional<DevicePairing> findByPairingIdAndUserId(Long pairingId, Long userId);
 
+    long countByUserIdAndCreatedAtGreaterThanEqual(Long userId, Instant createdAt);
+
     /**
      * Atomically claims a pairing. Returns 1 only for the first caller while the token is still valid,
      * which makes the token strictly one-time even under concurrent requests.
