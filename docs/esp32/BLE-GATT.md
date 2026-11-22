@@ -24,8 +24,10 @@ hardware yet.
 * The provisioning payload is at most 512 bytes (Web Bluetooth performs a long write;
   the firmware must accept prepared/long writes, e.g. NimBLE does).
 * `ssid` ≤ 32 bytes, `password` ≤ 64 bytes (empty for open networks),
-  `apiBaseUrl` must be `https://…` in production (`http://localhost…` is accepted only
-  by debug builds).
+  `apiBaseUrl` must be `https://…` in production. Debug builds may also accept plain
+  `http://` to a LAN address of the development machine (for example,
+  `http://192.168.0.10:8080`). `localhost` and `127.0.0.1` must be rejected because
+  they point at the cube itself.
 * The provisioning characteristic must require an encrypted link
   (`ESP_GATT_PERM_WRITE_ENCRYPTED` / NimBLE `BLE_GATT_CHR_F_WRITE_ENC`), so the Wi-Fi
   password is never sent in clear over the air. The OS shows its pairing prompt on the
@@ -63,3 +65,8 @@ token was used or expired, creates a new pairing session). `CANCEL` returns to `
 Web Bluetooth works only in Chromium-based browsers (Chrome, Edge, Opera; desktop and
 Android) and only in a secure context (HTTPS or `http://localhost`). Safari / iOS and
 Firefox do not support it; the website shows an explanation instead of the wizard.
+
+**Local testing:** Opening the site as `http://localhost:8080` gives the cube a useless
+`apiBaseUrl`. Open it by the computer's LAN IP instead and add that origin in Chrome at
+`chrome://flags/#unsafely-treat-insecure-origin-as-secure` so Web Bluetooth still works,
+or test against the HTTPS production site.

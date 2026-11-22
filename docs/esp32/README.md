@@ -58,9 +58,10 @@ software emulators.
 
 * WebSocket sessions are kept in memory: correct for the current single-instance
   deployment, a second instance would need a shared broker.
-* Behind a reverse proxy the proxy must forward WebSocket upgrades for `/ws/devices`,
-  and forwarded headers must be configured so Spring's same-origin check sees the public
-  host.
+* Behind a reverse proxy the proxy must forward WebSocket upgrades for `/ws/devices`
+  (`Upgrade` / `Connection` headers) and send `X-Forwarded-Proto` plus the original `Host`.
+  The app trusts these headers (`server.forward-headers-strategy=native`) only from private
+  addresses, which covers a proxy reaching the Docker container on the same host.
 * History of the browser timer is recorded by the timer page; if several phases pass while
   no timer page is open, only the phase that was running when you come back is recorded.
 * No JWT (`/api/jwt/**`) variants of the new user endpoints yet; the website uses the session.
