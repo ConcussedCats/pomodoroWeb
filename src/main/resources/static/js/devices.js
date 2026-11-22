@@ -10,6 +10,9 @@
         const wizardContent = document.querySelector("[data-wizard-content]");
         const wizardActions = document.querySelector("[data-wizard-actions]");
         const wizardMessage = document.querySelector("[data-wizard-message]");
+        const wizardStepLabel = document.querySelector("[data-wizard-step]");
+        const wizardDevice = document.querySelector("[data-wizard-device]");
+        const WIZARD_STEPS = 4;
         const csrf = document.querySelector('meta[name="_csrf"]')?.content;
         const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
         const state = {
@@ -76,7 +79,11 @@
             sound: "M11 5 6 9H2v6h4l5 4V5zM15.5 8.5a5 5 0 0 1 0 7",
             brightness: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2"
                 + "M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4",
-            power: "M18.4 6.6a9 9 0 1 1-12.8 0M12 2v10"
+            power: "M18.4 6.6a9 9 0 1 1-12.8 0M12 2v10",
+            wifi: "M8.3 15a5.3 5.3 0 0 1 7.4 0M5.1 11.9a9.7 9.7 0 0 1 13.8 0M1.9 8.7a14.3 14.3 0 0 1 20.2 0M12 18.5h.01",
+            shield: "M12 3 4.5 6v5.5c0 4.6 3.2 8.6 7.5 9.5 4.3-.9 7.5-4.9 7.5-9.5V6L12 3zM9 12l2.2 2.2L15.5 10",
+            info: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-4M12 8h.01",
+            eye: "M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
         };
 
         function icon(name, className = "device-icon") {
@@ -310,6 +317,7 @@
             state.unsubscribeStatus?.();
             state.unsubscribeStatus = null;
             wizard.classList.add("hidden");
+            showWizardDevice(null);
             wizardContent.replaceChildren();
             wizardActions.replaceChildren();
             setMessage(wizardMessage, "");
@@ -321,15 +329,28 @@
             button.addEventListener("click", fn);
             return button;
         }
-        function wizardStep(title) {
+        /** step: number of the step in the pairing flow; omitted for the final success / error screens. */
+        function wizardStep(title, step) {
             wizard.classList.remove("hidden");
             wizardTitle.textContent = title;
+            if (wizardStepLabel) {
+                wizardStepLabel.textContent = step
+                    ? `Telos hardware · Step ${step} of ${WIZARD_STEPS}`
+                    : "Telos hardware";
+            }
             wizardContent.replaceChildren();
             wizardActions.replaceChildren();
             setMessage(wizardMessage, "");
         }
+        /** Bluetooth name of the chosen cube in the dialog footer. */
+        function showWizardDevice(name) {
+            if (!wizardDevice) return;
+            wizardDevice.textContent = name || "";
+            wizardDevice.classList.toggle("hidden", !name);
+        }
         function startWizard() {
-            wizardStep("Check browser support");
+            showWizardDevice(null);
+            wizardStep("Check browser support", 1);
             if (!window.TelosBleProvisioning?.isSupported()) {
                 const reason = window.TelosBleProvisioning?.unsupportedReason()
                     || "Bluetooth provisioning is unavailable. Use a supported browser.";
@@ -345,10 +366,11 @@
         }
         async function chooseCube() {
             try {
-                wizardStep("Choose your cube");
+                wizardStep("Choose your cube", 2);
                 add(wizardContent, "p", "Choose the Telos Cube in the browser prompt.");
                 const device = await TelosBleProvisioning.requestDevice();
                 await TelosBleProvisioning.connect(device);
+                showWizardDevice(device?.name);
                 const info = await TelosBleProvisioning.readDeviceInfo();
                 if (info.provisioned) {
                     throw Object.assign(
@@ -362,29 +384,71 @@
                 pairingError(error);
             }
         }
+        function note(text, strong, iconName, modifier = "") {
+            const box = add(wizardContent, "div", undefined, `wizard-note ${modifier}`.trim());
+            box.appendChild(icon(iconName));
+            const paragraph = add(box, "p");
+            const [before, after] = text.split("{strong}");
+            paragraph.append(before);
+            add(paragraph, "strong", strong);
+            if (after) paragraph.append(after);
+            return box;
+        }
+        function wizardField(label, extra) {
+            const field = add(wizardContent, "div", undefined, "wizard-field");
+            const head = add(field, "div", undefined, "wizard-field__head");
+            const labelEl = add(head, "label", label, "wizard-field__label");
+            if (extra) head.appendChild(extra);
+            const wrap = add(field, "div", undefined, "wizard-input-wrap");
+            return { labelEl, wrap };
+        }
         function wifiStep() {
-            wizardStep("Connect cube to Wi-Fi");
-            add(
-                wizardContent,
-                "p",
-                "Your Wi-Fi password is sent only to the cube over encrypted Bluetooth. "
-                    + "It is never saved by this website."
-            );
-            const ssidField = add(wizardContent, "label", "Wi-Fi network", "wizard-field");
-            const ssid = add(ssidField, "input", undefined, "settings-input");
+            wizardStep("Connect cube to Wi-Fi", 3);
+            note("Your Wi-Fi password is sent only to the cube over encrypted {strong}. "
+                + "It is never saved by this website.", "Bluetooth", "shield", "wizard-note--secure");
+
+            const badge = document.createElement("span");
+            badge.className = "wizard-badge";
+            badge.textContent = "2.4 GHz only";
+            const network = wizardField("Wi-Fi network", badge);
+            network.wrap.appendChild(icon("wifi"));
+            const ssid = add(network.wrap, "input", undefined, "wizard-input wizard-input--icon");
+            ssid.id = "wizard-ssid";
+            network.labelEl.htmlFor = ssid.id;
             ssid.autocomplete = "off";
-            const passField = add(wizardContent, "label", "Wi-Fi password", "wizard-field");
-            const passWrap = add(passField, "div", undefined, "wizard-password");
-            const password = add(passWrap, "input", undefined, "settings-input");
+            ssid.placeholder = "Network name";
+            ssid.maxLength = 32;
+
+            const security = document.createElement("span");
+            security.className = "wizard-field__hint";
+            security.textContent = "WPA2 / WPA3";
+            const secret = wizardField("Wi-Fi password", security);
+            const password = add(secret.wrap, "input", undefined, "wizard-input wizard-input--toggle");
+            password.id = "wizard-password";
+            secret.labelEl.htmlFor = password.id;
             password.type = "password";
             password.autocomplete = "new-password";
-            const show = add(passWrap, "button", "Show", "btn btn--secondary");
+            password.placeholder = "Empty for an open network";
+            password.maxLength = 64;
+            const show = add(secret.wrap, "button", undefined, "wizard-reveal");
             show.type = "button";
+            show.appendChild(icon("eye"));
+            const showLabel = add(show, "span", "Show");
             show.addEventListener("click", () => {
                 password.type = password.type === "password" ? "text" : "password";
-                show.textContent = password.type === "password" ? "Show" : "Hide";
+                showLabel.textContent = password.type === "password" ? "Show" : "Hide";
             });
-            action("Send to cube", async () => {
+
+            note("Telos cubes work only on {strong} Wi-Fi. 5 GHz networks are not supported.", "2.4 GHz", "info");
+
+            action("Cancel", async () => {
+                try {
+                    await TelosBleProvisioning.cancel();
+                } finally {
+                    clearWizard();
+                }
+            }, false);
+            const send = action("Send to cube", async () => {
                 try {
                     await createPairingAndWrite(ssid.value, password.value);
                     password.value = "";
@@ -394,13 +458,10 @@
                     pairingError(error);
                 }
             });
-            action("Cancel", async () => {
-                try {
-                    await TelosBleProvisioning.cancel();
-                } finally {
-                    clearWizard();
-                }
-            }, false);
+            [ssid, password].forEach(input => input.addEventListener("keydown", event => {
+                if (event.key === "Enter") send.click();
+            }));
+            ssid.focus?.();
         }
         async function createPairingAndWrite(ssid, password) {
             state.pairing = await request("/api/device-pairings", {
@@ -417,11 +478,11 @@
             startPoll();
         }
         function statusStep() {
-            wizardStep("Pairing your cube");
+            wizardStep("Pairing your cube", 4);
             add(wizardContent, "p", "Connecting the cube to Wi-Fi and claiming it to your account.");
             const status = add(wizardContent, "p", "Waiting for cube…", "wizard-status");
             status.dataset.status = "";
-            const countdown = add(wizardContent, "p", "", "wizard-status");
+            const countdown = add(wizardContent, "p", "", "wizard-status wizard-status--muted");
             const tick = () => {
                 const seconds = Math.max(0, Math.ceil((state.pairing.expiresAt - Date.now()) / 1000));
                 const minutes = Math.floor(seconds / 60);
