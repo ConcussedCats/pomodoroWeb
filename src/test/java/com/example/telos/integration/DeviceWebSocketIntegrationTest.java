@@ -115,6 +115,10 @@ class DeviceWebSocketIntegrationTest extends PostgresIntegrationTest {
     }
 
     private Socket connect(String cookie, String origin) throws Exception {
+        return connect(cookie, origin, new WebSocketHttpHeaders());
+    }
+
+    private Socket connect(String cookie, String origin, WebSocketHttpHeaders headers) throws Exception {
         BlockingQueue<JsonNode> messages = new LinkedBlockingQueue<>();
         TextWebSocketHandler handler = new TextWebSocketHandler() {
             @Override
@@ -122,7 +126,6 @@ class DeviceWebSocketIntegrationTest extends PostgresIntegrationTest {
                 messages.add(objectMapper.readTree(message.getPayload()));
             }
         };
-        WebSocketHttpHeaders headers = new WebSocketHttpHeaders();
         if (cookie != null) {
             headers.add(HttpHeaders.COOKIE, cookie);
         }
@@ -250,5 +253,24 @@ class DeviceWebSocketIntegrationTest extends PostgresIntegrationTest {
     void handshakeFromForeignOriginIsRejected() throws Exception {
         String cookie = login(createUser("wsowner5"));
         assertThatThrownBy(() -> connect(cookie, "http://evil.example")).isInstanceOf(Exception.class);
+    }
+
+    /** Production terminates HTTPS at a reverse proxy: the browser's https Origin must still count as same-origin. */
+    @Test
+    void handshakeBehindHttpsProxyIsAccepted() throws Exception {
+        String cookie = login(createUser("wsowner7"));
+        WebSocketHttpHeaders proxyHeaders = new WebSocketHttpHeaders();
+        proxyHeaders.add("X-Forwarded-Proto", "https");
+        try (Socket socket = connect(cookie, "https://localhost", proxyHeaders)) {
+            assertThat(socket.session().isOpen()).isTrue();
+        }
+    }
+
+    @Test
+    void forwardedHttpsDoesNotOpenTheDoorForForeignOrigins() throws Exception {
+        String cookie = login(createUser("wsowner8"));
+        WebSocketHttpHeaders proxyHeaders = new WebSocketHttpHeaders();
+        proxyHeaders.add("X-Forwarded-Proto", "https");
+        assertThatThrownBy(() -> connect(cookie, "https://evil.example", proxyHeaders)).isInstanceOf(Exception.class);
     }
 }
