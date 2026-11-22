@@ -65,7 +65,6 @@ software emulators.
 * History of the browser timer is recorded by the timer page; if several phases pass while
   no timer page is open, only the phase that was running when you come back is recorded.
 * No JWT (`/api/jwt/**`) variants of the new user endpoints yet; the website uses the session.
-* No rate limiting on pairing creation yet.
 * Anyone who knows a cube's `hardwareId` can pair it first while it is unpaired; the owner
   then sees "linked to another account" until it is unbound. Closing this needs a
   per-device secret burned into the firmware (proof of possession).

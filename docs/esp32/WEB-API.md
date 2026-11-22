@@ -34,6 +34,11 @@ DeviceDto = {
 | POST | `/api/device-pairings` | `201 {"pairingId":5,"pairingToken":"…","status":"CREATED","expiresAt":…}` — opening a new one expires the user's previous open pairing |
 | GET | `/api/device-pairings/{id}` | `{"pairingId":5,"status":"CREATED|CLAIMED|EXPIRED","expiresAt":…,"deviceId":12,"deviceName":"Pomodoro Cube"}` |
 
+`POST /api/device-pairings` returns `429 PAIRING_RATE_LIMITED` after
+`telos.device.pairing-rate-limit` creations (default `10`) within
+`telos.device.pairing-rate-window` (default `PT10M`). These settings can be overridden
+with `DEVICE_PAIRING_RATE_LIMIT` and `DEVICE_PAIRING_RATE_WINDOW`.
+
 ## Connected timer
 
 | Method | Path | Body | Response |

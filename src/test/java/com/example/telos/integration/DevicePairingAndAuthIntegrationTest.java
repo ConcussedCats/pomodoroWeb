@@ -19,6 +19,38 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DevicePairingAndAuthIntegrationTest extends DeviceIntegrationTestSupport {
 
     @Test
+    void pairingCreationIsRateLimitedWithoutInvalidatingThePreviousPairing() throws Exception {
+        String email = "pairing-rate-limit@test.com";
+        jdbcTemplate.update("DELETE FROM users WHERE email = ?", email);
+        jdbcTemplate.update(
+                "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+                "pairing-rate-limit", email, "unused"
+        );
+
+        JsonNode pairing = null;
+        for (int attempt = 0; attempt < 10; attempt++) {
+            pairing = createPairing(email);
+        }
+
+        MvcResult rejected = mockMvc.perform(post("/api/device-pairings").with(as(email)).with(csrf()))
+                .andExpect(status().isTooManyRequests())
+                .andExpect(jsonPath("$.errorCode").value("PAIRING_RATE_LIMITED"))
+                .andReturn();
+        assertThat(json(rejected).get("message").asText())
+                .isEqualTo("Too many pairing attempts, try again in a few minutes");
+
+        assertThat(pairing).isNotNull();
+        mockMvc.perform(get("/api/device-pairings/" + pairing.get("pairingId").asLong()).with(as(email)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CREATED"));
+        assertThat(newCube("RATELIMIT01").pair(pairing.get("pairingToken").asText())
+                .getResponse().getStatus()).isEqualTo(201);
+
+        clock.advance(Duration.ofMinutes(10).plusMillis(1));
+        createPairing(email);
+    }
+
+    @Test
     void pairingTokenIsOneTimeAndDeviceAppearsInAccount() throws Exception {
         JsonNode pairing = createPairing(OWNER);
         String token = pairing.get("pairingToken").asText();
